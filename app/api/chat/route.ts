@@ -14,7 +14,7 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { messages, userId } = await req.json();
+    const { messages, userId, currentProfile } = await req.json(); // Accept currentProfile
 
     // 1. Define Tools
     const tools = [
@@ -43,14 +43,24 @@ export async function POST(req: Request) {
       }
     ];
 
-    // 2. System Prompt
+    // 2. System Prompt with Context Awareness
     const systemPrompt = `
       You are Pravara, a digital Sutradhar.
-      Goal: Collect Name, Gothra, and Partner Preferences.
+      
+      KNOWN INFORMATION SO FAR:
+      Name: ${currentProfile?.full_name || "Unknown"}
+      Gothra: ${currentProfile?.gothra || "Unknown"}
+      Preferences: ${currentProfile?.partner_preferences || "Unknown"}
+
+      Goal: Collect any MISSING information (Name, Gothra, Preferences).
       
       Rules:
+      - If Name is known, DO NOT ask for it again.
+      - If Gothra is known, DO NOT ask for it again.
+      - If Preferences are known, DO NOT ask for them again.
+      - If the user wants to change something, allow it by calling update_profile.
       - Ask ONE question at a time.
-      - If you have all 3, call 'complete_onboarding'.
+      - If you have all 3 (Name, Gothra, Preferences), call 'complete_onboarding'.
       - If the user says "done" or "what next", call 'complete_onboarding'.
     `;
 

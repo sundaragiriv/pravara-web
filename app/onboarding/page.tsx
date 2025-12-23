@@ -18,23 +18,46 @@ export default function Onboarding() {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [isComplete, setIsComplete] = useState(false); // New state for completion
+  const [isComplete, setIsComplete] = useState(false);
+  const [existingProfile, setExistingProfile] = useState<any>(null); // NEW: Store existing data
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const initialized = useRef(false); // Ref to prevent double greeting
+  const initialized = useRef(false);
 
-  // 1. Initialize User & Greeting
+  // 1. Initialize User & Check Memory
   useEffect(() => {
-    if (initialized.current) return; // Prevent double run
+    if (initialized.current) return;
     initialized.current = true;
 
     const initSession = async () => {
       const supabase = createClient();
-      const { data } = await supabase.auth.getUser();
-      if (data.user) {
-        setUserId(data.user.id);
-        // Only add greeting if empty
-        setMessages([{ role: "ai", text: "Namaste! I am Pravara. May I know your full name?" }]);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        setUserId(user.id);
+        
+        // CHECK DATABASE: Do we already know this person?
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        setExistingProfile(profile);
+
+        // SMART GREETING LOGIC
+        if (profile?.full_name) {
+             // We know them!
+             const firstName = profile.full_name.split(' ')[0];
+             setMessages([{ 
+                role: "ai", 
+                text: `Namaste, ${firstName} ji. Welcome back. I recall your Gothra is ${profile.gothra || "not yet recorded"}. What else would you like to update?` 
+             }]);
+        } else {
+             // New user
+             setMessages([{ role: "ai", text: "Namaste! I am Pravara. May I know your full name?" }]);
+        }
+
       } else {
         router.push("/signup");
       }
@@ -71,7 +94,9 @@ export default function Onboarding() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...messages, newMsg], // Send history so AI remembers context
-          userId: userId // Pass ID so AI can save to Supabase
+          userId: userId, // Pass ID so AI can save to Supabase
+          // PASS CONTEXT: Tell AI what we already know so it doesn't re-ask
+          currentProfile: existingProfile
         }),
       });
 
