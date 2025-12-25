@@ -1,39 +1,86 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { 
   ArrowLeft, MapPin, Briefcase, GraduationCap, 
-  Sparkles, Edit3, ShieldCheck, User 
+  Sparkles, Edit3, ShieldCheck, User, Camera, Loader2 
 } from "lucide-react";
 
 export default function MyProfile() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    const fetchMyProfile = async () => {
+    fetchMyProfile();
+  }, []);
+
+  const fetchMyProfile = async () => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      setProfile(data);
+    } else {
+      router.push("/login");
+    }
+    setLoading(false);
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setUploading(true);
+      const file = event.target.files?.[0];
+      if (!file) return;
+
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-      if (user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        setProfile(data);
-      } else {
-        router.push("/login");
-      }
-      setLoading(false);
-    };
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}-${Math.random()}.${fileExt}`;
 
-    fetchMyProfile();
-  }, [router]);
+      // 1. Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // 2. Get Public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // 3. Update Profile Database
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ image_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      // 4. Refresh UI
+      await fetchMyProfile();
+      alert("Profile photo updated!");
+
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("Error uploading image");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (loading) return <div className="min-h-screen bg-stone-950 flex items-center justify-center text-stone-500">Loading your profile...</div>;
   if (!profile) return null;
@@ -53,7 +100,8 @@ export default function MyProfile() {
           
           {/* Left Column: Photo & Actions */}
           <div className="w-full md:w-1/3 space-y-6">
-            <div className="aspect-[3/4] rounded-2xl overflow-hidden border border-stone-800 shadow-2xl relative bg-stone-900 flex items-center justify-center">
+            <div className="aspect-[3/4] rounded-2xl overflow-hidden border border-stone-800 shadow-2xl relative bg-stone-900 flex items-center justify-center group">
+               {/* Image Display */}
                {profile.image_url ? (
                  <img 
                    src={profile.image_url} 
@@ -63,9 +111,27 @@ export default function MyProfile() {
                ) : (
                  <User className="w-20 h-20 text-stone-700" />
                )}
+
+               {/* Upload Overlay (Hover) */}
+               <div 
+                 onClick={() => fileInputRef.current?.click()}
+                 className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer gap-2"
+               >
+                 {uploading ? <Loader2 className="w-8 h-8 text-white animate-spin"/> : <Camera className="w-8 h-8 text-white" />}
+                 <span className="text-white text-xs font-bold uppercase tracking-wider">Change Photo</span>
+               </div>
+               
+               {/* Hidden Input */}
+               <input 
+                 type="file" 
+                 ref={fileInputRef}
+                 onChange={handleImageUpload}
+                 accept="image/*"
+                 className="hidden"
+               />
             </div>
 
-            {/* EDIT BUTTON - The key feature you asked for */}
+            {/* EDIT BUTTON */}
             <Link 
                 href="/onboarding" 
                 className="w-full py-4 bg-stone-800 hover:bg-stone-700 border border-stone-700 text-stone-200 font-bold rounded-xl transition-all flex items-center justify-center gap-2"
@@ -73,11 +139,11 @@ export default function MyProfile() {
                  <Edit3 className="w-4 h-4" /> Update with Sutradhar
             </Link>
             <p className="text-xs text-center text-stone-500">
-                To update your details, simply chat with Pravara.
+                To update your bio or gothra, simply chat with Pravara.
             </p>
           </div>
 
-          {/* Right Column: Details */}
+          {/* Right Column: Details (Same as before) */}
           <div className="flex-1 space-y-8">
             <div>
               <h1 className="text-4xl font-serif text-stone-100 mb-2">{profile.full_name}</h1>
@@ -110,7 +176,7 @@ export default function MyProfile() {
                   <div className="text-stone-500 text-xs uppercase mb-1">Community</div>
                   <div className="text-stone-200 font-serif text-lg">{profile.sub_community || "-"}</div>
                </div>
-               <div className="p-4 rounded-xl bg-stone-900 border border-stone-800 col-span-2">
+               <div className="p-4 rounded-xl bg-stone-900 border border-stone-800">
                   <div className="text-stone-500 text-xs uppercase mb-1">Partner Preferences</div>
                   <div className="text-stone-200 text-sm leading-relaxed">{profile.partner_preferences || "Not specified yet."}</div>
                </div>
