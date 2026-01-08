@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, Sparkles, ShieldCheck, Heart, SearchX, AlertTriangle, ScrollText } from "lucide-react";
 import ChatDemo from "./components/ChatDemo";
 import { createClient } from "@/utils/supabase/server";
+import Footer from "@/components/Footer";
+import FadeIn from "@/components/FadeIn";
 
 export default async function Home() {
   // Check if user is logged in
@@ -20,8 +22,8 @@ export default async function Home() {
               <div className="w-8 h-8 bg-haldi-600 rounded-lg flex items-center justify-center text-stone-950 font-bold font-serif text-xl group-hover:scale-105 transition-transform">
                 P
               </div>
-              <span className="font-serif text-xl tracking-wide text-stone-100 group-hover:text-haldi-500 transition-colors">
-                Pravara
+              <span className="font-serif text-xl tracking-widest text-stone-100 group-hover:text-haldi-500 transition-colors">
+                PRAVARA
               </span>
             </Link>
           </div>
@@ -41,14 +43,14 @@ export default async function Home() {
               <>
                 <div className="hidden md:flex items-center gap-6 text-sm font-medium text-stone-400">
                   <Link href="/pricing" className="hover:text-haldi-500 transition-colors">Membership</Link>
-                  <Link href="/login" className="hover:text-haldi-500 transition-colors">Sign In</Link>
+                  <Link href="/login" className="hover:text-haldi-500 transition-colors">Login</Link>
                 </div>
                 
                 <Link 
                   href="/signup" 
                   className="bg-stone-100 hover:bg-white text-stone-950 px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105"
                 >
-                  Get Started
+                  Join
                 </Link>
               </>
             )}
@@ -67,14 +69,18 @@ export default async function Home() {
             <span>AI-Powered Matchmaking for the Modern Era</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-serif text-transparent bg-clip-text bg-gradient-to-b from-stone-50 to-stone-400 leading-[1.1] mb-8 max-w-4xl mx-auto">
-            Tradition meets Intelligence. <br/>
-            <span className="text-stone-500">Find your perfect union.</span>
-          </h1>
+          <FadeIn>
+            <h1 className="text-5xl md:text-7xl font-serif text-transparent bg-clip-text bg-gradient-to-b from-stone-50 to-stone-400 leading-[1.1] mb-8 max-w-4xl mx-auto">
+              Tradition meets Intelligence. <br/>
+              <span className="text-stone-500">Find your perfect union.</span>
+            </h1>
+          </FadeIn>
           
-          <p className="text-lg text-stone-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            The first matrimonial platform that understands your values, gothra, and compatibility using an AI Sutradhar, not just filters.
-          </p>
+          <FadeIn delay={0.2}>
+            <p className="text-lg text-stone-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+              The first matrimonial platform that understands your values, gothra, and compatibility using an AI Sutradhar, not just filters.
+            </p>
+          </FadeIn>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             {user ? (
@@ -91,7 +97,7 @@ export default async function Home() {
                   href="/signup" 
                   className="group relative px-8 py-4 bg-haldi-600 hover:bg-haldi-500 text-stone-950 font-bold rounded-full transition-all hover:scale-105 min-w-[200px] flex items-center justify-center gap-2"
                 >
-                  Start My Search
+                  Begin Your Search
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 
@@ -99,7 +105,7 @@ export default async function Home() {
                   href="/login"
                   className="px-8 py-4 bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-300 font-medium rounded-full transition-all min-w-[200px]"
                 >
-                  Resume Journey
+                  Member Login
                 </Link>
               </>
             )}
@@ -156,42 +162,50 @@ export default async function Home() {
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {/* Card 1: Endless Scrolling */}
-            <div className="p-8 rounded-2xl bg-stone-950/50 border border-stone-800 hover:border-haldi-500/30 transition-colors group">
-              <div className="w-12 h-12 bg-stone-900 rounded-lg flex items-center justify-center mb-6 group-hover:bg-haldi-900/20 transition-colors">
-                <SearchX className="w-6 h-6 text-stone-400 group-hover:text-haldi-500" />
+            <FadeIn delay={0.1}>
+              <div className="p-8 rounded-2xl bg-stone-950/50 border border-stone-800 hover:border-haldi-500/30 transition-colors group">
+                <div className="w-12 h-12 bg-stone-900 rounded-lg flex items-center justify-center mb-6 group-hover:bg-haldi-900/20 transition-colors">
+                  <SearchX className="w-6 h-6 text-stone-400 group-hover:text-haldi-500" />
+                </div>
+                <h3 className="text-xl font-serif text-stone-200 mb-3">Endless Scrolling Fatigue</h3>
+                <p className="text-stone-500 leading-relaxed">
+                  Browsing hundreds of incompatible profiles with no guidance is exhausting. We replaced the search bar with a conversation.
+                </p>
               </div>
-              <h3 className="text-xl font-serif text-stone-200 mb-3">Endless Scrolling Fatigue</h3>
-              <p className="text-stone-500 leading-relaxed">
-                Browsing hundreds of incompatible profiles with no guidance is exhausting. We replaced the search bar with a conversation.
-              </p>
-            </div>
+            </FadeIn>
 
             {/* Card 2: Cultural Mistakes */}
-            <div className="p-8 rounded-2xl bg-stone-900/80 border border-stone-700 shadow-xl relative overflow-hidden group">
-               {/* Highlight this card slightly as the 'Core' differentiator */}
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-haldi-600 to-kumkum-600" />
-              <div className="w-12 h-12 bg-stone-950 rounded-lg flex items-center justify-center mb-6">
-                <AlertTriangle className="w-6 h-6 text-kumkum-500" />
+            <FadeIn delay={0.2}>
+              <div className="p-8 rounded-2xl bg-stone-900/80 border border-stone-700 shadow-xl relative overflow-hidden group">
+                {/* Highlight this card slightly as the 'Core' differentiator */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-haldi-600 to-kumkum-600" />
+                <div className="w-12 h-12 bg-stone-950 rounded-lg flex items-center justify-center mb-6">
+                  <AlertTriangle className="w-6 h-6 text-kumkum-500" />
+                </div>
+                <h3 className="text-xl font-serif text-stone-100 mb-3">Cultural Integrity</h3>
+                <p className="text-stone-400 leading-relaxed">
+                  Generic platforms often miss critical nuances like Gothra and Sub-community. Our algorithms block same-Gothra matches automatically.
+                </p>
               </div>
-              <h3 className="text-xl font-serif text-stone-100 mb-3">Cultural Integrity</h3>
-              <p className="text-stone-400 leading-relaxed">
-                Generic platforms often miss critical nuances like Gothra and Sub-community. Our algorithms block same-Gothra matches automatically.
-              </p>
-            </div>
+            </FadeIn>
 
             {/* Card 3: Kundali */}
-            <div className="p-8 rounded-2xl bg-stone-950/50 border border-stone-800 hover:border-haldi-500/30 transition-colors group">
-              <div className="w-12 h-12 bg-stone-900 rounded-lg flex items-center justify-center mb-6 group-hover:bg-haldi-900/20 transition-colors">
-                <ScrollText className="w-6 h-6 text-stone-400 group-hover:text-haldi-500" />
+            <FadeIn delay={0.3}>
+              <div className="p-8 rounded-2xl bg-stone-950/50 border border-stone-800 hover:border-haldi-500/30 transition-colors group">
+                <div className="w-12 h-12 bg-stone-900 rounded-lg flex items-center justify-center mb-6 group-hover:bg-haldi-900/20 transition-colors">
+                  <ScrollText className="w-6 h-6 text-stone-400 group-hover:text-haldi-500" />
+                </div>
+                <h3 className="text-xl font-serif text-stone-200 mb-3">Vedic Compatibility</h3>
+                <p className="text-stone-500 leading-relaxed">
+                  Don't wait until the end to find out the charts don't match. We integrate Kundali analysis right from the first connection.
+                </p>
               </div>
-              <h3 className="text-xl font-serif text-stone-200 mb-3">Vedic Compatibility</h3>
-              <p className="text-stone-500 leading-relaxed">
-                Don't wait until the end to find out the charts don't match. We integrate Kundali analysis right from the first connection.
-              </p>
-            </div>
+            </FadeIn>
           </div>
         </div>
       </section>
+
+      <Footer />
 
     </div>
   );

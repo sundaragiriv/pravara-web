@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { Send, User, Sparkles, Phone, Video, MoreVertical, ArrowLeft } from "lucide-react";
+import { Send, User, Sparkles, Phone, Video, MoreVertical, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -13,6 +13,7 @@ export default function SangamChat() {
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [hintLoading, setHintLoading] = useState(false); // State for Sutradhar
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
@@ -29,8 +30,8 @@ export default function SangamChat() {
           id,
           sender_id,
           receiver_id,
-          sender:profiles!connections_sender_id_fkey(id, full_name, image_url, profession), 
-          receiver:profiles!connections_receiver_id_fkey(id, full_name, image_url, profession)
+          sender:profiles!connections_sender_id_fkey(id, full_name, image_url, profession, location, sub_community), 
+          receiver:profiles!connections_receiver_id_fkey(id, full_name, image_url, profession, location, sub_community)
         `)
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .eq('status', 'accepted');
@@ -109,6 +110,33 @@ export default function SangamChat() {
   };
 
   const getActivePartner = () => conversations.find(c => c.connection_id === activeChat)?.partner;
+
+  // --- SUTRADHAR AI HINT ---
+  const askSutradhar = async () => {
+    if (!activeChat || !currentUser) return;
+    setHintLoading(true);
+    
+    try {
+      const partner = getActivePartner();
+      
+      const response = await fetch('/api/sutradhar-hint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+           myProfile: { name: "Me" }, 
+           partnerProfile: partner 
+        })
+      });
+      
+      const data = await response.json();
+      setInput(data.hint); // Insert hint into input box
+      
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setHintLoading(false);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-stone-950 text-stone-50 overflow-hidden">
@@ -214,8 +242,16 @@ export default function SangamChat() {
                
                {/* 2. Sutradhar Whisper (Moved BELOW the input to prevent overlap) */}
                <div className="flex justify-center">
-                  <button className="text-[10px] text-haldi-500/70 hover:text-haldi-500 flex items-center gap-1.5 transition-colors uppercase tracking-widest font-bold py-1 px-3 rounded-full hover:bg-haldi-900/10">
-                     <Sparkles className="w-3 h-3" /> Ask Sutradhar for a hint
+                  <button 
+                     onClick={askSutradhar} 
+                     disabled={hintLoading}
+                     className="text-[10px] text-haldi-500/70 hover:text-haldi-500 flex items-center gap-1.5 transition-colors uppercase tracking-widest font-bold py-1 px-3 rounded-full hover:bg-haldi-900/10 disabled:opacity-50"
+                  >
+                     {hintLoading ? (
+                        <><Loader2 className="w-3 h-3 animate-spin" /> Consulting the stars...</>
+                     ) : (
+                        <><Sparkles className="w-3 h-3" /> Ask Sutradhar for a hint</>
+                     )}
                   </button>
                </div>
             </div>

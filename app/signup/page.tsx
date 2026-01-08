@@ -70,7 +70,6 @@ export default function SignupPage() {
         {/* Background Gradients */}
         <div className="absolute top-[-20%] left-[-20%] w-[600px] h-[600px] bg-haldi-500/10 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-kumkum-900/20 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-5 pointer-events-none mix-blend-overlay"></div>
 
         {/* Content */}
         <div className="relative z-10">
