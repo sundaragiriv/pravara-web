@@ -214,6 +214,39 @@ export default function Dashboard() {
     fetchData(); 
   };
 
+  const handleShortlist = async (profileId: string) => {
+    if (!currentUser) return;
+
+    // A. Find the current status
+    const profile = matches.find(m => m.id === profileId);
+    const isCurrentlyShortlisted = shortlist.some(s => s.profile.id === profileId);
+
+    // B. Optimistic Update (Update UI Instantly)
+    if (isCurrentlyShortlisted) {
+      // Remove from local shortlist state
+      setShortlist(prev => prev.filter(s => s.profile.id !== profileId));
+      // Update the Slide-Over state if it's open
+      if (selectedProfile?.id === profileId) {
+        setSelectedProfile((prev: any) => ({ ...prev, isShortlisted: false }));
+      }
+    } else {
+      // Add to local shortlist state
+      const newShortlistItem = { id: Date.now().toString(), profile: profile }; 
+      setShortlist((prev: any) => [newShortlistItem, ...prev]);
+      // Update Slide-Over state
+      if (selectedProfile?.id === profileId) {
+        setSelectedProfile((prev: any) => ({ ...prev, isShortlisted: true }));
+      }
+    }
+
+    // C. Database Operation (Supabase)
+    if (isCurrentlyShortlisted) {
+      await supabase.from('shortlists').delete().eq('user_id', currentUser.id).eq('profile_id', profileId);
+    } else {
+      await supabase.from('shortlists').insert({ user_id: currentUser.id, profile_id: profileId });
+    }
+  };
+
   const handleSendInterest = async (receiverId: string) => {
     if (!currentUser) return;
     const senderId = viewingAs || currentUser.id;
@@ -358,10 +391,10 @@ export default function Dashboard() {
                             <span className="text-xs font-bold text-haldi-500">{completionPercent}%</span>
                          </div>
                       </div>
-                      <Link href="/dashboard/profile" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-stone-800 transition-colors text-stone-300 hover:text-white">
+                      <Link href="/dashboard/edit-profile" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-stone-800 transition-colors text-stone-300 hover:text-white">
                          <User className="w-4 h-4" /> <span className="text-sm font-medium">Edit Profile</span>
                       </Link>
-                      <Link href="/dashboard/profile?tab=preferences" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-stone-800 transition-colors text-stone-300 hover:text-white">
+                      <Link href="/dashboard/edit-profile" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-stone-800 transition-colors text-stone-300 hover:text-white">
                          <SlidersHorizontal className="w-4 h-4" /> <span className="text-sm font-medium">Partner Preferences</span>
                       </Link>
                       <div className="border-t border-stone-800 my-1"></div>
@@ -413,8 +446,9 @@ export default function Dashboard() {
                 matches={filteredMatches}
                 isLoading={loading}
                 onToggleMobileFilters={() => setMobileFiltersOpen(true)}
-                // This connects the Slide-Over to the cards
                 onProfileClick={(profile) => setSelectedProfile(profile)}
+                shortlist={shortlist}
+                onShortlist={handleShortlist}
               />
             )}
 
@@ -474,6 +508,21 @@ export default function Dashboard() {
         isOpen={!!selectedProfile} 
         onClose={() => setSelectedProfile(null)}
         profile={selectedProfile}
+        isPremium={false} // Set to true to test premium view, false to see lock overlay
+        // Check if this specific profile is in the shortlist array
+        isShortlisted={shortlist.some(s => s.profile?.id === selectedProfile?.id)}
+        
+        // Pass action handlers to sync state
+        onConnect={() => {
+          if (selectedProfile) {
+            handleSendInterest(selectedProfile.id);
+            // Optimistically update the selected profile to show "Pending" immediately
+            setSelectedProfile((prev: any) => ({ ...prev, connectionStatus: 'sent' }));
+          }
+        }}
+        onShortlist={() => {
+          if (selectedProfile) handleShortlist(selectedProfile.id);
+        }}
       />
 
     </div>

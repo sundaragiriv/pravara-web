@@ -42,58 +42,27 @@ interface MatchCardProps {
   index: number;
   isCollaborator?: boolean;
   onProfileClick?: (profile: MatchProfile) => void;
+  isShortlisted?: boolean;
+  onToggleShortlist?: (e: React.MouseEvent) => void;
 }
 
-export default function MatchCard({ profile, index, isCollaborator = false, onProfileClick }: MatchCardProps) {
-  const [isShortlisted, setIsShortlisted] = useState(profile.isShortlisted || false);
-  
+export default function MatchCard({ profile, index, isCollaborator = false, onProfileClick, isShortlisted = false, onToggleShortlist }: MatchCardProps) {
   // Calculate Vedic Gunas (derived from match score)
   const vedic_gunas = Math.floor((profile.score / 100) * 36);
   const gunaQuality = vedic_gunas >= 27 ? 'Excellent Match' : vedic_gunas >= 18 ? 'Good Match' : 'Fair Match';
 
-  // Helper to determine Action Button State
-  const getActionState = () => {
-    switch (profile.connectionStatus) {
-      case 'connected':
-        return { 
-          label: 'Message', 
-          style: 'bg-green-600 hover:bg-green-700 text-white border-transparent',
-          icon: <MessageCircle size={18} />
-        };
-      case 'sent':
-        return { 
-          label: 'Interest Sent', 
-          style: 'bg-transparent border border-haldi-500 text-haldi-500 cursor-default',
-          icon: <Clock size={18} />
-        };
-      case 'received':
-        return {
-          label: 'Accept',
-          style: 'bg-haldi-500 hover:bg-haldi-600 text-black font-bold border-transparent',
-          icon: <Heart size={18} className="fill-black" />
-        };
-      default:
-        return { 
-          label: 'Send Interest', 
-          style: 'bg-haldi-500 hover:bg-haldi-600 text-black font-bold border-transparent',
-          icon: <Heart size={18} className="fill-black" />
-        };
-    }
-  };
-
-  const action = getActionState();
-
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }} 
-      animate={{ opacity: 1, y: 0 }} 
-      transition={{ delay: index * 0.1 }}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      whileHover={{ y: -5, transition: { duration: 0.2 } }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
       className="bg-stone-900/90 rounded-xl overflow-hidden shadow-lg border border-stone-800 hover:border-stone-700 transition-all duration-300 group flex flex-col h-full"
     >
       {/* --- TOP SECTION: IMAGE & BADGES --- */}
       <div 
-        onClick={() => onProfileClick ? onProfileClick(profile) : window.location.href = `/profile/${profile.id}`}
-        className="relative h-64 w-full overflow-hidden bg-stone-900 cursor-pointer"
+        className="relative h-64 w-full overflow-hidden bg-stone-900"
       >
         {profile.image_url ? (
           <Image 
@@ -203,48 +172,54 @@ export default function MatchCard({ profile, index, isCollaborator = false, onPr
           </div>
         </div>
 
-        {/* Additional Vedic Heritage */}
-        {(profile.spiritual_org || profile.religious_level) && (
+        {/* Additional Vedic Heritage - Only show if there's actual content */}
+        {((profile.spiritual_org?.trim?.() || profile.religious_level?.trim?.()) && (
           <div className="flex flex-wrap gap-1.5 pt-2 border-t border-stone-800">
-            {profile.spiritual_org && (
+            {profile.spiritual_org?.trim?.() && (
               <span className="px-2 py-0.5 bg-haldi-900/10 text-haldi-600 text-[10px] rounded border border-haldi-500/20">
-                🕉 {profile.spiritual_org}
+                {profile.spiritual_org}
               </span>
             )}
-            {profile.religious_level && (
+            {profile.religious_level?.trim?.() && (
               <span className="px-2 py-0.5 bg-stone-800 text-stone-500 text-[10px] rounded border border-stone-700">
                 {profile.religious_level}
               </span>
             )}
           </div>
-        )}
+        ))}
       </div>
 
       {/* --- BOTTOM SECTION: ACTIONS --- */}
-      <div className="p-4 pt-0 flex gap-3 mt-auto">
+      <div className="p-4 pt-0 flex gap-2 mt-auto">
         {/* Main Action Button */}
         {!isCollaborator && (
-          <div className="flex-1">
-            <ConnectionButton 
-              profileId={profile.id} 
-              initialStatus={(profile.connectionStatus || 'none') as 'none' | 'sent' | 'received' | 'connected' | 'rejected'}
-              onSendInterest={async () => console.log('Interest sent to', profile.id)}
-            />
-          </div>
+          <ConnectionButton 
+            profileId={profile.id} 
+            initialStatus={(profile.connectionStatus || 'none') as 'none' | 'sent' | 'received' | 'connected' | 'rejected'}
+            onSendInterest={async () => console.log('Interest sent to', profile.id)}
+          />
         )}
 
         {/* Shortlist / Star Button */}
-        <button 
-          onClick={() => setIsShortlisted(!isShortlisted)}
-          className={`w-11 h-11 rounded-lg border flex items-center justify-center transition-all duration-300 ${
+        <motion.button 
+          onClick={onToggleShortlist}
+          whileTap={{ scale: 0.85 }}
+          whileHover={{ scale: 1.05 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className={`w-11 h-11 flex-shrink-0 rounded-lg border flex items-center justify-center transition-all duration-300 ${
             isShortlisted 
               ? 'bg-stone-800 border-haldi-500 text-haldi-500' 
               : 'bg-stone-800 border-stone-700 text-stone-400 hover:text-white hover:border-stone-500'
           }`}
           title={isShortlisted ? "Remove from shortlist" : "Add to shortlist"}
         >
-          <Star size={20} className={isShortlisted ? "fill-haldi-500" : ""} />
-        </button>
+          <motion.div
+            animate={isShortlisted ? { scale: [1, 1.3, 1], rotate: [0, 15, -15, 0] } : {}}
+            transition={{ duration: 0.4 }}
+          >
+            <Star size={20} className={isShortlisted ? "fill-haldi-500" : ""} />
+          </motion.div>
+        </motion.button>
       </div>
     </motion.div>
   );

@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, SlidersHorizontal } from 'lucide-react';
+import { X, SlidersHorizontal, Sparkles } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -184,6 +184,23 @@ export default function Sidebar({
             >
               Reset All Filters
             </button>
+
+            {/* PREMIUM UPSELL CARD */}
+            <div className="mt-8 p-4 rounded-xl bg-gradient-to-br from-gray-900 to-black border border-[#F5A623]/30 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Sparkles size={64} />
+              </div>
+              
+              <div className="relative z-10">
+                <h3 className="text-[#F5A623] font-serif font-bold text-lg mb-1">Unlock Bhrugu Engine</h3>
+                <p className="text-gray-400 text-xs mb-3 leading-relaxed">
+                  See precise Vedic compatibility scores, Mangal Dosha checks, and connect instantly.
+                </p>
+                <button className="w-full py-2 bg-[#F5A623] hover:bg-orange-600 text-black font-bold rounded-lg text-xs transition-transform transform hover:scale-105 shadow-lg shadow-orange-500/20">
+                  Upgrade to Premium
+                </button>
+              </div>
+            </div>
 
           </div>
 

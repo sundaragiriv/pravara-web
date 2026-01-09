@@ -184,7 +184,7 @@ export function getPravaraOptionsForGothra(gothra: string): string[] | null {
     g.toLowerCase() === gothra.toLowerCase().trim()
   );
   
-  return match ? VEDIC_DATA.gothras[match].pravara_options : null;
+  return match ? VEDIC_DATA.gothras[match as keyof typeof VEDIC_DATA.gothras].pravara_options : null;
 }
 
 // Helper to validate Pravara against Gothra

@@ -1,20 +1,32 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { X, Heart, MessageCircle, MapPin, GraduationCap, Briefcase, Ruler, Sun, ExternalLink } from 'lucide-react';
-import AstroMatchCard from './AstroMatchCard';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Heart, MessageCircle, MapPin, Briefcase, Star, ExternalLink, Clock } from 'lucide-react';
+import AstroMatchCard from '@/components/AstroMatchCard';
 
 interface ProfileDetailsPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  profile: any; // Replace with your strict MatchProfile type
+  profile: any;
+  isShortlisted?: boolean;
+  onShortlist?: () => void;
+  onConnect?: () => void;
+  isPremium?: boolean;
 }
 
-export default function ProfileDetailsPanel({ isOpen, onClose, profile }: ProfileDetailsPanelProps) {
+export default function ProfileDetailsPanel({ 
+  isOpen, 
+  onClose, 
+  profile, 
+  isShortlisted = false, 
+  onShortlist, 
+  onConnect, 
+  isPremium = false 
+}: ProfileDetailsPanelProps) {
   
-  // Prevent background scrolling when panel is open
+  // Prevent background scrolling
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -26,96 +38,136 @@ export default function ProfileDetailsPanel({ isOpen, onClose, profile }: Profil
 
   if (!profile) return null;
 
+  // Determine Connection Status for Buttons
+  const connectionStatus = profile.connectionStatus || 'none';
+  const isPending = connectionStatus === 'sent' || connectionStatus === 'pending';
+  const isConnected = connectionStatus === 'connected';
+
   return (
-    <>
-      {/* --- BACKDROP OVERLAY --- */}
-      <div 
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity duration-300 ${
-          isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
-        }`}
-        onClick={onClose}
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* BACKDROP FADE */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            onClick={onClose}
+          />
 
-      {/* --- SLIDING PANEL --- */}
-      <div 
-        className={`
-          fixed top-0 right-0 h-full w-full md:w-[600px] lg:w-[700px] bg-[#0F0F0F] z-[60] shadow-2xl border-l border-gray-800
-          transform transition-transform duration-300 ease-out flex flex-col
-          ${isOpen ? 'translate-x-0' : 'translate-x-full'}
-        `}
-      >
+          {/* SLIDING PANEL */}
+          <motion.div 
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed top-0 right-0 h-full w-full md:w-[600px] bg-[#0F0F0F] z-[60] shadow-2xl border-l border-gray-800 flex flex-col"
+          >
         
-        {/* --- HEADER: STICKY ACTIONS --- */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-[#0F0F0F]/90 backdrop-blur z-10 sticky top-0">
-          <div className="flex items-center gap-3">
-             <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-full transition text-gray-400 hover:text-white">
-                <X size={24} />
-             </button>
-             <span className="text-gray-400 text-sm font-medium">Profile Details</span>
-          </div>
-          
-          <div className="flex gap-3">
-             {/* NEW: External Link Button */}
-             <Link 
-               href={`/profile/${profile.id}`}
-               className="p-2 border border-gray-700 rounded-full text-gray-400 hover:text-white hover:border-gray-500 transition"
-               title="Open Full Page"
-             >
-                <ExternalLink size={20} />
-             </Link>
-
-             <button className="p-2 border border-gray-700 rounded-full text-gray-400 hover:text-[#F5A623] hover:border-[#F5A623] transition">
-                <Heart size={20} />
-             </button>
-             <button className="px-4 py-2 bg-[#F5A623] hover:bg-orange-600 text-black font-bold rounded-full text-sm flex items-center gap-2 transition">
-                <MessageCircle size={18} />
-                Connect
-             </button>
-          </div>
-        </div>
-
-        {/* --- SCROLLABLE CONTENT --- */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-800">
+        {/* --- 1. COMPACT HEADER (New Design) --- */}
+        <div className="p-6 border-b border-gray-800 bg-[#141414] flex flex-col gap-6">
             
-            {/* 1. HERO IMAGE GRID */}
-            <div className="h-96 w-full relative group">
-                <Image 
-                  src={profile.image_url || profile.image || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800'} 
-                  alt={profile.full_name || profile.name || 'Profile'} 
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 700px"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0F0F0F] via-transparent to-transparent" />
-                
-                <div className="absolute bottom-6 left-6 right-6">
-                    <h1 className="text-4xl font-serif text-white font-bold mb-2">{profile.full_name || profile.name}</h1>
-                    <div className="flex flex-wrap items-center gap-4 text-gray-300 text-sm">
-                        <span className="flex items-center gap-1"><MapPin size={14} className="text-[#F5A623]" /> {profile.location || 'Not specified'}</span>
-                        <span className="flex items-center gap-1"><Ruler size={14} className="text-[#F5A623]" /> {profile.height || 'N/A'}</span>
-                        <span className="flex items-center gap-1"><Sun size={14} className="text-[#F5A623]" /> {profile.age || '28'} yrs</span>
+            {/* Top Row: Close Button */}
+            <div className="flex justify-between items-start">
+                 <button onClick={onClose} className="p-2 -ml-2 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white transition">
+                    <X size={24} />
+                 </button>
+                 
+                 <div className="flex gap-2">
+                    {/* Full Page Link */}
+                    <Link href={`/profile/${profile.id}`} className="p-2.5 border border-gray-700 rounded-lg text-gray-400 hover:text-white hover:border-gray-500 transition">
+                        <ExternalLink size={20} />
+                    </Link>
+                    
+                    {/* Shortlist Star */}
+                    <motion.button 
+                        onClick={onShortlist}
+                        whileTap={{ scale: 0.85 }}
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                        className={`p-2.5 border rounded-lg transition ${
+                            isShortlisted 
+                            ? 'bg-[#F5A623]/10 border-[#F5A623] text-[#F5A623]' 
+                            : 'border-gray-700 text-gray-400 hover:text-white hover:border-gray-500'
+                        }`}
+                    >
+                        <motion.div
+                            animate={isShortlisted ? { scale: [1, 1.3, 1], rotate: [0, 15, -15, 0] } : {}}
+                            transition={{ duration: 0.4 }}
+                        >
+                            <Star size={20} className={isShortlisted ? "fill-[#F5A623]" : ""} />
+                        </motion.div>
+                    </motion.button>
+                 </div>
+            </div>
+
+            {/* Profile Info Row */}
+            <div className="flex items-start gap-5">
+                {/* Avatar */}
+                <div className="relative w-24 h-24 flex-shrink-0">
+                    <img 
+                        src={profile.image || profile.image_url} 
+                        alt={profile.name || profile.full_name} 
+                        className="w-full h-full object-cover rounded-xl border border-gray-700 shadow-lg"
+                    />
+                    {/* Score Badge */}
+                    <div className="absolute -bottom-2 -right-2 bg-black px-2 py-1 rounded-md border border-gray-800 shadow-sm flex items-center gap-1">
+                        <Heart size={10} className="text-pink-500 fill-pink-500" />
+                        <span className="text-white text-xs font-bold">{profile.matchPercentage || profile.score || 0}%</span>
+                    </div>
+                </div>
+
+                {/* Text Details */}
+                <div className="flex-1 min-w-0">
+                    <h2 className="text-2xl font-serif text-white font-bold leading-tight truncate">
+                        {profile.name || profile.full_name}
+                    </h2>
+                    <div className="text-gray-400 text-sm mt-1 mb-3">
+                         {profile.age} yrs • {profile.height} • {profile.community || profile.gothra}
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-500">
+                        <span className="flex items-center gap-1"><MapPin size={12} /> {profile.location}</span>
+                        <span className="flex items-center gap-1"><Briefcase size={12} /> {profile.profession}</span>
                     </div>
                 </div>
             </div>
 
-            {/* 2. MAIN CONTENT LAYOUT */}
-            <div className="p-6 md:p-8 space-y-10">
-                
-                {/* BIO SECTION */}
-                <section>
-                    <h3 className="text-gray-500 font-bold uppercase text-xs tracking-wider mb-3">About Me</h3>
-                    <p className="text-gray-300 leading-relaxed text-lg font-light">
-                        {profile.bio || "I am a software architect who loves classical music and hiking. Looking for someone who values tradition but has a modern outlook on life. I come from a close-knit family and value honesty above all."}
-                    </p>
-                </section>
+            {/* Main Action Button (Full Width) */}
+            <div className="mt-2">
+                 {isConnected ? (
+                    <Link href={`/dashboard/chat?id=${profile.id}`} className="block w-full">
+                        <button className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition">
+                           <MessageCircle size={18} /> Chat Now
+                        </button>
+                    </Link>
+                 ) : isPending ? (
+                    <button disabled className="w-full py-3 border border-[#F5A623] text-[#F5A623] font-bold rounded-xl flex items-center justify-center gap-2 cursor-default">
+                       <Clock size={18} /> Interest Sent (Pending)
+                    </button>
+                 ) : (
+                    <button 
+                       onClick={onConnect}
+                       className="w-full py-3 bg-[#F5A623] hover:bg-orange-600 text-black font-bold rounded-xl flex items-center justify-center gap-2 transition shadow-lg shadow-orange-500/20"
+                    >
+                       <Heart size={18} className="fill-black" /> Connect
+                    </button>
+                 )}
+            </div>
+        </div>
 
-                {/* THE ASTRO MATCH CARD (Embedded Here) */}
-                <section>
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-[#F5A623] font-bold uppercase text-xs tracking-wider">Vedic Compatibility</h3>
-                        <span className="px-2 py-1 bg-gray-800 rounded text-xs text-gray-300">Strict Match</span>
-                    </div>
-                    {/* Passing dummy compatible data for now */}
+        {/* --- 2. SCROLLABLE CONTENT --- */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-thin scrollbar-thumb-gray-800">
+            
+            {/* VEDIC MATCH (Priority) */}
+            <section>
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-[#F5A623] text-xs font-bold uppercase tracking-widest">Bhrugu Compatibility</h3>
+                    <span className="px-2 py-0.5 bg-green-900/30 border border-green-500/30 rounded text-[10px] text-green-400 uppercase font-bold">Strict Match</span>
+                </div>
+                {/* Premium Lock Logic handled inside or via opacity */}
+                <div className={!isPremium ? "opacity-70" : ""}>
                     <AstroMatchCard 
                         data={{
                             totalScore: profile.gunas || 28,
@@ -127,45 +179,40 @@ export default function ProfileDetailsPanel({ isOpen, onClose, profile }: Profil
                             partnerIsManglik: false
                         }} 
                     />
-                </section>
-
-                {/* DETAILS GRID */}
-                <section className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                    
-                    {/* Education */}
-                    <div className="space-y-1">
-                         <h4 className="flex items-center gap-2 text-sm text-gray-500 font-medium">
-                            <GraduationCap size={16} /> Education
-                         </h4>
-                         <p className="text-white">{profile.education || 'Masters in Computer Science'}</p>
-                         <p className="text-sm text-gray-400">Georgia Tech</p>
+                </div>
+                {!isPremium && (
+                    <div className="mt-3 text-center">
+                        <p className="text-gray-500 text-xs">Upgrade to unlock detailed analysis.</p>
                     </div>
+                )}
+            </section>
 
-                    {/* Profession */}
-                    <div className="space-y-1">
-                         <h4 className="flex items-center gap-2 text-sm text-gray-500 font-medium">
-                            <Briefcase size={16} /> Profession
-                         </h4>
-                         <p className="text-white">{profile.profession || 'Software Engineer'}</p>
-                         <p className="text-sm text-gray-400">Senior Architect @ Google</p>
-                    </div>
+            {/* BIO */}
+            <section>
+                <h3 className="text-gray-500 font-bold uppercase text-xs tracking-wider mb-2">About</h3>
+                <p className="text-gray-300 leading-relaxed font-serif text-sm">
+                    "{profile.bio || "No bio available."}"
+                </p>
+            </section>
 
-                    {/* Community */}
-                    <div className="space-y-1">
-                         <h4 className="flex items-center gap-2 text-sm text-gray-500 font-medium">
-                            <Sun size={16} /> Community
-                         </h4>
-                         <p className="text-white">{profile.community || profile.gothra || 'Not specified'}</p>
-                         <p className="text-sm text-gray-400">Gothra: {profile.gothra || 'Kasyapa'}</p>
-                    </div>
-                </section>
-                
-                {/* FOOTER SPACE */}
-                <div className="h-20" /> 
-
-            </div>
+            {/* KEY DETAILS */}
+            <section className="grid grid-cols-2 gap-4">
+                <div className="bg-[#141414] p-3 rounded-lg border border-gray-800">
+                     <p className="text-xs text-gray-500 uppercase">Education</p>
+                     <p className="text-gray-200 text-sm font-medium truncate">{profile.education || "N/A"}</p>
+                </div>
+                <div className="bg-[#141414] p-3 rounded-lg border border-gray-800">
+                     <p className="text-xs text-gray-500 uppercase">Gothra</p>
+                     <p className="text-gray-200 text-sm font-medium truncate">{profile.gothra || "N/A"}</p>
+                </div>
+            </section>
+            
+            {/* Footer Padding */}
+            <div className="h-10"></div>
         </div>
-      </div>
-    </>
+      </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
