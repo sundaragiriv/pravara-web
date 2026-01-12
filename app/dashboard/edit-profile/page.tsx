@@ -6,7 +6,7 @@ import { createClient } from '@/utils/supabase/client';
 import { 
     Save, ArrowLeft, Loader2, CheckCircle, 
     Sparkles, Briefcase, Users, Heart, Scroll, 
-    ShieldCheck, Mic, Video, Trash2, Camera, UploadCloud
+    ShieldCheck, Mic, Video, Trash2, Camera, UploadCloud, Upload, Shield
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import AvatarUpload from '@/components/AvatarUpload'; // Ensure this matches your file path
@@ -60,6 +60,10 @@ export default function EditProfilePage() {
     // --- STATE ---
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [uploadingID, setUploadingID] = useState(false);
+    const [isInviting, setIsInviting] = useState(false);
+    const [inviteEmail, setInviteEmail] = useState("");
+    const [inviteRole, setInviteRole] = useState("Parent");
     const [formData, setFormData] = useState<any>({});
     const [successMessage, setSuccessMessage] = useState('');
 
@@ -101,7 +105,13 @@ export default function EditProfilePage() {
                     voice_intro_url: data.voice_intro_url || '',
                     video_intro_url: data.video_intro_url || '',
                     
-                    partner_preferences: data.partner_preferences || {}
+                    // Partner Preferences Defaults
+                    partner_preferences: data.partner_preferences || {
+                        age_min: 21,
+                        age_max: 35,
+                        height_min: "5'0\"",
+                        communities: []
+                    }
                 });
             }
             setLoading(false);
@@ -153,6 +163,78 @@ export default function EditProfilePage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
              await supabase.from('profiles').update({ gallery_images: newGallery }).eq('id', user.id);
+        }
+    };
+
+    const handleVaraahiUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        try {
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            setUploadingID(true);
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${user.id}/govt_id_${Date.now()}.${fileExt}`;
+
+            // Upload to Supabase Storage
+            const { error: uploadError } = await supabase.storage
+                .from('varaahi_docs')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            // Save the PATH to the profile (not the full URL, to keep it private)
+            const { error: dbError } = await supabase
+                .from('profiles')
+                .update({ 
+                    varaahi_status: 'pending_verification',
+                    govt_id_url: fileName 
+                })
+                .eq('id', user.id);
+
+            if (dbError) throw dbError;
+
+            setSuccessMessage("ID Uploaded! Verification pending.");
+            setTimeout(() => setSuccessMessage(''), 3000);
+            
+            // Refresh local data
+            setFormData((prev: any) => ({ ...prev, varaahi_status: 'pending_verification' }));
+
+        } catch (error: any) {
+            console.error('Error uploading ID:', error.message);
+            alert('Upload failed: ' + error.message);
+        } finally {
+            setUploadingID(false);
+        }
+    };
+
+    const handleSendInvite = async () => {
+        if (!inviteEmail.includes('@')) return alert("Please enter a valid email.");
+
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const { error } = await supabase
+                .from('collaborators')
+                .insert({
+                    profile_id: user.id,
+                    email: inviteEmail,
+                    role: inviteRole,
+                    status: 'pending'
+                });
+
+            if (error) throw error;
+
+            setSuccessMessage(`Invite sent to ${inviteEmail}!`);
+            setTimeout(() => setSuccessMessage(''), 3000);
+            setIsInviting(false);
+            setInviteEmail("");
+
+        } catch (error: any) {
+            alert("Error sending invite: " + error.message);
         }
     };
 
@@ -235,18 +317,77 @@ export default function EditProfilePage() {
                             <p className="text-xs text-stone-500 mt-1">Tap to change</p>
                         </div>
 
-                        {/* 2. VARAAHI PROTECTION (Verification) */}
-                        <div className="bg-gradient-to-br from-green-900/20 to-stone-900 border border-green-800/40 rounded-2xl p-6 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-3 opacity-10"><ShieldCheck size={80} /></div>
-                            <h3 className="text-green-400 font-serif font-bold flex items-center gap-2 mb-2">
-                                <ShieldCheck size={18} /> Varaahi Shield
-                            </h3>
-                            <p className="text-xs text-stone-400 mb-4">
-                                Verification protects the community. Upload Government ID to get the <span className="text-green-400 font-bold">Verified Badge</span>.
+                        {/* 2. VARAAHI SHIELD CARD (Branded) */}
+                        <div className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-500 group ${
+                            formData.varaahi_status === 'verified' 
+                                ? 'bg-gradient-to-br from-green-950/40 to-stone-950 border-green-500/30' 
+                                : 'bg-stone-900/50 border-stone-800 hover:border-haldi-500/30'
+                        }`}>
+                            
+                            {/* 🌟 THE BRANDING WATERMARK */}
+                            <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-25 pointer-events-none grayscale group-hover:grayscale-0 group-hover:opacity-35 transition-all duration-500 flex items-center justify-center">
+                                <img 
+                                    src="/varaahi-shield.png" 
+                                    alt="Varaahi Shield" 
+                                    className="w-full h-full object-cover"
+                                /> 
+                            </div>
+
+                            {/* Header Section */}
+                            <div className="relative z-10 flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                        formData.varaahi_status === 'verified' ? 'bg-green-500/20 text-green-500' : 'bg-stone-800 text-stone-400'
+                                    }`}>
+                                        <Shield size={16} />
+                                    </div>
+                                    <div>
+                                        <span className="font-serif font-bold text-stone-200 block leading-tight">Varaahi Shield</span>
+                                        <span className="text-[10px] text-stone-500 uppercase tracking-widest">Verification</span>
+                                    </div>
+                                </div>
+                                
+                                {/* Status Badge */}
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold ${
+                                    formData.varaahi_status === 'verified' ? 'bg-green-950 text-green-400 border-green-800' : 
+                                    formData.varaahi_status === 'pending_verification' ? 'bg-yellow-950 text-yellow-500 border-yellow-800' : 
+                                    'bg-stone-950 text-stone-500 border-stone-800'
+                                }`}>
+                                    {formData.varaahi_status === 'verified' ? 'VERIFIED' : 
+                                     formData.varaahi_status === 'pending_verification' ? 'PENDING' : 'UNVERIFIED'}
+                                </span>
+                            </div>
+                            
+                            <p className="relative z-10 text-xs text-stone-500 mb-4 leading-relaxed max-w-[90%]">
+                                Upload Government ID to activate the <strong className="text-haldi-500">Varaahi Shield</strong> and get the Verified Badge.
                             </p>
-                            <button className="w-full py-2 bg-green-900/30 border border-green-600/30 text-green-400 text-xs font-bold rounded-lg hover:bg-green-900/50 transition">
-                                Upload ID Document
-                            </button>
+
+                            {/* The Upload Button */}
+                            <div className="relative z-10">
+                                <button className={`w-full py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 transition-all ${
+                                     formData.varaahi_status === 'verified' 
+                                     ? 'bg-green-900/20 border-green-800 text-green-500 cursor-default'
+                                     : 'bg-stone-950 border-stone-800 text-stone-400 hover:border-haldi-500 hover:text-haldi-500'
+                                }`}>
+                                    {uploadingID ? <Loader2 className="animate-spin" size={14} /> : 
+                                     formData.varaahi_status === 'verified' ? <CheckCircle size={14} /> : <Upload size={14} />}
+                                    
+                                    {uploadingID ? "Uploading Securely..." : 
+                                     formData.varaahi_status === 'verified' ? "Identity Verified" : 
+                                     formData.varaahi_status === 'pending_verification' ? "Verification In Progress" : "Upload ID Document"}
+                                </button>
+                                
+                                {/* Hidden Input (Only active if not verified) */}
+                                {formData.varaahi_status !== 'verified' && (
+                                    <input 
+                                        type="file" 
+                                        accept="image/*,.pdf"
+                                        onChange={handleVaraahiUpload}
+                                        disabled={uploadingID}
+                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                    />
+                                )}
+                            </div>
                         </div>
 
                         {/* 3. IDENTITY FORM */}
@@ -283,6 +424,72 @@ export default function EditProfilePage() {
                                 </div>
                             </div>
                         </SectionCard>
+
+                        {/* 4. PARTNER PREFERENCES (Real Form) */}
+                        <div className="bg-stone-900/50 border border-stone-800 rounded-2xl p-6 hover:border-haldi-500/30 transition">
+                            <div className="flex items-center gap-2 mb-4">
+                                <Heart className="text-pink-500" size={20} />
+                                <h3 className="font-serif text-lg font-bold text-stone-200">Partner Preferences</h3>
+                            </div>
+                            
+                            <div className="space-y-4">
+                                {/* Age Range */}
+                                <div>
+                                    <label className="text-[10px] uppercase font-bold text-stone-500 tracking-wider block mb-2">Age Range</label>
+                                    <div className="flex items-center gap-2">
+                                        <input 
+                                            type="number" 
+                                            value={formData.partner_preferences?.age_min || 21}
+                                            onChange={(e) => setFormData({
+                                                ...formData, 
+                                                partner_preferences: { ...formData.partner_preferences, age_min: parseInt(e.target.value) }
+                                            })}
+                                            className="w-16 bg-stone-950 border border-stone-800 rounded-lg p-2 text-center text-sm outline-none focus:border-pink-500 text-stone-200"
+                                        />
+                                        <span className="text-stone-600 text-xs">to</span>
+                                        <input 
+                                            type="number" 
+                                            value={formData.partner_preferences?.age_max || 35}
+                                            onChange={(e) => setFormData({
+                                                ...formData, 
+                                                partner_preferences: { ...formData.partner_preferences, age_max: parseInt(e.target.value) }
+                                            })}
+                                            className="w-16 bg-stone-950 border border-stone-800 rounded-lg p-2 text-center text-sm outline-none focus:border-pink-500 text-stone-200"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Preferred Communities */}
+                                <div>
+                                    <label className="text-[10px] uppercase font-bold text-stone-500 tracking-wider block mb-2">Communities</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {['Iyer', 'Iyengar', 'Smartha', 'Madhva', 'Kanyakubja', 'Maithil'].map(comm => (
+                                            <button
+                                                key={comm}
+                                                type="button"
+                                                onClick={() => {
+                                                    const current = formData.partner_preferences?.communities || [];
+                                                    const updated = current.includes(comm) 
+                                                        ? current.filter((c: string) => c !== comm)
+                                                        : [...current, comm];
+                                                    setFormData({
+                                                        ...formData, 
+                                                        partner_preferences: { ...formData.partner_preferences, communities: updated }
+                                                    });
+                                                }}
+                                                className={`px-3 py-1 rounded-full text-xs border transition ${
+                                                    formData.partner_preferences?.communities?.includes(comm)
+                                                    ? 'bg-pink-900/20 border-pink-500 text-pink-400'
+                                                    : 'bg-stone-950 border-stone-800 text-stone-500 hover:border-stone-600'
+                                                }`}
+                                            >
+                                                {comm}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* --- RIGHT COLUMN: Vedic, Family, Media --- */}
@@ -361,14 +568,58 @@ export default function EditProfilePage() {
                                     </select>
                                 </div>
 
-                                {/* Invite Button */}
-                                <button 
-                                    type="button"
-                                    onClick={() => alert("Invite Modal Opening... (We need to wire this to the collaborators table)")}
-                                    className="w-full py-2 border border-dashed border-stone-700 rounded-lg text-stone-500 text-xs hover:border-haldi-500 hover:text-haldi-500 transition flex items-center justify-center gap-2"
-                                >
-                                    <Users size={14} /> Invite Family Member (Collaborator)
-                                </button>
+                                {/* KUTUMBA INVITE SECTION */}
+                                <div className="mt-3">
+                                    {isInviting ? (
+                                        <div className="bg-stone-900 border border-haldi-500/50 rounded-lg p-3 animate-in fade-in slide-in-from-top-2">
+                                            <p className="text-[10px] uppercase font-bold text-haldi-500 mb-2">Invite Family Member</p>
+                                            
+                                            <div className="flex gap-2 mb-2">
+                                                <input 
+                                                    type="email" 
+                                                    value={inviteEmail}
+                                                    onChange={(e) => setInviteEmail(e.target.value)}
+                                                    placeholder="Enter family email..."
+                                                    className="flex-1 bg-black border border-stone-700 rounded px-2 py-1 text-xs text-white outline-none focus:border-haldi-500"
+                                                />
+                                                <select 
+                                                    value={inviteRole}
+                                                    onChange={(e) => setInviteRole(e.target.value)}
+                                                    className="bg-black border border-stone-700 rounded px-2 py-1 text-xs text-stone-300 outline-none"
+                                                >
+                                                    <option value="Parent">Parent</option>
+                                                    <option value="Sibling">Sibling</option>
+                                                    <option value="Relative">Relative</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div className="flex gap-2">
+                                                <button 
+                                                    type="button"
+                                                    onClick={handleSendInvite}
+                                                    className="flex-1 bg-haldi-500 hover:bg-haldi-600 text-black text-xs font-bold py-1 rounded transition"
+                                                >
+                                                    Send Invite
+                                                </button>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setIsInviting(false)}
+                                                    className="px-3 bg-stone-800 hover:bg-stone-700 text-stone-400 text-xs font-bold py-1 rounded transition"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button 
+                                            type="button"
+                                            onClick={() => setIsInviting(true)}
+                                            className="w-full py-2 border border-dashed border-stone-700 rounded-lg text-stone-500 text-xs hover:border-haldi-500 hover:text-haldi-500 transition flex items-center justify-center gap-2"
+                                        >
+                                            <Users size={14} /> Invite Family Member (Collaborator)
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
                             {/* FAMILY DETAILS FORM */}
@@ -409,32 +660,40 @@ export default function EditProfilePage() {
                                     )}
                                 </div>
 
-                                {/* Audio / Video Links */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="flex items-center gap-3 bg-stone-950 p-3 rounded-lg border border-stone-800">
-                                        <div className="p-2 bg-stone-900 rounded-full text-stone-400"><Mic size={16} /></div>
-                                        <div className="flex-1">
-                                            <label className="text-[10px] uppercase font-bold text-stone-500">Voice Intro URL</label>
+                                {/* MEDIA STUDIO - Audio / Video */}
+                                <div className="border-t border-stone-800 pt-6 mt-2">
+                                    <h4 className="text-stone-400 font-bold text-xs uppercase tracking-wider mb-4 flex items-center gap-2">
+                                        <Video size={14} /> Media Studio
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Voice Intro */}
+                                        <div className="bg-stone-950 p-4 rounded-xl border border-stone-800 flex flex-col gap-2">
+                                            <div className="flex items-center gap-2 text-stone-400">
+                                                <Mic size={16} /> <span className="text-xs font-bold uppercase">Voice Intro</span>
+                                            </div>
                                             <input 
                                                 name="voice_intro_url" 
                                                 value={formData.voice_intro_url || ''} 
                                                 onChange={handleChange} 
-                                                placeholder="Link to voice note..." 
-                                                className="w-full bg-transparent text-xs text-stone-300 outline-none border-b border-stone-800 focus:border-haldi-500"
+                                                placeholder="Paste Audio URL..." 
+                                                className="bg-transparent border-b border-stone-800 focus:border-haldi-500 outline-none text-sm py-1 text-stone-300"
                                             />
+                                            <p className="text-[10px] text-stone-600">e.g. Vocaroo link or Google Drive</p>
                                         </div>
-                                    </div>
-                                    <div className="flex items-center gap-3 bg-stone-950 p-3 rounded-lg border border-stone-800">
-                                        <div className="p-2 bg-stone-900 rounded-full text-stone-400"><Video size={16} /></div>
-                                        <div className="flex-1">
-                                            <label className="text-[10px] uppercase font-bold text-stone-500">Video Bio URL</label>
+
+                                        {/* Video Bio */}
+                                        <div className="bg-stone-950 p-4 rounded-xl border border-stone-800 flex flex-col gap-2">
+                                            <div className="flex items-center gap-2 text-stone-400">
+                                                <Video size={16} /> <span className="text-xs font-bold uppercase">Video Bio</span>
+                                            </div>
                                             <input 
                                                 name="video_intro_url" 
                                                 value={formData.video_intro_url || ''} 
                                                 onChange={handleChange} 
-                                                placeholder="Link to video..." 
-                                                className="w-full bg-transparent text-xs text-stone-300 outline-none border-b border-stone-800 focus:border-haldi-500"
+                                                placeholder="Paste Video URL..." 
+                                                className="bg-transparent border-b border-stone-800 focus:border-haldi-500 outline-none text-sm py-1 text-stone-300"
                                             />
+                                            <p className="text-[10px] text-stone-600">e.g. YouTube Unlisted or Loom</p>
                                         </div>
                                     </div>
                                 </div>

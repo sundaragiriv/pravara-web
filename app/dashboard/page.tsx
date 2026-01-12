@@ -49,6 +49,9 @@ export default function Dashboard() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [roleLabel, setRoleLabel] = useState(""); 
   
+  // --- GLOBAL UNREAD MESSAGES COUNT ---
+  const [globalUnreadCount, setGlobalUnreadCount] = useState(0); 
+  
   // --- FILTER ENGINE STATE ---
   const [filters, setFilters] = useState({
     minAge: 21,
@@ -90,6 +93,58 @@ export default function Dashboard() {
     fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // --- GLOBAL MESSAGE NOTIFICATIONS ---
+  useEffect(() => {
+    if (!currentUser) return;
+
+    // Fetch initial unread count (simplified - RLS handles connection filtering)
+    const fetchUnreadCount = async () => {
+      const { count, error } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .neq('sender_id', currentUser.id)
+        .eq('is_read', false);
+      
+      if (error) {
+        console.error('Error fetching unread count:', error);
+      } else {
+        console.log('Unread count:', count);
+        setGlobalUnreadCount(count || 0);
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Realtime subscription for ALL message events (INSERT and UPDATE)
+    const channel = supabase
+      .channel('global_notifications')
+      .on(
+        'postgres_changes',
+        { 
+          event: '*', // Listen to ALL events (Insert & Update)
+          schema: 'public', 
+          table: 'messages'
+        },
+        (payload: any) => {
+          console.log('Message event:', payload.eventType, payload);
+          
+          // If NEW message comes in -> Increment (only if I'm not the sender)
+          if (payload.eventType === 'INSERT' && payload.new.sender_id !== currentUser.id) {
+            console.log('New message received, incrementing count');
+            setGlobalUnreadCount((prev) => prev + 1);
+          }
+          // If message is READ (Updated) -> Re-fetch to ensure accuracy
+          else if (payload.eventType === 'UPDATE') {
+            console.log('Message updated (marked as read), re-fetching count');
+            fetchUnreadCount();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [currentUser]);
 
   // Force reload Shortlist whenever tab is clicked
   useEffect(() => {
@@ -313,7 +368,14 @@ export default function Dashboard() {
               {!isCollaborator && (
                 <>
                     <Link href="/dashboard/requests" className="px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 text-stone-500 hover:text-stone-300">Requests {requests.length > 0 && <span className="bg-haldi-600 text-stone-950 text-[10px] font-bold px-1.5 rounded-full">{requests.length}</span>}</Link>
-                    <Link href="/dashboard/chat" className="px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 text-stone-500 hover:text-stone-300">Chat</Link>
+                    <Link href="/dashboard/chat" className="px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 text-stone-500 hover:text-stone-300">
+                      Chat
+                      {globalUnreadCount > 0 && (
+                        <span className="bg-haldi-500 text-black text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center animate-pulse">
+                          {globalUnreadCount}
+                        </span>
+                      )}
+                    </Link>
                     <div className="w-px h-4 bg-stone-800 mx-2"></div>
                     <Link href="/onboarding" className="px-4 py-1.5 rounded-full text-haldi-500 hover:text-haldi-400 text-sm font-bold flex items-center gap-2 transition-colors"><Sparkles className="w-3 h-3" /> Sutradhar</Link>
                 </>
