@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Check, X, Sparkles, Crown, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
+import Footer from "@/components/Footer";
 
 export default function PricingPage() {
   return (
@@ -10,8 +12,15 @@ export default function PricingPage() {
       
       {/* Header */}
       <nav className="p-6 flex items-center justify-between border-b border-stone-900 bg-stone-950/80 backdrop-blur-md sticky top-0 z-50">
-        <Link href="/dashboard" className="font-serif text-2xl font-bold bg-gradient-to-r from-haldi-500 to-haldi-700 bg-clip-text text-transparent">
-          P
+        <Link href="/dashboard">
+          <Image
+            src="/logo3.png"
+            alt="Pravara"
+            width={110}
+            height={38}
+            className="object-contain [mix-blend-mode:lighten]"
+            priority
+          />
         </Link>
         <Link href="/dashboard" className="text-sm text-stone-400 hover:text-stone-200">
           Close
@@ -123,6 +132,7 @@ export default function PricingPage() {
             </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

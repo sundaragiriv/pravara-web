@@ -43,8 +43,18 @@
   * {
     @apply border-border;
   }
-  
+
   body {
     @apply bg-stone-950 text-stone-50 font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .text-gold-shine {
+    background: linear-gradient(90deg, #b8860b 0%, #ffd700 30%, #fffacd 50%, #ffd700 70%, #b8860b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 18px rgba(255, 215, 0, 0.55));
   }
 }

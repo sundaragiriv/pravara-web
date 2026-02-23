@@ -1,23 +1,14 @@
 import React from 'react';
 import { X, SlidersHorizontal, Sparkles } from 'lucide-react';
 
+import type { DashboardFilters } from '@/types';
+
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  filters: {
-    minAge: number;
-    maxAge: number;
-    minHeight: string;
-    maxHeight: string;
-    diet: string[];
-    visa: string;
-    community: string;
-    gothra: string;
-    location: string;
-    searchTerm: string;
-  };
-  setFilters: (filters: any) => void;
-  updateFilter: (key: string, value: any) => void;
+  filters: DashboardFilters;
+  setFilters: React.Dispatch<React.SetStateAction<DashboardFilters>>;
+  updateFilter: (key: string, value: string | number | string[]) => void;
   toggleFilter: (key: string, value: string) => void;
   resetFilters: () => void;
   matchCount: number;

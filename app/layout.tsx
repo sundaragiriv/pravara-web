@@ -1,14 +1,27 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
+import { Toaster } from 'sonner';
 import SutradharWidget from "@/components/SutradharWidget";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
 
 export const metadata: Metadata = {
-  title: "Pravara | Tradition meets Intelligence",
-  description: "AI-Powered Matrimony for the Brahmin Community",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://pravara.com"),
+  title: "Pravara | Modern Heritage Matrimony",
+  description: "AI-Powered Vedic Matrimony for the Brahmin Community. Join 500 founding members.",
+  icons: {
+    icon: "/logo3.png",
+    apple: "/logo3.png",
+    shortcut: "/logo3.png",
+  },
+  openGraph: {
+    title: "Pravara — Modern Heritage Matrimony",
+    description: "AI-Powered Vedic Matrimony for the Brahmin Community",
+    images: [{ url: "/logo3.png", width: 480, height: 200 }],
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -20,6 +33,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       >
         {children}
         <SutradharWidget />
+        {/* Sonner Toaster for global toast notifications */}
+        <Toaster position="top-center" richColors closeButton />
       </body>
     </html>
   );

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
+// Upgrade 3: Context-aware useEffect for chat history injection
 import { Sparkles, X, Send, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -35,19 +36,20 @@ export default function SutradharWidget() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/assistant', {
+      // Call the new Brain API
+      const response = await fetch('/api/sutradhar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            message: userMsg,
-            context: `User is currently viewing: ${pathname}` 
+        body: JSON.stringify({
+          message: userMsg,
+          contextPath: pathname
         })
       });
-      
-      const data = await res.json();
+
+      const data = await response.json();
       setMessages(prev => [...prev, { role: 'ai', content: data.reply || "I am reflecting on that..." }]);
-    } catch (e) {
-      setMessages(prev => [...prev, { role: 'ai', content: "Apologies, I am having trouble connecting to the stars right now." }]);
+    } catch (error) {
+      setMessages(prev => [...prev, { role: 'ai', content: "My connection to the divine cloud is interrupted. Please try again." }]);
     } finally {
       setLoading(false);
     }

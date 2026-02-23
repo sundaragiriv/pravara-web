@@ -106,9 +106,9 @@ export default function ProfileDetailsPanel({
             <div className="flex items-start gap-5">
                 {/* Avatar */}
                 <div className="relative w-24 h-24 flex-shrink-0">
-                    <img 
-                        src={profile.image || profile.image_url} 
-                        alt={profile.name || profile.full_name} 
+                    <img
+                        src={profile.image || profile.image_url || "/placeholder.jpg"}
+                        alt={profile.name || profile.full_name}
                         className="w-full h-full object-cover rounded-xl border border-gray-700 shadow-lg"
                     />
                     {/* Score Badge */}

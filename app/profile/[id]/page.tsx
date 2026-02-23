@@ -3,16 +3,18 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { 
-    MapPin, Briefcase, Star, Heart, ArrowLeft, ShieldCheck, 
-    Users, Camera, Quote, Video, Music, 
-    MessageCircle, GraduationCap, Home, Lock, Clock 
+import {
+    MapPin, Briefcase, Star, Heart, ArrowLeft, ShieldCheck,
+    Users, Camera, Quote, Video, Music,
+    MessageCircle, GraduationCap, Home, Lock, Clock
 } from 'lucide-react';
 import Link from 'next/link';
 import ConnectionButton from '@/components/ConnectionButton';
 import AstroMatchCard from '@/components/AstroMatchCard';
 import { calculateMatchScore } from '@/utils/matchEngine';
-import BhruguLoader from '@/components/BhruguLoader'; // <--- NEW IMPORT
+import { toast } from "sonner";
+import BhruguLoader from '@/components/BhruguLoader';
+import DashboardSubNav from '@/components/navigation/DashboardSubNav';
 
 export default function ProfileDetailsPage() {
     const params = useParams();
@@ -86,7 +88,7 @@ export default function ProfileDetailsPage() {
 
     const toggleShortlist = async () => {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return alert("Please login");
+        if (!user) return toast.error("Please login");
         
         // Optimistic UI Update
         const newStatus = !isShortlisted;
@@ -145,7 +147,8 @@ export default function ProfileDetailsPage() {
 
     return (
         <div className="min-h-screen bg-stone-950 pb-20 font-sans">
-            
+            <DashboardSubNav backLabel="Back" />
+
             {/* --- 1. THE SOCIAL COVER --- */}
             <div className="relative group">
                 <div className="h-72 w-full overflow-hidden relative">

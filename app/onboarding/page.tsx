@@ -3,8 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
 import { Sparkles, ArrowRight, Loader2, Video, ArrowUp, X } from "lucide-react";
+import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import AvatarUpload from "@/components/AvatarUpload";
 
@@ -157,7 +159,7 @@ export default function Onboarding() {
       const videoLink = prompt("Paste your Video Bio URL (YouTube/Drive):");
       if (videoLink) {
           setLiveProfileData(prev => ({ ...prev, video_bio_url: videoLink }));
-          alert("Video link added! Don't forget to click Save.");
+          toast.success("Video link added! Don't forget to click Save.");
       }
   };
 
@@ -166,7 +168,7 @@ export default function Onboarding() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-        alert("Please log in to save your profile.");
+        toast.error("Please log in to save your profile.");
         return;
     }
 
@@ -181,13 +183,13 @@ export default function Onboarding() {
 
         if (error) {
             console.error("DB Error:", error);
-            alert(`Save Failed: ${error.message || "Unknown database error"}`);
+            toast.error(`Save Failed: ${error.message || "Unknown database error"}`);
         } else {
             router.push("/dashboard");
         }
     } catch (err) {
         console.error("Save Error:", err);
-        alert("Failed to save profile. Please try again.");
+        toast.error("Failed to save profile. Please try again.");
     }
   };
 
@@ -199,11 +201,17 @@ export default function Onboarding() {
         {/* --- MINIMALIST BRAND HEADER --- */}
         <div className="absolute top-0 left-0 w-full p-6 z-50 flex justify-between items-center pointer-events-none">
             {/* Brand Logo (Top Left) */}
-            <div className="flex items-center gap-2 pointer-events-auto">
-                <Link href="/" className="font-serif text-2xl font-bold bg-gradient-to-r from-haldi-500 to-haldi-700 bg-clip-text text-transparent hover:opacity-80 transition-opacity">
-                    P
+            <div className="flex items-center pointer-events-auto">
+                <Link href="/" aria-label="Pravara">
+                    <Image
+                        src="/logo3.png"
+                        alt="Pravara"
+                        width={110}
+                        height={38}
+                        className="object-contain [mix-blend-mode:lighten] hover:brightness-110 transition-all duration-300"
+                        priority
+                    />
                 </Link>
-                <span className="text-xs text-stone-600 font-bold tracking-[0.2em] uppercase hidden sm:block">Pravara</span>
             </div>
 
             {/* Exit / Dashboard Link (Top Right) */}
@@ -448,19 +456,7 @@ export default function Onboarding() {
                         animate={{ opacity: 1 }}
                         className="text-xs text-stone-400 leading-relaxed italic"
                      >
-                        {(() => {
-                            const pref = liveProfileData.partner_preferences;
-                            if (!pref) return "Sutradhar is listening for your preferences...";
-                            
-                            // Safe rendering: Handle objects, arrays, and strings
-                            if (typeof pref === 'string') return pref;
-                            if (Array.isArray(pref)) return pref.join(", ");
-                            if (typeof pref === 'object') {
-                                // @ts-ignore - Extract qualities or stringify
-                                return pref.qualities || JSON.stringify(pref);
-                            }
-                            return String(pref);
-                        })()}
+                        {liveProfileData.partner_preferences || "Sutradhar is listening for your preferences..."}
                      </motion.p>
                 </div>
 

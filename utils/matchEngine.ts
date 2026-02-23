@@ -2,16 +2,16 @@
 // Vedic Match Engine - Calculates compatibility based on Indian matchmaking rules
 
 interface Profile {
-    age: number;
-    gothra?: string;
-    sub_community?: string;
-    diet?: string;
-    nakshatra?: string;
-    rashi?: string;
-    height?: number; // Height in cm
-    location?: string;
-    visa_status?: string;
-    education?: string;
+    age?: number | null;
+    gothra?: string | null;
+    sub_community?: string | null;
+    diet?: string | null;
+    nakshatra?: string | null;
+    raasi?: string | null;
+    height?: string | null;
+    location?: string | null;
+    visa_status?: string | null;
+    education?: string | null;
 }
 
 /**
@@ -64,15 +64,17 @@ export function calculateMatchScore(me: Profile, them: Profile): number {
 
     // --- RULE 4: AGE GAP (15 Points) ---
     // Proximity in age is generally preferred
-    const ageDiff = Math.abs(me.age - them.age);
-    if (ageDiff <= 3) {
-        score += 15; // Very close in age
-    } else if (ageDiff <= 5) {
-        score += 12; // Acceptable gap
-    } else if (ageDiff <= 8) {
-        score += 8; // Moderate gap
-    } else if (ageDiff <= 12) {
-        score += 3; // Large gap but acceptable
+    if (me.age && them.age) {
+        const ageDiff = Math.abs(me.age - them.age);
+        if (ageDiff <= 3) {
+            score += 15; // Very close in age
+        } else if (ageDiff <= 5) {
+            score += 12; // Acceptable gap
+        } else if (ageDiff <= 8) {
+            score += 8; // Moderate gap
+        } else if (ageDiff <= 12) {
+            score += 3; // Large gap but acceptable
+        }
     }
 
     // --- RULE 5: NAKSHATRA COMPATIBILITY (20 Points) ---
@@ -110,13 +112,17 @@ export function calculateMatchScore(me: Profile, them: Profile): number {
     // --- RULE 7: HEIGHT COMPATIBILITY (10 Points) ---
     // Traditional preference consideration
     if (me.height && them.height) {
-        const heightDiff = Math.abs(me.height - them.height);
-        if (heightDiff <= 10) {
-            score += 10; // Very similar height
-        } else if (heightDiff <= 20) {
-            score += 7; // Acceptable difference
-        } else {
-            score += 3; // Large difference
+        const myH = parseFloat(String(me.height));
+        const theirH = parseFloat(String(them.height));
+        if (!isNaN(myH) && !isNaN(theirH)) {
+            const heightDiff = Math.abs(myH - theirH);
+            if (heightDiff <= 10) {
+                score += 10; // Very similar height
+            } else if (heightDiff <= 20) {
+                score += 7; // Acceptable difference
+            } else {
+                score += 3; // Large difference
+            }
         }
     }
 

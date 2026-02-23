@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { ArrowLeft, Mail, Lock, ArrowRight, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
@@ -81,9 +82,14 @@ export default function SignupPage() {
 
         <div className="relative z-10 space-y-8 max-w-lg">
            {/* Logo Mark */}
-           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-haldi-500 to-haldi-700 flex items-center justify-center shadow-[0_0_40px_-10px_rgba(251,191,36,0.5)]">
-              <span className="font-serif text-3xl text-stone-950 font-bold">P</span>
-           </div>
+           <Image
+             src="/logo3.png"
+             alt="Pravara"
+             width={160}
+             height={54}
+             className="object-contain [mix-blend-mode:lighten]"
+             priority
+           />
            
            <h1 className="text-5xl font-serif text-transparent bg-clip-text bg-gradient-to-r from-stone-50 to-stone-400 leading-tight">
              Begin your journey to a meaningful union.
@@ -124,9 +130,14 @@ export default function SignupPage() {
             <Link href="/" className="flex items-center gap-2 text-stone-500 mb-6">
               <ArrowLeft className="w-4 h-4" /> Back
             </Link>
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-haldi-500 to-haldi-700 flex items-center justify-center mb-4">
-              <span className="font-serif text-2xl text-stone-950 font-bold">P</span>
-            </div>
+            <Image
+              src="/logo3.png"
+              alt="Pravara"
+              width={130}
+              height={44}
+              className="object-contain [mix-blend-mode:lighten] mb-4"
+              priority
+            />
           </div>
 
           <div className="space-y-2">

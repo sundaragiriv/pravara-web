@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { Users, Check, X, ShieldCheck, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
+import DashboardSubNav from "@/components/navigation/DashboardSubNav";
 
 export default function CollaboratorAcceptPage() {
   const router = useRouter();
@@ -60,7 +62,7 @@ export default function CollaboratorAcceptPage() {
         router.push('/dashboard');
       }
     } else {
-      alert("Could not update invitation: " + error.message);
+      toast.error("Could not update invitation: " + error.message);
     }
   };
 
@@ -73,8 +75,9 @@ export default function CollaboratorAcceptPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-50 font-sans p-6">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-stone-950 text-stone-50 font-sans">
+      <DashboardSubNav backLabel="Dashboard" />
+      <div className="max-w-2xl mx-auto p-6">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <Users className="w-6 h-6 text-haldi-500" />

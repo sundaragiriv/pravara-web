@@ -4,59 +4,29 @@ import ChatDemo from "./components/ChatDemo";
 import { createClient } from "@/utils/supabase/server";
 import Footer from "@/components/Footer";
 import FadeIn from "@/components/FadeIn";
+import MarketingNav from "@/components/navigation/MarketingNav";
 
 export default async function Home() {
-  // Check if user is logged in
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Fetch profile for avatar/name if logged in
+  let userAvatar: string | null = null;
+  let userName: string | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, image_url")
+      .eq("id", user.id)
+      .single();
+    userAvatar = profile?.image_url || null;
+    userName = profile?.full_name || user.email?.split("@")[0] || null;
+  }
+
   return (
     <div className="min-h-screen bg-stone-950 text-stone-50 font-sans selection:bg-haldi-500/30">
-      
-      {/* --- NEW: Navigation Bar --- */}
-      <nav className="fixed top-0 w-full z-50 bg-stone-950/80 backdrop-blur-md border-b border-stone-900">
-        <div className="container mx-auto px-6 h-20 flex items-center justify-between">
-          {/* Smart Logo Area */}
-          <div className="flex items-center gap-2">
-            <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 group">
-              <div className="w-8 h-8 bg-haldi-600 rounded-lg flex items-center justify-center text-stone-950 font-bold font-serif text-xl group-hover:scale-105 transition-transform">
-                P
-              </div>
-              <span className="font-serif text-xl tracking-widest text-stone-100 group-hover:text-haldi-500 transition-colors">
-                PRAVARA
-              </span>
-            </Link>
-          </div>
-
-          {/* Nav Links */}
-          <div className="flex items-center gap-8">
-            {user ? (
-              // IF LOGGED IN: Show Dashboard Button
-              <Link 
-                href="/dashboard" 
-                className="bg-stone-100 hover:bg-white text-stone-950 px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105"
-              >
-                Go to Dashboard
-              </Link>
-            ) : (
-              // IF LOGGED OUT: Show Login/Signup
-              <>
-                <div className="hidden md:flex items-center gap-6 text-sm font-medium text-stone-400">
-                  <Link href="/pricing" className="hover:text-haldi-500 transition-colors">Membership</Link>
-                  <Link href="/login" className="hover:text-haldi-500 transition-colors">Login</Link>
-                </div>
-                
-                <Link 
-                  href="/signup" 
-                  className="bg-stone-100 hover:bg-white text-stone-950 px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105"
-                >
-                  Join
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
+      {/* --- Navigation Bar --- */}
+      <MarketingNav isLoggedIn={!!user} userAvatar={userAvatar} userName={userName} />
 
       {/* --- Hero Section --- */}
       <div className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">

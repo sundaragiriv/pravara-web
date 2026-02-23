@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Plus, Trash2, Loader2, Image as ImageIcon } from "lucide-react";
+import { toast } from "sonner";
 
 interface GalleryProps {
   profileId: string;
@@ -64,7 +65,7 @@ export default function ProfileGallery({ profileId, editable }: GalleryProps) {
       fetchPhotos(); // Refresh grid
 
     } catch (error) {
-      alert("Error uploading photo");
+      toast.error("Error uploading photo");
       console.error(error);
     } finally {
       setUploading(false);

@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { Heart, Clock, X, ArrowLeft } from 'lucide-react';
+import { Heart, Clock, X } from 'lucide-react';
 import Link from 'next/link';
 import { notifyInterestAccepted } from '@/utils/notifications';
+import { toast } from "sonner";
+import DashboardSubNav from '@/components/navigation/DashboardSubNav';
 
 export default function RequestsPage() {
     const supabase = createClient();
@@ -61,13 +63,8 @@ export default function RequestsPage() {
 
     return (
         <div className="min-h-screen bg-stone-950 text-stone-50">
+            <DashboardSubNav />
             <div className="p-8 max-w-7xl mx-auto">
-                
-                {/* --- BACK BUTTON --- */}
-                <Link href="/dashboard" className="inline-flex items-center gap-2 text-stone-400 hover:text-haldi-500 mb-6 transition-colors">
-                    <ArrowLeft className="w-4 h-4" />
-                    <span className="text-sm">Back to Dashboard</span>
-                </Link>
 
                 {/* --- HEADER & TABS --- */}
                 <div className="flex flex-col md:flex-row justify-between items-end mb-8 border-b border-stone-800 pb-4">
@@ -149,7 +146,7 @@ function RequestCard({ profile, type, onAction }: any) {
         
         if (error) {
             console.error('Error accepting request:', error);
-            alert('Failed to accept request. Please try again.');
+            toast.error('Failed to accept request. Please try again.');
         } else {
             // Trigger notification to sender
             if (user) {
@@ -171,7 +168,7 @@ function RequestCard({ profile, type, onAction }: any) {
         
         if (error) {
             console.error('Error rejecting request:', error);
-            alert('Failed to reject request. Please try again.');
+            toast.error('Failed to reject request. Please try again.');
         } else {
             onAction(profile.id); // Remove from list
         }
@@ -189,7 +186,7 @@ function RequestCard({ profile, type, onAction }: any) {
         
         if (error) {
             console.error('Error withdrawing request:', error);
-            alert('Failed to withdraw request. Please try again.');
+            toast.error('Failed to withdraw request. Please try again.');
         } else {
             onAction(profile.id); // Remove from list
         }

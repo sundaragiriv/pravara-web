@@ -8,6 +8,7 @@ import {
     Sparkles, Briefcase, Users, Heart, Scroll, 
     ShieldCheck, Mic, Video, Trash2, Camera, UploadCloud, Upload, Shield
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import AvatarUpload from '@/components/AvatarUpload'; // Ensure this matches your file path
 
@@ -149,7 +150,9 @@ export default function EditProfilePage() {
             await supabase.from('profiles').update({ gallery_images: newGallery }).eq('id', user.id);
 
         } catch (error: any) {
-            alert("Upload failed: " + error.message);
+            toast.error("Gallery Upload Failed", {
+                description: error.message || "Could not upload image."
+            });
         } finally {
             setSaving(false);
         }
@@ -204,14 +207,21 @@ export default function EditProfilePage() {
 
         } catch (error: any) {
             console.error('Error uploading ID:', error.message);
-            alert('Upload failed: ' + error.message);
+            toast.error("ID Upload Failed", {
+                description: error.message || "Could not upload ID."
+            });
         } finally {
             setUploadingID(false);
         }
     };
 
     const handleSendInvite = async () => {
-        if (!inviteEmail.includes('@')) return alert("Please enter a valid email.");
+        if (!inviteEmail.includes('@')) {
+            toast.error("Invalid Email", {
+                description: "Please enter a valid email address."
+            });
+            return;
+        }
 
         try {
             const { data: { user } } = await supabase.auth.getUser();
@@ -234,7 +244,9 @@ export default function EditProfilePage() {
             setInviteEmail("");
 
         } catch (error: any) {
-            alert("Error sending invite: " + error.message);
+            toast.error("Invite Failed", {
+                description: error.message || "Could not send invite."
+            });
         }
     };
 
@@ -251,10 +263,13 @@ export default function EditProfilePage() {
         setSaving(false);
         
         if (error) {
-            alert("Error saving: " + error.message);
+            toast.error("Update Failed", {
+                description: error.message || "Could not save profile."
+            });
         } else {
-            setSuccessMessage("Profile updated successfully!");
-            setTimeout(() => setSuccessMessage(''), 3000);
+            toast.success("Profile Updated", {
+                description: "Your changes have been saved to the Vedic database."
+            });
         }
     };
 

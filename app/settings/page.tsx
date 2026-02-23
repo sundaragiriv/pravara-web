@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { 
-  ArrowLeft, Bell, Eye, EyeOff, Shield, Loader2, Save 
-} from "lucide-react";
+import { Bell, Eye, EyeOff, Shield, Loader2, Save } from "lucide-react";
+import { toast } from "sonner";
+import DashboardSubNav from "@/components/navigation/DashboardSubNav";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -59,7 +58,7 @@ export default function SettingsPage() {
             .eq('id', user.id);
         
         if (error) {
-            alert("Error saving settings");
+            toast.error("Error saving settings");
         } else {
             // Optional: Show a toast or success message
         }
@@ -71,13 +70,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-50 font-sans pb-20">
-      
-      {/* Navigation */}
-      <nav className="p-6 sticky top-0 z-50 bg-gradient-to-b from-stone-950/90 to-transparent">
-        <Link href="/dashboard" className="inline-flex items-center gap-2 text-stone-300 hover:text-haldi-500 transition-colors bg-stone-900/50 backdrop-blur-md px-4 py-2 rounded-full border border-stone-800">
-          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
-        </Link>
-      </nav>
+      <DashboardSubNav backLabel="Back to Dashboard" />
 
       <main className="container mx-auto px-4 max-w-2xl">
         <h1 className="text-3xl font-serif text-stone-100 mb-2">Account Settings</h1>

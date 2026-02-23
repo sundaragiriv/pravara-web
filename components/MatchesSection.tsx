@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ArrowUpDown, SearchX, Filter } from 'lucide-react';
 import MatchCard from './MatchCard';
+import type { MatchProfile, ShortlistItem } from '@/types';
 
 // --- SKELETON LOADER (Kept exactly as yours) ---
 const MatchCardSkeleton = () => (
@@ -29,14 +30,14 @@ const MatchCardSkeleton = () => (
 
 // --- MAIN COMPONENT ---
 interface MatchesSectionProps {
-  matches: any[];
+  matches: MatchProfile[];
   isLoading?: boolean;
   onToggleMobileFilters?: () => void;
-  onProfileClick?: (profile: any) => void;
+  onProfileClick?: (profile: MatchProfile) => void;
   isCollaborator?: boolean;
-  shortlist?: any[];
+  shortlist?: ShortlistItem[];
   onShortlist?: (id: string) => void;
-  onResetFilters?: () => void; // Added this specifically for the "Clear Filters" button
+  onResetFilters?: () => void;
 }
 
 export default function MatchesSection({ 

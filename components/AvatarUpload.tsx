@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import { Loader2, Camera, UploadCloud } from "lucide-react";
 
@@ -58,7 +59,7 @@ export default function AvatarUpload({ currentUrl, onUploadComplete, size = 120 
       onUploadComplete(publicUrl);
 
     } catch (error: any) {
-      alert("Error uploading avatar: " + error.message);
+      toast.error("Error uploading avatar: " + error.message);
     } finally {
       setUploading(false);
     }

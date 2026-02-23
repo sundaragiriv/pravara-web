@@ -4,9 +4,10 @@ import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Send, User, Sparkles, Phone, Video, MoreVertical, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-export default function SangamChat() {
+export default function ChatPage() {
   const router = useRouter();
   const [conversations, setConversations] = useState<any[]>([]);
   const [activeChat, setActiveChat] = useState<string | null>(null);
@@ -19,7 +20,7 @@ export default function SangamChat() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
-  // 1. Load Connections
+  // 1. Load Connections and Unread Counts
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -32,7 +33,7 @@ export default function SangamChat() {
           id,
           sender_id,
           receiver_id,
-          sender:profiles!connections_sender_id_fkey(id, full_name, image_url, profession, location, sub_community), 
+          sender:profiles!connections_sender_id_fkey(id, full_name, image_url, profession, location, sub_community),
           receiver:profiles!connections_receiver_id_fkey(id, full_name, image_url, profession, location, sub_community)
         `)
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
@@ -44,6 +45,22 @@ export default function SangamChat() {
           return { connection_id: c.id, partner };
         });
         setConversations(formatted);
+
+        // Fetch unread counts for each conversation
+        const counts: Record<string, number> = {};
+        for (const conv of formatted) {
+          const { count } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('connection_id', conv.connection_id)
+            .neq('sender_id', user.id)
+            .eq('is_read', false);
+
+          if (count && count > 0) {
+            counts[conv.partner.id] = count;
+          }
+        }
+        setUnreadCounts(counts);
       }
     };
     init();
@@ -73,7 +90,7 @@ export default function SangamChat() {
       if (error) {
         console.error('Error marking messages as read:', error);
       } else {
-        console.log('Marked messages as read:', updated?.length || 0);
+        // console.log('Marked messages as read:', updated?.length || 0); // Removed for production
       }
     };
     fetchMessages();
@@ -187,9 +204,14 @@ export default function SangamChat() {
       {/* SIDEBAR */}
       <div className="w-full md:w-80 border-r border-stone-800 flex flex-col bg-stone-900/30">
         <div className="p-4 border-b border-stone-800 flex justify-between items-center bg-stone-950">
-           <h1 className="font-serif text-xl text-haldi-500 font-bold flex items-center gap-2">
-             <Sparkles className="w-5 h-5" /> Sangam
-           </h1>
+           <Image
+             src="/logo3.png"
+             alt="Pravara"
+             width={100}
+             height={34}
+             className="object-contain [mix-blend-mode:lighten]"
+             priority
+           />
            <Link href="/dashboard" className="p-2 hover:bg-stone-800 rounded-full transition-colors">
              <ArrowLeft className="w-5 h-5 text-stone-400" />
            </Link>

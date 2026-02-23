@@ -1,41 +1,20 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { 
-  Heart, 
-  User, 
-  BadgeCheck, 
-  Star, 
-  MapPin, 
-  Info, 
-  Briefcase,
-  MessageCircle,
-  Clock
+import {
+  Heart,
+  User,
+  BadgeCheck,
+  Star,
+  MapPin,
+  Info,
+  Briefcase
 } from 'lucide-react';
 import ConnectionButton from '@/components/ConnectionButton';
 import { getMatchColor, shouldFillHeart } from '@/utils/matchEngine';
-
-// Define the shape of Match Profile Data
-interface MatchProfile {
-  id: string;
-  full_name: string;
-  age: number | null;
-  height: string | null;
-  location: string | null;
-  image_url: string | null;
-  score: number; // Match percentage (0-100)
-  gothra: string | null;
-  sub_community: string | null;
-  profession: string | null;
-  spiritual_org?: string | null;
-  religious_level?: string | null;
-  is_verified?: boolean;
-  connectionStatus?: 'none' | 'sent' | 'received' | 'connected';
-  isShortlisted?: boolean;
-}
+import type { MatchProfile } from '@/types';
 
 interface MatchCardProps {
   profile: MatchProfile;
@@ -173,11 +152,11 @@ export default function MatchCard({ profile, index, isCollaborator = false, onPr
         </div>
 
         {/* Additional Vedic Heritage - Only show if there's actual content */}
-        {((profile.spiritual_org?.trim?.() || profile.religious_level?.trim?.()) && (
+        {((profile.spiritual_org?.length || profile.religious_level?.trim?.()) && (
           <div className="flex flex-wrap gap-1.5 pt-2 border-t border-stone-800">
-            {profile.spiritual_org?.trim?.() && (
+            {profile.spiritual_org && profile.spiritual_org.length > 0 && (
               <span className="px-2 py-0.5 bg-haldi-900/10 text-haldi-600 text-[10px] rounded border border-haldi-500/20">
-                {profile.spiritual_org}
+                {profile.spiritual_org.join(', ')}
               </span>
             )}
             {profile.religious_level?.trim?.() && (
@@ -196,7 +175,7 @@ export default function MatchCard({ profile, index, isCollaborator = false, onPr
           <ConnectionButton 
             profileId={profile.id} 
             initialStatus={(profile.connectionStatus || 'none') as 'none' | 'sent' | 'received' | 'connected' | 'rejected'}
-            onSendInterest={async () => console.log('Interest sent to', profile.id)}
+            onSendInterest={async () => { /* Interest sent */ }}
           />
         )}
 

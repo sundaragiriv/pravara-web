@@ -1,19 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client"; 
-import { 
-  Sparkles, User, LogOut, Search, Check, X, 
+import { createClient } from "@/utils/supabase/client";
+import {
+  Sparkles, User, LogOut, Search, Check, X,
   MessageCircle, Star, ShieldCheck, Users, SlidersHorizontal, ChevronDown, Settings
 } from "lucide-react";
+
+// --- TYPE IMPORTS ---
+import type {
+  Profile,
+  MatchProfile,
+  ShortlistItem,
+  RequestItem,
+  ConnectedProfile,
+  DashboardFilters
+} from "@/types";
 
 // --- COMPONENT IMPORTS ---
 import MatchesSection from "@/components/MatchesSection";
 import Sidebar from "@/components/Sidebar";
 import NotificationBell from "@/components/NotificationBell";
-import ProfileDetailsPanel from "@/components/ProfileDetailsPanel"; // <--- THE NEW SLIDE OVER
+import ProfileDetailsPanel from "@/components/ProfileDetailsPanel";
 import { calculateMatchScore } from "@/utils/matchEngine";
 import { notifyInterestSent } from "@/utils/notifications";
 
@@ -27,18 +38,18 @@ export default function Dashboard() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   
   // --- NEW: SELECTED PROFILE STATE (For Slide-Over) ---
-  const [selectedProfile, setSelectedProfile] = useState<any | null>(null);
-  
+  const [selectedProfile, setSelectedProfile] = useState<MatchProfile | null>(null);
+
   // --- DATA STATE ---
-  const [matches, setMatches] = useState<any[]>([]);
-  const [requests, setRequests] = useState<any[]>([]);
-  const [connections, setConnections] = useState<any[]>([]);
-  const [shortlist, setShortlist] = useState<any[]>([]);
-  
+  const [matches, setMatches] = useState<MatchProfile[]>([]);
+  const [requests, setRequests] = useState<RequestItem[]>([]);
+  const [connections, setConnections] = useState<ConnectedProfile[]>([]);
+  const [shortlist, setShortlist] = useState<ShortlistItem[]>([]);
+
   // --- USER STATE ---
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; email?: string } | null>(null);
+  const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [userName, setUserName] = useState("User");
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const [completionPercent, setCompletionPercent] = useState(0); 
@@ -66,8 +77,11 @@ export default function Dashboard() {
     gothra: ""
   });
 
+  // --- DEBOUNCED FILTER FETCH ---
+  const filterDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
   // --- FILTER HELPER FUNCTIONS ---
-  const updateFilter = (key: string, value: any) => {
+  const updateFilter = (key: string, value: string | number | string[]) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
@@ -83,11 +97,85 @@ export default function Dashboard() {
   };
 
   const resetFilters = () => {
-    setFilters({ 
+    setFilters({
       minAge: 21, maxAge: 40, location: "", community: "", searchTerm: "",
       diet: [], visa: "", minHeight: "", maxHeight: "", gothra: ""
     });
   };
+
+  // --- SERVER-SIDE FILTERED FETCH ---
+  const fetchFilteredMatches = useCallback(async () => {
+    if (!viewingAs || !userProfile) return;
+
+    const params = new URLSearchParams();
+    params.set('excludeUser', viewingAs);
+    params.set('minAge', filters.minAge.toString());
+    params.set('maxAge', filters.maxAge.toString());
+    if (filters.location) params.set('location', filters.location);
+    if (filters.diet.length > 0) params.set('diet', filters.diet.join(','));
+    if (filters.visa) params.set('visa', filters.visa);
+    if (filters.gothra) params.set('gothra', filters.gothra);
+    if (filters.searchTerm) params.set('search', filters.searchTerm);
+    if (filters.minHeight) params.set('minHeight', filters.minHeight);
+    if (filters.maxHeight) params.set('maxHeight', filters.maxHeight);
+
+    try {
+      const response = await fetch(`/api/matches?${params.toString()}`);
+      if (!response.ok) return;
+
+      const { profiles: rawProfiles } = await response.json();
+
+      // Get connection statuses
+      const { data: myConnections } = await supabase
+        .from('connections')
+        .select('*')
+        .or(`sender_id.eq.${viewingAs},receiver_id.eq.${viewingAs}`);
+
+      const scored = rawProfiles.map((p: Profile) => {
+        const connection = myConnections?.find((c: { sender_id: string; receiver_id: string }) =>
+          (c.sender_id === viewingAs && c.receiver_id === p.id) ||
+          (c.sender_id === p.id && c.receiver_id === viewingAs)
+        );
+
+        let connectionStatus: 'none' | 'sent' | 'received' | 'connected' | 'rejected' = 'none';
+        if (connection) {
+          if (connection.status === 'accepted') connectionStatus = 'connected';
+          else if (connection.status === 'pending') {
+            connectionStatus = connection.sender_id === viewingAs ? 'sent' : 'received';
+          } else if (connection.status === 'rejected') connectionStatus = 'rejected';
+        }
+
+        return {
+          ...p,
+          score: calculateMatchScore(p, userProfile),
+          connectionStatus
+        };
+      });
+
+      setMatches(scored.sort((a: MatchProfile, b: MatchProfile) => b.score - a.score));
+    } catch (error) {
+      console.error('Filter fetch error:', error);
+    }
+  }, [viewingAs, userProfile, filters, supabase]);
+
+  // Debounced filter effect
+  useEffect(() => {
+    if (!userProfile) return;
+
+    if (filterDebounceRef.current) {
+      clearTimeout(filterDebounceRef.current);
+    }
+
+    filterDebounceRef.current = setTimeout(() => {
+      fetchFilteredMatches();
+    }, 300);
+
+    return () => {
+      if (filterDebounceRef.current) {
+        clearTimeout(filterDebounceRef.current);
+      }
+    };
+  }, [filters, fetchFilteredMatches, userProfile]);
 
   useEffect(() => {
     fetchData();
@@ -95,49 +183,55 @@ export default function Dashboard() {
   }, []);
 
   // --- GLOBAL MESSAGE NOTIFICATIONS ---
-  useEffect(() => {
-    if (!currentUser) return;
+  // Fetch unread count function (extracted for reuse)
+  const fetchUnreadCount = async (userId: string) => {
+    const { count, error } = await supabase
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .neq('sender_id', userId)
+      .eq('is_read', false);
 
-    // Fetch initial unread count (simplified - RLS handles connection filtering)
-    const fetchUnreadCount = async () => {
-      const { count, error } = await supabase
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .neq('sender_id', currentUser.id)
-        .eq('is_read', false);
-      
-      if (error) {
-        console.error('Error fetching unread count:', error);
-      } else {
-        console.log('Unread count:', count);
-        setGlobalUnreadCount(count || 0);
+    if (error) {
+      console.error('Error fetching unread count:', error);
+    } else {
+      setGlobalUnreadCount(count || 0);
+    }
+  };
+
+  // Refetch unread count whenever user returns to this page (visibility change)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && currentUser) {
+        fetchUnreadCount(currentUser.id);
       }
     };
 
-    fetchUnreadCount();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [currentUser]);
+
+  // Initial fetch and realtime subscription
+  useEffect(() => {
+    if (!currentUser) return;
+
+    // Fetch immediately when currentUser is available
+    fetchUnreadCount(currentUser.id);
 
     // Realtime subscription for ALL message events (INSERT and UPDATE)
     const channel = supabase
       .channel('global_notifications')
       .on(
         'postgres_changes',
-        { 
-          event: '*', // Listen to ALL events (Insert & Update)
-          schema: 'public', 
+        {
+          event: '*',
+          schema: 'public',
           table: 'messages'
         },
         (payload: any) => {
-          console.log('Message event:', payload.eventType, payload);
-          
-          // If NEW message comes in -> Increment (only if I'm not the sender)
           if (payload.eventType === 'INSERT' && payload.new.sender_id !== currentUser.id) {
-            console.log('New message received, incrementing count');
             setGlobalUnreadCount((prev) => prev + 1);
-          }
-          // If message is READ (Updated) -> Re-fetch to ensure accuracy
-          else if (payload.eventType === 'UPDATE') {
-            console.log('Message updated (marked as read), re-fetching count');
-            fetchUnreadCount();
+          } else if (payload.eventType === 'UPDATE') {
+            fetchUnreadCount(currentUser.id);
           }
         }
       )
@@ -201,40 +295,7 @@ export default function Dashboard() {
           }
       }
 
-      // 3. PARALLEL FETCH
-      const [profilesResponse, connectionsResponse] = await Promise.all([
-          supabase.from('profiles').select('*').neq('id', targetUserId).limit(100),
-          supabase.from('connections').select('*').or(`sender_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`)
-      ]);
-
-      const rawProfiles = profilesResponse.data || [];
-      const myConnections = connectionsResponse.data || [];
-      
-      if (rawProfiles && profile) {
-          const scored = rawProfiles.map(p => {
-              const connection = myConnections.find(c => 
-                  (c.sender_id === targetUserId && c.receiver_id === p.id) || 
-                  (c.sender_id === p.id && c.receiver_id === targetUserId)
-              );
-
-              let connectionStatus: 'none' | 'sent' | 'received' | 'connected' | 'rejected' = 'none';
-
-              if (connection) {
-                  if (connection.status === 'accepted') connectionStatus = 'connected';
-                  else if (connection.status === 'pending') {
-                      connectionStatus = connection.sender_id === targetUserId ? 'sent' : 'received';
-                  } else if (connection.status === 'rejected') connectionStatus = 'rejected';
-              }
-              
-              return {
-                  ...p,
-                  score: calculateMatchScore(p, profile),
-                  connectionStatus
-              };
-          });
-
-          setMatches(scored.sort((a, b) => b.score - a.score));
-      }
+      // 3. Matches will be fetched by the debounced filter effect when userProfile is set
 
       // 4. FETCH REQUESTS & CONNECTIONS
       if (!isCollaborator) {
@@ -282,15 +343,24 @@ export default function Dashboard() {
       setShortlist(prev => prev.filter(s => s.profile.id !== profileId));
       // Update the Slide-Over state if it's open
       if (selectedProfile?.id === profileId) {
-        setSelectedProfile((prev: any) => ({ ...prev, isShortlisted: false }));
+        setSelectedProfile(prev => prev ? { ...prev, isShortlisted: false } : null);
       }
     } else {
       // Add to local shortlist state
-      const newShortlistItem = { id: Date.now().toString(), profile: profile }; 
-      setShortlist((prev: any) => [newShortlistItem, ...prev]);
+      const newShortlistItem = {
+        id: Date.now().toString(),
+        user_id: currentUser?.id || '',
+        profile_id: profileId,
+        profile: profile as Profile,
+        shortlisted_by: null,
+        note: null,
+        added_by_email: currentUser?.email || null,
+        created_at: new Date().toISOString()
+      };
+      setShortlist(prev => [newShortlistItem, ...prev]);
       // Update Slide-Over state
       if (selectedProfile?.id === profileId) {
-        setSelectedProfile((prev: any) => ({ ...prev, isShortlisted: true }));
+        setSelectedProfile(prev => prev ? { ...prev, isShortlisted: true } : null);
       }
     }
 
@@ -328,31 +398,7 @@ export default function Dashboard() {
     router.push("/login");
   };
 
-  // --- POWER FILTER LOGIC ---
-  const filteredMatches = matches.filter(m => {
-      if (filters.searchTerm) {
-          const term = filters.searchTerm.toLowerCase();
-          const textMatch = (m.full_name?.toLowerCase().includes(term) || m.location?.toLowerCase().includes(term) || m.profession?.toLowerCase().includes(term));
-          if (!textMatch) return false;
-      }
-      if (m.age < filters.minAge || m.age > filters.maxAge) return false;
-      if (filters.minHeight && m.height && m.height < Number(filters.minHeight)) return false;
-      if (filters.maxHeight && m.height && m.height > Number(filters.maxHeight)) return false;
-      
-      if (filters.diet.length > 0) {
-          const profileDiet = m.diet || '';
-          const hasMatch = filters.diet.some(d => profileDiet.toLowerCase().includes(d.toLowerCase()));
-          if (!hasMatch) return false;
-      }
-      if (filters.visa && !m.visa_status?.toLowerCase().includes(filters.visa.toLowerCase())) return false;
-      if (filters.location && !m.location?.toLowerCase().includes(filters.location.toLowerCase())) return false;
-      if (filters.gothra) {
-          const search = filters.gothra.toLowerCase();
-          const text = `${m.sub_community || ''} ${m.gothra || ''} ${m.nakshatra || ''} ${m.rashi || ''}`.toLowerCase();
-          if (!text.includes(search)) return false;
-      }
-      return true;
-  });
+  // Server-side filtering is now handled by /api/matches
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-50 font-sans">
@@ -361,7 +407,16 @@ export default function Dashboard() {
       <nav className="border-b border-stone-900 bg-stone-950/80 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/" className="font-serif text-2xl font-bold bg-gradient-to-r from-haldi-500 to-haldi-700 bg-clip-text text-transparent">P</Link>
+            <Link href="/" aria-label="Pravara Home">
+              <Image
+                src="/logo3.png"
+                alt="Pravara"
+                width={110}
+                height={38}
+                className="object-contain [mix-blend-mode:lighten] hover:brightness-110 transition-all duration-300"
+                priority
+              />
+            </Link>
             
             <div className="hidden md:flex bg-stone-900 rounded-full p-1 border border-stone-800 items-center">
               <button onClick={() => setActiveTab('explorer')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'explorer' ? 'bg-stone-800 text-stone-200 shadow-sm' : 'text-stone-500 hover:text-stone-300'}`}>Explorer</button>
@@ -483,18 +538,15 @@ export default function Dashboard() {
         {/* --- SIDEBAR --- */}
         <div className="w-full lg:w-80 flex-none">
           {activeTab === 'explorer' && (
-            <Sidebar 
+            <Sidebar
               isOpen={mobileFiltersOpen}
               onClose={() => setMobileFiltersOpen(false)}
               filters={filters}
               setFilters={setFilters}
-              // @ts-ignore
               updateFilter={updateFilter}
-              // @ts-ignore
               toggleFilter={toggleFilter}
-              // @ts-ignore
               resetFilters={resetFilters}
-              matchCount={filteredMatches.length}
+              matchCount={matches.length}
             />
           )}
         </div>
@@ -505,7 +557,7 @@ export default function Dashboard() {
             {/* 1. EXPLORER TAB (Using Smart Matches Section) */}
             {activeTab === 'explorer' && (
               <MatchesSection 
-                matches={filteredMatches}
+                matches={matches}
                 isLoading={loading}
                 onToggleMobileFilters={() => setMobileFiltersOpen(true)}
                 onProfileClick={(profile) => setSelectedProfile(profile)}
@@ -555,7 +607,7 @@ export default function Dashboard() {
                             </div>
                             <div className="p-5"><h3 className="text-xl font-serif text-stone-100">{match.full_name}</h3>
                             {/* Updated to open Slide-Over instead of redirecting */}
-                            <button onClick={() => setSelectedProfile(match)} className="block mt-4 w-full text-center py-3 rounded-xl bg-stone-100 text-stone-950 font-bold text-sm">View Profile</button>
+                            <button onClick={() => setSelectedProfile({ ...match, score: 0 })} className="block mt-4 w-full text-center py-3 rounded-xl bg-stone-100 text-stone-950 font-bold text-sm">View Profile</button>
                             </div>
                         </div>
                     );

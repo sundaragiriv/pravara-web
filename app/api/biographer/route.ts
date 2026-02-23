@@ -2,32 +2,65 @@ import { createClient } from "@/utils/supabase/server";
 import { OpenAI } from "openai";
 import { NextResponse } from "next/server";
 import { VEDIC_DATA, getPravaraOptionsForGothra } from "@/lib/vedicData";
+import { ratelimit, getClientIP } from "@/lib/ratelimit";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// 1. UPDATED MASTER LIST with WhatsApp Group Fields
-const ONBOARDING_STEPS = [
-  "full_name", 
-  "age", "gender", "marital_status", // Added Marital Status early
-  "dob", "birth_time", "birth_place", // The Horoscope Block
-  "nakshatra", "nakshatra_padam",     // Specific Vedic details
+// 1. VALID DATABASE COLUMNS (only these can be updated)
+const VALID_PROFILE_COLUMNS = new Set([
+  "full_name", "age", "gender", "marital_status",
+  "dob", "birth_time", "birth_place",
+  "nakshatra", "nakshatra_padam", "raasi",
   "sub_community", "gothra", "pravara",
-  "education", "profession", "employer", // Added Employer
-  "visa_status", // Critical for NRIs
-  "location", "height", "weight", "diet",
-  "family_details", // Parents & Siblings info
-  "smoking", "drinking", 
+  "education", "profession", "employer",
+  "visa_status", "location", "height", "weight", "diet",
+  "family_details", "smoking", "drinking",
   "religious_level", "spiritual_org",
-  // MEDIA GROUP (Optional but asked)
   "audio_bio_url", "video_bio_url",
-  "bio", 
-  "partner_preferences" // MUST Remain Last
+  "bio", "partner_preferences", "image_url", "gallery_images"
+]);
+
+// 2. ONBOARDING FLOW ORDER
+const ONBOARDING_STEPS = [
+  "full_name",
+  "age", "gender", "marital_status",
+  "dob", "birth_time", "birth_place",
+  "nakshatra", "nakshatra_padam",
+  "sub_community", "gothra", "pravara",
+  "education", "profession", "employer",
+  "visa_status",
+  "location", "height", "weight", "diet",
+  "family_details",
+  "smoking", "drinking",
+  "religious_level", "spiritual_org",
+  "audio_bio_url", "video_bio_url",
+  "bio",
+  "partner_preferences"
 ];
 
 const humanize = (str: string) => str.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
 export async function POST(req: Request) {
   try {
+    // ── Rate limit check ─────────────────────────────────────────────────────
+    const ip = getClientIP(req);
+    const { success, limit, reset, remaining } = await ratelimit.limit(ip);
+
+    if (!success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please slow down." },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": String(limit),
+            "X-RateLimit-Remaining": String(remaining),
+            "X-RateLimit-Reset": String(reset),
+            "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)),
+          },
+        }
+      );
+    }
+
     const supabase = await createClient();
     const { messages, currentProfile } = await req.json();
 
@@ -35,25 +68,42 @@ export async function POST(req: Request) {
     const lastAiQuestion = messages[messages.length - 2]?.content || ""; 
 
     // --- STEP 1: CONTEXT-AWARE EXTRACTION ---
+    // CRITICAL: Detect if AI was asking about PARTNER preferences
+    const isAskingPartnerPrefs = lastAiQuestion.toLowerCase().includes('partner') ||
+                                  lastAiQuestion.toLowerCase().includes('looking for') ||
+                                  lastAiQuestion.toLowerCase().includes('qualities') ||
+                                  lastAiQuestion.toLowerCase().includes('spouse') ||
+                                  lastAiQuestion.toLowerCase().includes('ideal match');
+
     const extraction = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
             {
                 role: "system",
-                // FIX #2: Added instruction for precise extraction
-                content: `You are a Data Extractor for a matrimonial profile.
-                
-                CONTEXT: AI asked: "${lastAiQuestion}"
-                USER REPLIED: "${lastUserMessage}"
-                
-                Target Fields: ${ONBOARDING_STEPS.join(', ')}.
-                
-                RULES:
-                1. Extract facts ONLY. Do not infer "pursuing" unless stated. If user says "I am a Masters", extract "Masters".
-                2. If user mentions "Niyogi", "Vaidiki", "Iyer", "Iyengar", etc., extract as 'sub_community'.
-                3. If extracting 'spiritual_org', output an ARRAY of strings. Example: ["Iskon", "Sringeri"]. Users can mention multiple influences.
-                4. Do NOT extract 'partner_preferences' from a general 'bio' statement.
-                5. Output JSON only.`
+                content: `You are a strict Data Extractor for a matrimonial profile database.
+
+CONTEXT: AI asked: "${lastAiQuestion}"
+USER REPLIED: "${lastUserMessage}"
+
+${isAskingPartnerPrefs ? `
+⚠️ CRITICAL: The AI was asking about PARTNER PREFERENCES (what the user wants in a spouse).
+The user's response describes their IDEAL PARTNER, NOT themselves.
+Put the ENTIRE response into "partner_preferences" as a single string.
+DO NOT extract to height, diet, education, etc. - those are for the USER's own profile.
+
+Output: {"partner_preferences": "${lastUserMessage}"}
+` : `
+Extract the user's OWN details into these database columns:
+${ONBOARDING_STEPS.join(', ')}
+
+RULES:
+1. ONLY use column names from the list above.
+2. For height/weight: Only extract numbers (e.g., "175 cm", "70 kg"). Skip "tall", "slim", etc.
+3. For age: Only extract numbers.
+4. If user mentions "Niyogi", "Vaidiki", etc., extract as 'sub_community'.
+5. For 'spiritual_org', output an ARRAY: ["Iskon", "Sringeri"].
+6. Output valid JSON only. Empty object {} if nothing to extract.
+`}`
             },
             { role: "user", content: `Context: ${lastAiQuestion}\nUser Input: ${lastUserMessage}` }
         ],
@@ -70,27 +120,38 @@ export async function POST(req: Request) {
     if (Object.keys(extractedData).length > 0) {
         Object.keys(extractedData).forEach(k => {
             let value = extractedData[k];
-            
+
+            // --- 0A. PARTNER PREFERENCES CONTEXT GUARD ---
+            // If AI was asking about partner preferences, ONLY allow partner_preferences field
+            if (isAskingPartnerPrefs && k !== 'partner_preferences') {
+                console.log(`Context guard: Blocking ${k} - AI was asking about partner preferences`);
+                return;
+            }
+
+            // --- 0B. SKIP INVALID COLUMNS (Prevents "music_oriented" type errors) ---
+            if (!VALID_PROFILE_COLUMNS.has(k)) {
+                console.log(`Skipping unknown column: ${k}`);
+                return;
+            }
+
             // Skip empty/invalid values
-            if (!value || value === "..." || value === "" || value === "skip") return;
+            if (value === null || value === undefined || value === "..." || value === "" || value === "skip") return;
 
             // --- 1. DOB SAFEGUARD (The Fix for "1993" Error) ---
             if (k === 'dob') {
                 const strVal = String(value).trim();
-                
+
                 // Scenario A: User gave just a Year (e.g., "1993")
                 if (/^\d{4}$/.test(strVal)) {
-                    // Calculate Age instead of crashing DOB
                     const birthYear = parseInt(strVal);
                     const currentYear = new Date().getFullYear();
                     updatedProfile.age = currentYear - birthYear;
-                    return; // STOP here. Do not save "1993" to dob column.
+                    return;
                 }
-                
-                // Scenario B: User gave a Date (e.g., "1993-05-20")
-                // Ensure it's a valid ISO string or leave it to trigger a proper prompt later
+
+                // Scenario B: Invalid date format
                 if (!strVal.includes('-') && !strVal.includes('/')) {
-                     return; // Skip invalid formats to prevent DB crashes
+                    return;
                 }
             }
 
@@ -98,17 +159,34 @@ export async function POST(req: Request) {
             if (k === 'partner_preferences') {
                 const existing = updatedProfile.partner_preferences || "";
                 if (!existing.includes(value)) {
-                     updatedProfile[k] = existing ? `${existing}. ${value}` : value;
+                    updatedProfile[k] = existing ? `${existing}. ${value}` : value;
                 }
-                return; // Done with this field
-            } 
-
-            // --- 3. STANDARD MAPPING ---
-            if (k === 'age') {
-                updatedProfile[k] = parseInt(String(value), 10);
-            } else {
-                updatedProfile[k] = value;
+                return;
             }
+
+            // --- 3. INTEGER FIELDS (age, nakshatra_padam) ---
+            if (k === 'age' || k === 'nakshatra_padam') {
+                const parsed = parseInt(String(value), 10);
+                if (!isNaN(parsed)) {
+                    updatedProfile[k] = parsed;
+                }
+                return;
+            }
+
+            // --- 4. HEIGHT/WEIGHT (Keep as string, but validate) ---
+            if (k === 'height' || k === 'weight') {
+                // Convert descriptive words to null (will prompt again)
+                const descriptive = ['tall', 'short', 'average', 'medium', 'slim', 'heavy'];
+                if (descriptive.includes(String(value).toLowerCase())) {
+                    // Don't save descriptive words, let user provide actual measurement
+                    return;
+                }
+                updatedProfile[k] = String(value);
+                return;
+            }
+
+            // --- 5. STANDARD MAPPING ---
+            updatedProfile[k] = value;
         });
 
         // --- 🛡️ FINAL SANITIZATION BEFORE SAVE 🛡️ ---
@@ -135,17 +213,24 @@ export async function POST(req: Request) {
         // 3. Fix Time (birth_time): Empty string -> NULL
         if (updatedProfile.birth_time === "") updatedProfile.birth_time = null;
 
-        // 4. Ghost Busting: Remove 'sub_sect' if it still lingers
-        // @ts-ignore
-        delete updatedProfile.sub_sect; 
+        // 4. Ghost Busting: Remove any invalid columns that slipped through
+        const cleanedProfile: Record<string, any> = {};
+        for (const [key, value] of Object.entries(updatedProfile)) {
+            if (VALID_PROFILE_COLUMNS.has(key) || key === 'id' || key === 'religion') {
+                cleanedProfile[key] = value;
+            }
+        }
 
         // -----------------------------------------------------------
 
         // NOW it is safe to save
         if (currentProfile.id) {
-            const { error } = await supabase.from('profiles').update(updatedProfile).eq('id', currentProfile.id);
+            const { error } = await supabase.from('profiles').update(cleanedProfile).eq('id', currentProfile.id);
             if (error) console.error("DB Update Failed:", error.message);
         }
+
+        // Update reference for response
+        updatedProfile = cleanedProfile;
     }
 
     // --- STEP 2: DIRECTOR ---

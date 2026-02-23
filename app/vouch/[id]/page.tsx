@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
 import { ShieldCheck, HeartHandshake } from "lucide-react";
 
@@ -31,6 +33,9 @@ export default function VouchPage() {
   if (submitted) {
     return (
         <div className="min-h-screen bg-stone-950 flex flex-col items-center justify-center text-center p-6">
+            <Link href="/" className="mb-10">
+              <Image src="/logo3.png" alt="Pravara" width={120} height={40} className="object-contain [mix-blend-mode:lighten]" priority />
+            </Link>
             <div className="w-20 h-20 bg-green-900/20 rounded-full flex items-center justify-center mb-6">
                 <ShieldCheck className="w-10 h-10 text-green-500" />
             </div>
@@ -42,7 +47,10 @@ export default function VouchPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-stone-950 flex flex-col items-center justify-center p-4">
+      <Link href="/" className="mb-8">
+        <Image src="/logo3.png" alt="Pravara" width={120} height={40} className="object-contain [mix-blend-mode:lighten]" priority />
+      </Link>
       <div className="w-full max-w-md bg-stone-900 border border-stone-800 rounded-2xl p-8 shadow-2xl">
         <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-haldi-900/20 text-haldi-500 mb-4">
