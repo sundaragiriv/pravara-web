@@ -27,11 +27,14 @@ import NotificationBell from "@/components/NotificationBell";
 import ProfileDetailsPanel from "@/components/ProfileDetailsPanel";
 import { calculateMatchScore } from "@/utils/matchEngine";
 import { notifyInterestSent } from "@/utils/notifications";
+import { useShortlist } from "@/contexts/ShortlistContext";
+import { toast } from "sonner";
 
 export default function Dashboard() {
   const router = useRouter();
   const supabase = createClient();
-  
+  const { toggle: toggleShortlist, count: shortlistCount } = useShortlist();
+
   // --- UI STATE ---
   const [activeTab, setActiveTab] = useState<'explorer' | 'requests' | 'connections' | 'shortlist'>('explorer');
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -330,46 +333,12 @@ export default function Dashboard() {
     fetchData(); 
   };
 
-  const handleShortlist = async (profileId: string) => {
-    if (!currentUser) return;
-
-    // A. Find the current status
-    const profile = matches.find(m => m.id === profileId);
-    const isCurrentlyShortlisted = shortlist.some(s => s.profile.id === profileId);
-
-    // B. Optimistic Update (Update UI Instantly)
-    if (isCurrentlyShortlisted) {
-      // Remove from local shortlist state
-      setShortlist(prev => prev.filter(s => s.profile.id !== profileId));
-      // Update the Slide-Over state if it's open
-      if (selectedProfile?.id === profileId) {
-        setSelectedProfile(prev => prev ? { ...prev, isShortlisted: false } : null);
-      }
-    } else {
-      // Add to local shortlist state
-      const newShortlistItem = {
-        id: Date.now().toString(),
-        user_id: currentUser?.id || '',
-        profile_id: profileId,
-        profile: profile as Profile,
-        shortlisted_by: null,
-        note: null,
-        added_by_email: currentUser?.email || null,
-        created_at: new Date().toISOString()
-      };
-      setShortlist(prev => [newShortlistItem, ...prev]);
-      // Update Slide-Over state
-      if (selectedProfile?.id === profileId) {
-        setSelectedProfile(prev => prev ? { ...prev, isShortlisted: true } : null);
-      }
-    }
-
-    // C. Database Operation (Supabase)
-    if (isCurrentlyShortlisted) {
-      await supabase.from('shortlists').delete().eq('user_id', currentUser.id).eq('profile_id', profileId);
-    } else {
-      await supabase.from('shortlists').insert({ user_id: currentUser.id, profile_id: profileId });
-    }
+  // Shortlist toggle — delegates to ShortlistContext (global source of truth).
+  // Context handles optimistic update, DB write, and rollback on error.
+  const handleShortlist = (profileId: string) => {
+    toggleShortlist(profileId);
+    // Refresh the shortlist tab data so it stays in sync if the tab is currently open
+    if (activeTab === 'shortlist') fetchShortlistOnly();
   };
 
   const handleSendInterest = async (receiverId: string) => {
@@ -387,7 +356,12 @@ export default function Dashboard() {
     
     if (error) {
       setMatches(prev => prev.map(m => m.id === receiverId ? { ...m, connectionStatus: 'none' } : m));
-      console.error(error);
+      console.error('handleSendInterest failed:', error.code, error.message, error.details);
+      if (error.code === '23505') {
+        toast.info('Interest already sent to this person');
+      } else {
+        toast.error('Could not send interest — please try again');
+      }
     } else {
       await notifyInterestSent(receiverId, senderId);
     }
@@ -431,11 +405,9 @@ export default function Dashboard() {
                         </span>
                       )}
                     </Link>
-                    <div className="w-px h-4 bg-stone-800 mx-2"></div>
-                    <Link href="/onboarding" className="px-4 py-1.5 rounded-full text-haldi-500 hover:text-haldi-400 text-sm font-bold flex items-center gap-2 transition-colors"><Sparkles className="w-3 h-3" /> Sutradhar</Link>
                 </>
               )}
-              <Link href="/dashboard/shortlist" className="ml-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 text-stone-500 hover:text-stone-300">Shortlist {shortlist.length > 0 && <span className="bg-haldi-600 text-stone-950 text-[10px] font-bold px-1.5 rounded-full">{shortlist.length}</span>}</Link>
+              <Link href="/dashboard/shortlist" className="ml-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 text-stone-500 hover:text-stone-300">Shortlist {shortlistCount > 0 && <span className="bg-haldi-600 text-stone-950 text-[10px] font-bold px-1.5 rounded-full">{shortlistCount}</span>}</Link>
             </div>
           </div>
 
@@ -556,13 +528,12 @@ export default function Dashboard() {
           
             {/* 1. EXPLORER TAB (Using Smart Matches Section) */}
             {activeTab === 'explorer' && (
-              <MatchesSection 
+              <MatchesSection
                 matches={matches}
                 isLoading={loading}
                 onToggleMobileFilters={() => setMobileFiltersOpen(true)}
                 onProfileClick={(profile) => setSelectedProfile(profile)}
-                shortlist={shortlist}
-                onShortlist={handleShortlist}
+                onSendInterest={handleSendInterest}
               />
             )}
 
@@ -618,24 +589,17 @@ export default function Dashboard() {
       </main>
 
       {/* --- GLOBAL: PROFILE DETAILS SLIDE-OVER --- */}
-      <ProfileDetailsPanel 
-        isOpen={!!selectedProfile} 
+      {/* Shortlist star now reads from ShortlistContext — no props needed */}
+      <ProfileDetailsPanel
+        isOpen={!!selectedProfile}
         onClose={() => setSelectedProfile(null)}
         profile={selectedProfile}
-        isPremium={false} // Set to true to test premium view, false to see lock overlay
-        // Check if this specific profile is in the shortlist array
-        isShortlisted={shortlist.some(s => s.profile?.id === selectedProfile?.id)}
-        
-        // Pass action handlers to sync state
+        isPremium={false}
         onConnect={() => {
           if (selectedProfile) {
             handleSendInterest(selectedProfile.id);
-            // Optimistically update the selected profile to show "Pending" immediately
             setSelectedProfile((prev: any) => ({ ...prev, connectionStatus: 'sent' }));
           }
-        }}
-        onShortlist={() => {
-          if (selectedProfile) handleShortlist(selectedProfile.id);
         }}
       />
 

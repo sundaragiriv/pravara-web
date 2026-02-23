@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'sonner';
 import SutradharWidget from "@/components/SutradharWidget";
+import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
@@ -31,10 +32,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${inter.variable} ${playfair.variable} font-sans bg-stone-950 text-stone-50 antialiased`}
         suppressHydrationWarning
       >
-        {children}
-        <SutradharWidget />
-        {/* Sonner Toaster for global toast notifications */}
-        <Toaster position="top-center" richColors closeButton />
+        <Providers>
+          {children}
+          <SutradharWidget />
+          {/* Sonner Toaster for global toast notifications */}
+          <Toaster position="top-center" richColors closeButton />
+        </Providers>
       </body>
     </html>
   );

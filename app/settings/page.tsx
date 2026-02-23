@@ -70,7 +70,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-50 font-sans pb-20">
-      <DashboardSubNav backLabel="Back to Dashboard" />
+      <DashboardSubNav backLabel="Back to Sutradhar" />
 
       <main className="container mx-auto px-4 max-w-2xl">
         <h1 className="text-3xl font-serif text-stone-100 mb-2">Account Settings</h1>

@@ -24,8 +24,8 @@ export default function SutradharWidget() {
     scrollToBottom();
   }, [messages, isOpen]);
 
-  // Hide on Login/Home pages - AFTER hooks
-  if (pathname === '/login' || pathname === '/' || pathname === '/signup') return null;
+  // Hide on auth pages, onboarding, and chat (which has its own Sutradhar hint)
+  if (pathname === '/login' || pathname === '/' || pathname === '/signup' || pathname === '/onboarding' || pathname === '/dashboard/chat') return null;
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -129,12 +129,30 @@ export default function SutradharWidget() {
 
       {/* FLOATING TRIGGER BUTTON */}
       <motion.button
-        whileHover={{ scale: 1.05 }}
+        layout
+        whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 rounded-full bg-gradient-to-br from-haldi-500 to-haldi-700 shadow-lg shadow-haldi-900/50 flex items-center justify-center text-stone-950 border-2 border-stone-900 z-50"
+        transition={{ layout: { type: 'spring', stiffness: 380, damping: 28 } }}
+        className={`h-14 bg-gradient-to-br from-haldi-500 to-haldi-700 shadow-lg shadow-haldi-900/50
+                    flex items-center justify-center text-stone-950 border-2 border-stone-900 z-50
+                    ${isOpen ? 'w-14 rounded-full' : 'rounded-full pl-4 pr-5 gap-2.5'}`}
       >
-        {isOpen ? <X className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}
+        {isOpen ? (
+          <X className="w-6 h-6" />
+        ) : (
+          <>
+            <Sparkles className="w-5 h-5 flex-shrink-0" />
+            <motion.span
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 'auto' }}
+              exit={{ opacity: 0, width: 0 }}
+              className="font-serif font-bold text-sm whitespace-nowrap overflow-hidden"
+            >
+              Sutradhar
+            </motion.span>
+          </>
+        )}
       </motion.button>
     </div>
   );

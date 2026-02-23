@@ -281,11 +281,12 @@ export default function EditProfilePage() {
             {/* HEADER */}
             <header className="sticky top-0 z-40 bg-stone-950/90 backdrop-blur border-b border-stone-800 px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => router.back()} className="p-2 hover:bg-stone-800 rounded-full text-stone-400 transition">
-                        <ArrowLeft size={20} />
+                    <button onClick={() => router.back()} className="flex items-center gap-2 text-stone-400 hover:text-haldi-500 transition-colors">
+                        <ArrowLeft size={18} />
+                        <span className="text-xs font-bold hidden sm:inline">Back to Sutradhar</span>
                     </button>
-                    <div>
-                        <h1 className="text-xl font-serif font-bold text-white leading-none">Edit Profile</h1>
+                    <div className="border-l border-stone-800 pl-4">
+                        <h1 className="text-xl font-serif font-bold text-white leading-none">Vedic Profile</h1>
                         <p className="text-xs text-stone-500 mt-1">Updates are saved automatically on media upload.</p>
                     </div>
                 </div>
@@ -716,6 +717,42 @@ export default function EditProfilePage() {
                         </div>
                     </div>
                 </div>
+
+                {/* ── NARADA AI BANNER ───────────────────────────────────── */}
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+                    <div className="relative overflow-hidden rounded-2xl border border-haldi-500/20 bg-gradient-to-r from-stone-900 via-haldi-900/10 to-stone-900 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                        {/* Glow accent */}
+                        <div className="absolute inset-0 pointer-events-none">
+                            <div className="absolute left-0 top-0 h-full w-32 bg-gradient-to-r from-haldi-500/5 to-transparent" />
+                        </div>
+
+                        {/* OM glyph */}
+                        <div className="relative flex-shrink-0 w-14 h-14 rounded-full bg-haldi-500/10 border border-haldi-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(234,179,8,0.12)]">
+                            <span className="text-haldi-400 font-serif select-none" style={{ fontSize: "28px", lineHeight: 1 }}>ॐ</span>
+                        </div>
+
+                        {/* Text */}
+                        <div className="relative flex-1 min-w-0">
+                            <p className="text-xs font-bold text-haldi-500 uppercase tracking-widest mb-0.5">Narada · Divine Guide</p>
+                            <h3 className="text-stone-100 font-serif font-semibold text-lg leading-snug">
+                                Let Narada complete your profile through conversation
+                            </h3>
+                            <p className="text-stone-500 text-xs mt-1 leading-relaxed">
+                                Instead of filling forms, simply tell Narada your story. The AI extracts and updates your Vedic roots, career, and preferences automatically.
+                            </p>
+                        </div>
+
+                        {/* CTA */}
+                        <a
+                            href="/onboarding"
+                            className="relative flex-shrink-0 flex items-center gap-2 px-5 py-2.5 bg-haldi-600 hover:bg-haldi-500 text-stone-950 font-bold rounded-xl text-sm transition-all shadow-lg shadow-haldi-900/20 active:scale-95 whitespace-nowrap"
+                        >
+                            <Sparkles size={15} />
+                            Talk to Narada
+                        </a>
+                    </div>
+                </div>
+
             </main>
         </div>
     );

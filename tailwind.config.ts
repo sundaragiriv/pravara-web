@@ -19,7 +19,7 @@ const config: Config = {
         // 2. PRD Custom Colors (Mapped to full palettes for safety)
         // This makes 'bg-haldi-600' valid because it pulls from amber-600
         haldi: {
-          ...colors.amber, 
+          ...colors.amber,
           DEFAULT: "#FBBF24", // PRD Primary [cite: 68]
         },
         kumkum: {
@@ -27,9 +27,16 @@ const config: Config = {
           DEFAULT: "#991B1B", // PRD Secondary [cite: 71]
         },
         sandstone: {
-          light: "#FDFBF7", 
-          dark: "#1F1A15", 
+          light: "#FDFBF7",
+          dark: "#1F1A15",
         },
+
+        // 3. Vedic Biodata Palette (BiodataCard / ProfileDetailsPanel)
+        gold: {
+          DEFAULT: "#C9A24A",
+          bright: "#E8C56B",
+        },
+        parchment: "#F2E2C0",
         
         // 3. Shadcn UI Mappings (Required for components)
         border: "hsl(var(--border))",
