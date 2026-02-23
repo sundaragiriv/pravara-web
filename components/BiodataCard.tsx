@@ -87,7 +87,7 @@ export default function BiodataCard({
       </div>
 
       {/* ── PHOTO ─────────────────────────────────────────────────── */}
-      <div className={`relative flex-shrink-0 overflow-hidden ${scrollMode ? 'h-[45%]' : 'h-[210px]'}`}>
+      <div className={`relative flex-shrink-0 overflow-hidden ${scrollMode ? 'h-[45%]' : 'aspect-[4/5] max-h-[320px]'}`}>
         {profile.image_url ? (
           <Image
             src={profile.image_url}
