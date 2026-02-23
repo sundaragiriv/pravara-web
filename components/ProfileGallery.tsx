@@ -127,8 +127,12 @@ export default function ProfileGallery({ profileId, editable }: GalleryProps) {
     try {
       setUploading(true);
       const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const fileExt = file.name.split(".").pop();
-      const filePath = `gallery/${profileId}/${Date.now()}.${fileExt}`;
+      // Path must be under {userId}/ to satisfy the avatars bucket RLS policy
+      const filePath = `${user.id}/gallery/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")

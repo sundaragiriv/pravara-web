@@ -188,7 +188,7 @@ export default function ShortlistPage() {
                 isOpen={isPanelOpen}
                 onClose={() => setIsPanelOpen(false)}
                 profile={selectedProfile}
-                onConnect={handleSendInterest}
+                onConnect={() => selectedProfile && handleSendInterest(selectedProfile.id)}
             />
         </div>
     );
