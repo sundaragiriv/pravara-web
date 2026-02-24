@@ -20,8 +20,7 @@ export default function ConnectionButton({ profileId, initialStatus, onSendInter
         if (status !== 'none' && status !== 'connected' && status !== 'received') return;
 
         if (status === 'connected') {
-            // Navigate to chat
-            window.location.href = `/chat?user=${profileId}`;
+            window.location.href = `/dashboard/chat`;
             return;
         }
 
