@@ -31,6 +31,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Fetch current user's gender to filter for opposite gender
+    const { data: myProfile } = await supabase
+      .from('profiles')
+      .select('gender')
+      .eq('id', user.id)
+      .single();
+
+    const myGender = myProfile?.gender ?? null;
+    const oppositeGender =
+      myGender === 'Male' ? 'Female' :
+      myGender === 'Female' ? 'Male' : null;
+
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const minAge = parseInt(searchParams.get('minAge') || '18');
@@ -50,6 +62,11 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('*')
       .neq('id', excludeUserId);
+
+    // Only show opposite-gender profiles (core matrimony logic)
+    if (oppositeGender) {
+      query = query.eq('gender', oppositeGender);
+    }
 
     // Age filter
     if (minAge) {

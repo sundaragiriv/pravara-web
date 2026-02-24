@@ -3,6 +3,7 @@
 
 interface Profile {
     age?: number | null;
+    gender?: string | null;
     gothra?: string | null;
     sub_community?: string | null;
     diet?: string | null;
