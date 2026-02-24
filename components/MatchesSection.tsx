@@ -54,8 +54,42 @@ export default function MatchesSection({
   const [viewMode, setViewMode] = useState<'grid' | 'scroll'>('grid');
   const { isShortlisted, toggle } = useShortlist();
 
-  // ── Empty state ─────────────────────────────────────────────────────────
-  if (!isLoading && matches.length === 0) {
+  // ── Sutradhar loading screen ─────────────────────────────────────────────
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center p-6 select-none">
+        {/* Pulsing mandala ring */}
+        <div className="relative w-20 h-20 mb-6">
+          <div className="absolute inset-0 rounded-full border-2 border-haldi-500/30 animate-ping" />
+          <div className="absolute inset-2 rounded-full border-2 border-haldi-500/50 animate-ping [animation-delay:0.3s]" />
+          <div className="absolute inset-4 rounded-full bg-haldi-500/10 border border-haldi-500/60 flex items-center justify-center">
+            <span className="text-haldi-500 text-xl font-serif">ॐ</span>
+          </div>
+        </div>
+
+        <h3 className="text-lg font-serif text-stone-100 mb-2">
+          Narada is searching for you…
+        </h3>
+        <p className="text-stone-500 text-sm max-w-xs leading-relaxed">
+          Reviewing Gothra, Nakshatra &amp; values to find your most compatible matches.
+        </p>
+
+        {/* Animated dots */}
+        <div className="flex gap-1.5 mt-5">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="w-1.5 h-1.5 rounded-full bg-haldi-500 animate-bounce"
+              style={{ animationDelay: `${i * 0.18}s` }}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Empty state (genuine zero results after load) ────────────────────────
+  if (matches.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center p-6">
         <div className="w-16 h-16 bg-stone-900 rounded-full flex items-center justify-center mb-4 border border-stone-800">
@@ -176,11 +210,7 @@ export default function MatchesSection({
       {/* ── GRID VIEW ───────────────────────────────────────────────── */}
       {viewMode === 'grid' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 pb-10">
-          {isLoading &&
-            Array.from({ length: 6 }).map((_, i) => <BiodataCardSkeleton key={i} />)}
-
-          {!isLoading &&
-            matches.map((profile, idx) => (
+          {matches.map((profile, idx) => (
               <div
                 key={profile.id}
                 onClick={() => onProfileClick?.(profile)}
@@ -207,20 +237,7 @@ export default function MatchesSection({
         <div
           className="overflow-y-auto snap-y snap-mandatory scroll-smooth pb-4 h-[calc(100svh_-_10rem)]"
         >
-          {isLoading &&
-            Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className="snap-start flex items-center justify-center px-4 py-3 h-[calc(100svh_-_10rem)]"
-              >
-                <div className="w-full max-w-sm h-full max-h-[680px]">
-                  <BiodataCardSkeleton />
-                </div>
-              </div>
-            ))}
-
-          {!isLoading &&
-            matches.map((profile, idx) => (
+          {matches.map((profile, idx) => (
               <div
                 key={profile.id}
                 className="snap-start flex items-center justify-center px-4 py-3 cursor-pointer h-[calc(100svh_-_10rem)]"

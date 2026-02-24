@@ -51,6 +51,7 @@ export default function Dashboard() {
 
   // --- USER STATE ---
   const [loading, setLoading] = useState(true);
+  const [matchesLoading, setMatchesLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<{ id: string; email?: string } | null>(null);
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [userName, setUserName] = useState("User");
@@ -122,9 +123,10 @@ export default function Dashboard() {
     if (filters.minHeight) params.set('minHeight', filters.minHeight);
     if (filters.maxHeight) params.set('maxHeight', filters.maxHeight);
 
+    setMatchesLoading(true);
     try {
       const response = await fetch(`/api/matches?${params.toString()}`);
-      if (!response.ok) return;
+      if (!response.ok) { setMatchesLoading(false); return; }
 
       const { profiles: rawProfiles } = await response.json();
 
@@ -158,6 +160,8 @@ export default function Dashboard() {
       setMatches(scored.sort((a: MatchProfile, b: MatchProfile) => b.score - a.score));
     } catch (error) {
       console.error('Filter fetch error:', error);
+    } finally {
+      setMatchesLoading(false);
     }
   }, [viewingAs, userProfile, filters, supabase]);
 
@@ -530,7 +534,7 @@ export default function Dashboard() {
             {activeTab === 'explorer' && (
               <MatchesSection
                 matches={matches}
-                isLoading={loading}
+                isLoading={loading || matchesLoading}
                 onToggleMobileFilters={() => setMobileFiltersOpen(true)}
                 onProfileClick={(profile) => setSelectedProfile(profile)}
                 onSendInterest={handleSendInterest}
