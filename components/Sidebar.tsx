@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { X, SlidersHorizontal, Sparkles } from 'lucide-react';
 
 import type { DashboardFilters } from '@/types';
@@ -181,15 +182,19 @@ export default function Sidebar({
               <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Sparkles size={64} />
               </div>
-              
+
               <div className="relative z-10">
-                <h3 className="text-[#F5A623] font-serif font-bold text-lg mb-1">Unlock Bhrugu Engine</h3>
+                <h3 className="text-[#F5A623] font-serif font-bold text-lg mb-1">Vedic Compatibility</h3>
+                <p className="text-[#F5A623]/60 text-[10px] italic mb-1">Powered by Bhrugu Engine</p>
                 <p className="text-gray-400 text-xs mb-3 leading-relaxed">
-                  See precise Vedic compatibility scores, Mangal Dosha checks, and connect instantly.
+                  Unlock precise horoscope matching, Mangal Dosha checks, and deep Ashtakoot analysis.
                 </p>
-                <button className="w-full py-2 bg-[#F5A623] hover:bg-orange-600 text-black font-bold rounded-lg text-xs transition-transform transform hover:scale-105 shadow-lg shadow-orange-500/20">
+                <Link
+                  href="/membership"
+                  className="block w-full py-2 bg-[#F5A623] hover:bg-orange-600 text-black font-bold rounded-lg text-xs transition-transform transform hover:scale-105 shadow-lg shadow-orange-500/20 text-center"
+                >
                   Upgrade to Premium
-                </button>
+                </Link>
               </div>
             </div>
 

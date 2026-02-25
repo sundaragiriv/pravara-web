@@ -49,7 +49,11 @@ export default function ProfileDetailsPage() {
 
         if (targetRes.data) {
             setProfile(targetRes.data);
-            if (myRes.data) setMatchScore(calculateMatchScore(myRes.data, targetRes.data));
+            if (myRes.data) {
+                setMatchScore(calculateMatchScore(myRes.data, targetRes.data));
+                const tier = myRes.data.membership_tier;
+                setIsPremium(tier === 'Gold' || tier === 'Concierge');
+            }
             if (connRes.data) {
                 const c = connRes.data;
                 if (c.status === 'accepted') setConnectionStatus('connected');
@@ -355,7 +359,7 @@ export default function ProfileDetailsPage() {
                     {/* BHRUGU MATCH CARD */}
                     <div className="bg-stone-900 border border-stone-800 rounded-2xl p-6 relative">
                         <div className="flex items-center justify-between mb-4 border-b border-stone-800 pb-3">
-                            <h4 className="text-haldi-500 font-serif text-base font-bold tracking-wide">The Bhrugu Match</h4>
+                            <h4 className="text-haldi-500 font-serif text-base font-bold tracking-wide">Vedic Compatibility</h4>
                             <span className="px-3 py-1 bg-green-900/30 border border-green-500/30 rounded-full text-[10px] font-bold text-green-400 uppercase tracking-wider shadow-[0_0_10px_rgba(74,222,128,0.1)]">Strict Match</span>
                         </div>
                         <div className={!isPremium ? "blur-sm select-none opacity-50 pointer-events-none transition-all duration-300" : "transition-all duration-300"}>
@@ -375,14 +379,14 @@ export default function ProfileDetailsPage() {
                             <div className="absolute inset-0 top-12 z-10 flex flex-col items-center justify-center text-center">
                                 <div className="bg-stone-900/95 border border-haldi-500/30 p-4 rounded-xl shadow-2xl max-w-[200px]">
                                     <Lock className="text-haldi-500 mx-auto mb-2" size={20} />
-                                    <p className="text-stone-300 text-xs font-bold mb-2">Unlock Detailed Report</p>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsPremium(true)}
-                                        className="bg-haldi-600 hover:bg-haldi-500 text-stone-950 font-bold py-1.5 px-4 rounded-full text-xs transition"
+                                    <p className="text-stone-300 text-xs font-bold mb-1">Vedic Compatibility Report</p>
+                                    <p className="text-stone-500 text-[10px] mb-2">Available on Gold & Concierge</p>
+                                    <Link
+                                        href="/membership"
+                                        className="block bg-haldi-600 hover:bg-haldi-500 text-stone-950 font-bold py-1.5 px-4 rounded-full text-xs transition text-center"
                                     >
                                         Upgrade
-                                    </button>
+                                    </Link>
                                 </div>
                             </div>
                         )}

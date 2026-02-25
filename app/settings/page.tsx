@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { Bell, Eye, EyeOff, Shield, Loader2, Save } from "lucide-react";
+import { Bell, Eye, EyeOff, Shield, Loader2, Save, Crown } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import DashboardSubNav from "@/components/navigation/DashboardSubNav";
 
@@ -16,6 +17,9 @@ export default function SettingsPage() {
   const [isVisible, setIsVisible] = useState(true);
   const [notifications, setNotifications] = useState(true);
   const [userEmail, setUserEmail] = useState("");
+  const [membershipTier, setMembershipTier] = useState("Basic");
+  const [subscriptionBilling, setSubscriptionBilling] = useState<string | null>(null);
+  const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSettings();
@@ -29,13 +33,16 @@ export default function SettingsPage() {
       setUserEmail(user.email || "");
       const { data } = await supabase
         .from('profiles')
-        .select('is_visible, notifications_enabled')
+        .select('is_visible, notifications_enabled, membership_tier, subscription_billing, subscription_end_date')
         .eq('id', user.id)
         .single();
-      
+
       if (data) {
         setIsVisible(data.is_visible);
         setNotifications(data.notifications_enabled);
+        setMembershipTier(data.membership_tier || "Basic");
+        setSubscriptionBilling(data.subscription_billing ?? null);
+        setSubscriptionEnd(data.subscription_end_date ?? null);
       }
     } else {
       router.push("/login");
@@ -135,6 +142,52 @@ export default function SettingsPage() {
                     <span className="text-stone-400">Email Address</span>
                     <span className="text-stone-300 font-mono">{userEmail}</span>
                 </div>
+            </div>
+
+            {/* CARD 4: Membership */}
+            <div className="p-6 rounded-2xl bg-stone-900/50 border border-stone-800">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <Crown className={`w-5 h-5 ${membershipTier === "Concierge" ? "text-purple-400" : membershipTier === "Gold" ? "text-haldi-400" : "text-stone-500"}`} />
+                        <h3 className="text-lg font-serif text-stone-200">Membership</h3>
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                        membershipTier === "Concierge" ? "text-purple-400 border-purple-800 bg-purple-950" :
+                        membershipTier === "Gold" ? "text-haldi-400 border-haldi-800 bg-haldi-950" :
+                        "text-stone-500 border-stone-700 bg-stone-900"
+                    }`}>
+                        {membershipTier}
+                    </span>
+                </div>
+                <div className="space-y-2 text-sm">
+                    {membershipTier !== "Basic" && subscriptionBilling && (
+                        <div className="flex justify-between items-center">
+                            <span className="text-stone-400">Billing Cycle</span>
+                            <span className="text-stone-300 capitalize">{subscriptionBilling}</span>
+                        </div>
+                    )}
+                    {membershipTier !== "Basic" && subscriptionEnd && (
+                        <div className="flex justify-between items-center">
+                            <span className="text-stone-400">Renewal Date</span>
+                            <span className="text-stone-300">
+                                {new Date(subscriptionEnd).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                            </span>
+                        </div>
+                    )}
+                    {membershipTier !== "Basic" && subscriptionEnd && (() => {
+                        const daysLeft = Math.ceil((new Date(subscriptionEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                        if (daysLeft <= 7 && daysLeft > 0) return (
+                            <p className="text-yellow-400 text-xs font-medium">Expires in {daysLeft} day{daysLeft !== 1 ? "s" : ""}</p>
+                        );
+                        if (daysLeft <= 0) return (
+                            <p className="text-red-400 text-xs font-medium">Subscription expired</p>
+                        );
+                        return null;
+                    })()}
+                </div>
+                <Link href="/membership" className="mt-4 block w-full text-center py-2.5 rounded-xl text-sm font-bold border border-stone-700 text-stone-300 hover:border-haldi-500 hover:text-haldi-400 transition-colors">
+                    {membershipTier === "Basic" ? "Upgrade Plan" : "Manage Plan"}
+                </Link>
             </div>
 
         </div>

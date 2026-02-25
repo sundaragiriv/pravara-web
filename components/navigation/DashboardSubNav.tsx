@@ -63,6 +63,7 @@ export default function DashboardSubNav({
   const [userName,       setUserName]       = useState<string>("");
   const [userAvatar,     setUserAvatar]     = useState<string | null>(null);
   const [membershipTier, setMembershipTier] = useState<string>("Basic");
+  const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [dropdownOpen,   setDropdownOpen]   = useState(false);
 
   /* ── Fetch user data once ─────────────────────────────────── */
@@ -74,14 +75,15 @@ export default function DashboardSubNav({
 
       const { data } = await supabase
         .from("profiles")
-        .select("full_name, avatar_url, membership_tier")
+        .select("full_name, image_url, membership_tier, subscription_end_date")
         .eq("id", user.id)
         .single();
 
       if (data && active) {
         setUserName((data.full_name || "").split(" ")[0] || "You");
-        setUserAvatar(data.avatar_url ?? null);
+        setUserAvatar(data.image_url ?? null);
         setMembershipTier(data.membership_tier || "Basic");
+        setSubscriptionEnd(data.subscription_end_date ?? null);
       }
     })();
     return () => { active = false; };
@@ -248,6 +250,16 @@ export default function DashboardSubNav({
                     >
                       ✦ Upgrade to Gold
                     </Link>
+                  )}
+                  {membershipTier !== "Basic" && subscriptionEnd && (
+                    <p className="text-[10px] text-stone-500 mt-1.5">
+                      {(() => {
+                        const daysLeft = Math.ceil((new Date(subscriptionEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                        if (daysLeft <= 0) return <span className="text-red-400">Expired</span>;
+                        if (daysLeft <= 7) return <span className="text-yellow-400">Expires in {daysLeft}d</span>;
+                        return <>Renews {new Date(subscriptionEnd).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</>;
+                      })()}
+                    </p>
                   )}
                 </div>
 

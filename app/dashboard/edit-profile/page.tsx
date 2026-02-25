@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import {
-    Save, ArrowLeft, Loader2, CheckCircle,
+    Save, ArrowLeft, Loader2, CheckCircle, X,
     Sparkles, Briefcase, Users, Heart, Scroll,
     ShieldCheck, Mic, Video, Trash2, Camera, UploadCloud, Upload, Shield, MapPin
 } from 'lucide-react';
@@ -150,6 +150,7 @@ export default function EditProfilePage() {
     const [isInviting, setIsInviting] = useState(false);
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteRole, setInviteRole] = useState("Parent");
+    const [collaborators, setCollaborators] = useState<any[]>([]);
     const [formData, setFormData] = useState<any>({});
     const [successMessage, setSuccessMessage] = useState('');
 
@@ -195,6 +196,14 @@ export default function EditProfilePage() {
                     partner_notes:          data.partner_notes           || '',
                 });
             }
+            // Fetch collaborators
+            const { data: collabs } = await supabase
+                .from('collaborators')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
+            if (collabs) setCollaborators(collabs);
+
             setLoading(false);
         };
         fetchProfile();
@@ -317,15 +326,23 @@ export default function EditProfilePage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
             const { error } = await supabase.from('collaborators').insert({
-                profile_id: user.id, email: inviteEmail, role: inviteRole, status: 'pending'
+                user_id: user.id, collaborator_email: inviteEmail, role: inviteRole, status: 'pending'
             });
             if (error) throw error;
             toast.success(`Invite sent to ${inviteEmail}!`);
+            setCollaborators(prev => [{ collaborator_email: inviteEmail, role: inviteRole, status: 'pending', id: crypto.randomUUID() }, ...prev]);
             setIsInviting(false);
             setInviteEmail("");
         } catch (error: any) {
             toast.error("Invite Failed", { description: error.message });
         }
+    };
+
+    const handleRemoveCollaborator = async (collabId: string) => {
+        setCollaborators(prev => prev.filter(c => c.id !== collabId));
+        const { error } = await supabase.from('collaborators').delete().eq('id', collabId);
+        if (error) toast.error("Could not remove collaborator");
+        else toast.success("Collaborator removed");
     };
 
     const handleSave = async () => {
@@ -670,6 +687,7 @@ export default function EditProfilePage() {
                                                     <option value="Parent">Parent</option>
                                                     <option value="Sibling">Sibling</option>
                                                     <option value="Relative">Relative</option>
+                                                    <option value="Friend">Friend</option>
                                                 </select>
                                             </div>
                                             <div className="flex gap-2">
@@ -689,6 +707,29 @@ export default function EditProfilePage() {
                                         </button>
                                     )}
                                 </div>
+
+                                {/* Collaborator List */}
+                                {collaborators.length > 0 && (
+                                    <div className="mt-3 space-y-2">
+                                        <label className="text-[10px] uppercase font-bold text-stone-500 tracking-wider">Active Collaborators</label>
+                                        {collaborators.map((c) => (
+                                            <div key={c.id} className="flex items-center justify-between bg-stone-900 p-2 rounded-lg">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <div className="w-6 h-6 rounded-full bg-stone-800 text-stone-400 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                                                        {c.collaborator_email?.[0]?.toUpperCase() || '?'}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-xs text-white font-medium truncate">{c.collaborator_email}</p>
+                                                        <p className="text-[10px] text-stone-500">{c.role} · <span className={c.status === 'accepted' ? 'text-green-500' : 'text-yellow-500'}>{c.status}</span></p>
+                                                    </div>
+                                                </div>
+                                                <button type="button" onClick={() => handleRemoveCollaborator(c.id)} className="text-stone-600 hover:text-red-400 transition-colors p-1 flex-shrink-0" title="Remove">
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             <InputGroup label="Father's Occupation" name="father_occupation" value={formData.father_occupation} onChange={handleChange} placeholder="e.g. Retired Banker" />

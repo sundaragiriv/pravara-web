@@ -31,6 +31,7 @@ interface AdminUser {
   image_url: string | null;
   location: string | null;
   bio: string | null;
+  subscription_end_date: string | null;
 }
 
 interface MembershipPlan {
@@ -101,13 +102,14 @@ function UserEditDrawer({
   const save = async () => {
     setSaving(true);
     const { error } = await supabase.from("profiles").update({
-      full_name:        form.full_name,
-      phone:            form.phone,
-      membership_tier:  form.membership_tier,
-      is_verified:      form.is_verified,
-      is_active:        form.is_active,
-      bio:              form.bio,
-      location:         form.location,
+      full_name:              form.full_name,
+      phone:                  form.phone,
+      membership_tier:        form.membership_tier,
+      is_verified:            form.is_verified,
+      is_active:              form.is_active,
+      bio:                    form.bio,
+      location:               form.location,
+      subscription_end_date:  form.subscription_end_date || null,
     }).eq("id", form.id);
     if (error) { toast.error(error.message); }
     else { toast.success("Profile updated."); onSave(form); }
@@ -175,6 +177,15 @@ function UserEditDrawer({
               <option value="Concierge">Concierge</option>
             </select>
           </DrawerField>
+          {form.membership_tier !== "Basic" && (
+            <DrawerField label="Subscription End Date">
+              <input type="date"
+                aria-label="Subscription end date"
+                value={form.subscription_end_date ? form.subscription_end_date.slice(0, 10) : ""}
+                onChange={e => setForm(f => ({ ...f, subscription_end_date: e.target.value ? new Date(e.target.value).toISOString() : null }))}
+                className={DI} />
+            </DrawerField>
+          )}
 
           {/* Toggles */}
           <div className="grid grid-cols-2 gap-3">
@@ -272,7 +283,7 @@ export default function AdminPage() {
   const loadUsers = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase.from("profiles")
-      .select("id, full_name, email, phone, membership_tier, is_admin, is_verified, is_active, created_at, image_url, location, bio")
+      .select("id, full_name, email, phone, membership_tier, is_admin, is_verified, is_active, created_at, image_url, location, bio, subscription_end_date")
       .order("created_at", { ascending: false }).limit(500);
     if (error) toast.error(error.message);
     else setUsers(data as AdminUser[]);

@@ -32,7 +32,7 @@ export default function BhruguLoader() {
             transition={{ duration: 2, repeat: Infinity }}
             className="text-haldi-500 font-serif text-sm tracking-[0.2em] uppercase font-bold"
           >
-            Consulting Bhrugu...
+            Reading the stars...
           </motion.p>
           <p className="text-stone-600 text-xs">Analyzing Gunas & Nadi Dosha</p>
       </div>

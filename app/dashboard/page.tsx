@@ -27,6 +27,7 @@ import ProfileDetailsPanel from "@/components/ProfileDetailsPanel";
 import { calculateGunaScore } from "@/utils/matchEngine";
 import { notifyInterestSent } from "@/utils/notifications";
 import { useShortlist } from "@/contexts/ShortlistContext";
+import { getCollaboratorPermissions } from "@/utils/collaborator-permissions";
 import { toast } from "sonner";
 
 export default function Dashboard() {
@@ -58,7 +59,8 @@ export default function Dashboard() {
   const [isCollaborator, setIsCollaborator] = useState(false);
   const [viewingAs, setViewingAs] = useState<string | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [roleLabel, setRoleLabel] = useState(""); 
+  const [roleLabel, setRoleLabel] = useState("");
+  const [collaboratorPerms, setCollaboratorPerms] = useState(getCollaboratorPermissions("Parent"));
   
   // --- GLOBAL UNREAD MESSAGES COUNT ---
   const [globalUnreadCount, setGlobalUnreadCount] = useState(0); 
@@ -281,6 +283,7 @@ export default function Dashboard() {
           setViewingAs(collaboration.user_id);
           targetUserId = collaboration.user_id;
           setRoleLabel(`Guardian Mode (${collaboration.role})`);
+          setCollaboratorPerms(getCollaboratorPermissions(collaboration.role));
       } else {
           setViewingAs(user.id);
       }
@@ -330,6 +333,10 @@ export default function Dashboard() {
   // Shortlist toggle — delegates to ShortlistContext (global source of truth).
   // Context handles optimistic update, DB write, and rollback on error.
   const handleShortlist = (profileId: string) => {
+    if (isCollaborator && !collaboratorPerms.shortlist) {
+      toast.error("Your role doesn't allow shortlisting");
+      return;
+    }
     toggleShortlist(profileId);
     // Refresh the shortlist tab data so it stays in sync if the tab is currently open
     if (activeTab === 'shortlist') fetchShortlistOnly();
@@ -337,6 +344,10 @@ export default function Dashboard() {
 
   const handleSendInterest = async (receiverId: string) => {
     if (!currentUser) return;
+    if (isCollaborator && !collaboratorPerms.sendInterest) {
+      toast.error("Your role doesn't allow sending interest");
+      return;
+    }
     const senderId = viewingAs || currentUser.id;
     
     // Optimistic Update

@@ -45,7 +45,7 @@ const TIERS: {
       "Full Ashtakoot Guna Milan report",
       "Unlimited interests",
       "Chat with matches",
-      "Bhrugu Engine deep compatibility",
+      "Vedic Compatibility Engine",
       "Concierge matchmaker",
     ],
   },
@@ -63,7 +63,7 @@ const TIERS: {
       "Full Ashtakoot Guna Milan (all 8 Kutas)",
       "Unlimited interests",
       "Chat with accepted matches",
-      "Bhrugu Engine compatibility report",
+      "Vedic Compatibility report (horoscope matching)",
       "Priority profile placement",
       "Advanced filters (Nakshatra, Gotra, diet, visa)",
       "Read receipts & message timestamps",
@@ -112,8 +112,8 @@ const FAQS = [
     a: "New members get a 7-day free trial of Gold features. No credit card required to start.",
   },
   {
-    q: "What is the Bhrugu Engine?",
-    a: "Pravara's deep-compatibility algorithm — analyzes Ashtakoot across all 8 Kutas, Nadi Dosha exceptions, Mangal Dosha, and cultural alignment beyond the surface Guna score.",
+    q: "What is Vedic Compatibility?",
+    a: "Pravara's deep horoscope-matching engine (Bhrugu Engine) — analyzes Ashtakoot across all 8 Kutas, Nadi Dosha exceptions, Mangal Dosha, and cultural alignment beyond the surface Guna score.",
   },
   {
     q: "How does Concierge matchmaking work?",
@@ -181,12 +181,24 @@ export default function MembershipPage() {
 
     // TODO: Wire Stripe/Razorpay checkout here.
     // For now: update membership_tier directly (dev/demo mode).
+    const now = new Date();
+    const endDate = new Date(now);
+    if (billing === "annual") {
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    } else {
+      endDate.setDate(endDate.getDate() + 30);
+    }
+
+    const updatePayload: Record<string, unknown> = {
+      membership_tier: targetTier,
+      subscription_billing: targetTier === "Basic" ? null : billing,
+      subscription_start_date: targetTier === "Basic" ? null : now.toISOString(),
+      subscription_end_date: targetTier === "Basic" ? null : endDate.toISOString(),
+    };
+
     const { error } = await supabase
       .from("profiles")
-      .update({
-        membership_tier: targetTier,
-        subscription_billing: targetTier === "Basic" ? null : billing,
-      })
+      .update(updatePayload)
       .eq("id", userId);
 
     if (error) {
@@ -294,6 +306,7 @@ export default function MembershipPage() {
           </button>
           <button
             type="button"
+            aria-label="Toggle billing period"
             onClick={() => setBilling(billing === "monthly" ? "annual" : "monthly")}
             className={`relative w-12 h-6 rounded-full transition-colors ${billing === "annual" ? "bg-haldi-500" : "bg-stone-700"}`}
           >
