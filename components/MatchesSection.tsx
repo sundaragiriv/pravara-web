@@ -54,6 +54,20 @@ export default function MatchesSection({
   const [viewMode, setViewMode] = useState<'grid' | 'scroll'>('grid');
   const { isShortlisted, toggle } = useShortlist();
 
+  const sortedMatches = React.useMemo(() => {
+    const arr = [...matches];
+    switch (sortBy) {
+      case 'compatibility':
+        return arr.sort((a, b) => (b.gunaResult?.total ?? b.score) - (a.gunaResult?.total ?? a.score));
+      case 'age: low to high':
+        return arr.sort((a, b) => (a.age ?? 99) - (b.age ?? 99));
+      case 'age: high to low':
+        return arr.sort((a, b) => (b.age ?? 0) - (a.age ?? 0));
+      default:
+        return arr; // 'relevance' / 'newest' — keep server order (score desc)
+    }
+  }, [matches, sortBy]);
+
   // ── Sutradhar loading screen ─────────────────────────────────────────────
   if (isLoading) {
     return (
@@ -79,8 +93,9 @@ export default function MatchesSection({
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="w-1.5 h-1.5 rounded-full bg-haldi-500 animate-bounce"
-              style={{ animationDelay: `${i * 0.18}s` }}
+              className={`w-1.5 h-1.5 rounded-full bg-haldi-500 animate-bounce ${
+                i === 1 ? '[animation-delay:0.18s]' : i === 2 ? '[animation-delay:0.36s]' : ''
+              }`}
             />
           ))}
         </div>
@@ -210,7 +225,7 @@ export default function MatchesSection({
       {/* ── GRID VIEW ───────────────────────────────────────────────── */}
       {viewMode === 'grid' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 pb-10">
-          {matches.map((profile, idx) => (
+          {sortedMatches.map((profile, idx) => (
               <div
                 key={profile.id}
                 onClick={() => onProfileClick?.(profile)}
@@ -237,7 +252,7 @@ export default function MatchesSection({
         <div
           className="overflow-y-auto snap-y snap-mandatory scroll-smooth pb-4 h-[calc(100svh_-_10rem)]"
         >
-          {matches.map((profile, idx) => (
+          {sortedMatches.map((profile, idx) => (
               <div
                 key={profile.id}
                 className="snap-start flex items-center justify-center px-4 py-3 cursor-pointer h-[calc(100svh_-_10rem)]"

@@ -26,8 +26,10 @@ interface MatchCardProps {
 }
 
 export default function MatchCard({ profile, index, isCollaborator = false, onProfileClick, isShortlisted = false, onToggleShortlist }: MatchCardProps) {
-  // Calculate Vedic Gunas (derived from match score)
-  const vedic_gunas = Math.floor((profile.score / 100) * 36);
+  // Use real GunaResult when available, fall back to legacy score conversion
+  const gr = profile.gunaResult;
+  const vedic_gunas = gr ? gr.total : Math.floor((profile.score / 100) * 36);
+  const isSagothra = gr ? gr.sagothra : profile.score === 0;
   const gunaQuality = vedic_gunas >= 27 ? 'Excellent Match' : vedic_gunas >= 18 ? 'Good Match' : 'Fair Match';
 
   return (
@@ -58,34 +60,31 @@ export default function MatchCard({ profile, index, isCollaborator = false, onPr
         )}
         
         {/* Match Percentage Badge */}
-        <div 
+        <div
           className={`absolute top-3 right-3 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5 border shadow-sm transition-all hover:scale-105 cursor-help ${
-            profile.score === 0 ? 'border-red-500/30' :
-            profile.score >= 85 ? 'border-green-500/30' :
-            profile.score >= 70 ? 'border-haldi-500/30' :
+            isSagothra ? 'border-red-500/30' :
+            vedic_gunas >= 27 ? 'border-green-500/30' :
+            vedic_gunas >= 18 ? 'border-haldi-500/30' :
             'border-rose-500/30'
           }`}
           title={
-            profile.score === 0 ? "Same Gothra - Not Compatible" :
-            profile.score >= 85 ? "Excellent Match - High Compatibility" :
-            profile.score >= 70 ? "Very Good Match" :
-            "Good Match"
+            isSagothra ? "Same Gothra - Not Compatible" :
+            vedic_gunas >= 27 ? "Uttama — Excellent Match" :
+            vedic_gunas >= 18 ? "Madhyama — Good Match" :
+            "Alpa — Fair Match"
           }
         >
-          <Heart 
-            size={12} 
-            className={`${
-              profile.score === 0 ? 'text-red-500' :
-              shouldFillHeart(profile.score) ? 'text-pink-500 fill-pink-500' : 'text-pink-500'
-            }`} 
+          <Heart
+            size={12}
+            className={`${isSagothra ? 'text-red-500' : vedic_gunas >= 18 ? 'text-pink-500 fill-pink-500' : 'text-pink-500'}`}
           />
-          <span className={`text-xs font-bold tracking-wide ${getMatchColor(profile.score)}`}>
-            {profile.score}%
+          <span className={`text-xs font-bold tracking-wide ${isSagothra ? 'text-red-400' : vedic_gunas >= 27 ? 'text-emerald-400' : vedic_gunas >= 18 ? 'text-haldi-400' : 'text-stone-400'}`}>
+            {isSagothra ? '✗' : `${vedic_gunas}/36`}
           </span>
         </div>
 
         {/* Sagothra Warning Badge */}
-        {profile.score === 0 && (
+        {isSagothra && (
           <div className="absolute top-14 right-3 bg-red-900/90 border border-red-500 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1 shadow-lg animate-pulse">
             <span>⚠️ Same Gothra</span>
           </div>
@@ -137,10 +136,16 @@ export default function MatchCard({ profile, index, isCollaborator = false, onPr
         <div className="grid grid-cols-2 gap-2">
           <div>
             <div className="flex items-center gap-1 mb-0.5">
-              <p className="text-[10px] text-stone-500 uppercase tracking-wider font-semibold">Vedic Gunas</p>
+              <p className="text-[10px] text-stone-500 uppercase tracking-wider font-semibold">Pravara Match</p>
               <Info size={10} className="text-stone-600 cursor-help" />
             </div>
-            <span className="text-haldi-500 font-bold text-sm">{vedic_gunas}/36</span>
+            <span className={`font-bold text-sm ${
+              isSagothra ? 'text-red-400' :
+              vedic_gunas >= 27 ? 'text-emerald-400' :
+              vedic_gunas >= 18 ? 'text-haldi-400' : 'text-stone-400'
+            }`}>
+              {isSagothra ? 'Sagothra' : `${vedic_gunas}/36`}
+            </span>
           </div>
           <div>
             <p className="text-[10px] text-stone-500 uppercase tracking-wider font-semibold mb-0.5">Profession</p>

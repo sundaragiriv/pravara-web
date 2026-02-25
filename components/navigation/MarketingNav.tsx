@@ -79,7 +79,9 @@ export default function MarketingNav({ isLoggedIn, userAvatar, userName }: Marke
           {isLoggedIn ? (
             <div className="relative" ref={dropdownRef}>
               <button
+                type="button"
                 onClick={() => setDropdownOpen((v) => !v)}
+                aria-label="Open account menu"
                 className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-stone-900/60 border border-stone-800 hover:border-stone-700 transition-all duration-200"
               >
                 {/* Avatar */}
@@ -106,6 +108,7 @@ export default function MarketingNav({ isLoggedIn, userAvatar, userName }: Marke
                   </Link>
                   <div className="border-t border-stone-900" />
                   <button
+                    type="button"
                     onClick={handleSignOut}
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-stone-400 hover:bg-stone-900 hover:text-red-400 transition-colors"
                   >
@@ -119,7 +122,7 @@ export default function MarketingNav({ isLoggedIn, userAvatar, userName }: Marke
             <>
               <div className="hidden md:flex items-center gap-6 text-sm font-medium">
                 <Link
-                  href="/pricing"
+                  href="/membership"
                   className="text-stone-400 hover:text-haldi-400 transition-colors duration-200"
                 >
                   Membership

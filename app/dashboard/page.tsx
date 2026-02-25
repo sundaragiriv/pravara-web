@@ -2,12 +2,11 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import {
-  Sparkles, User, LogOut, Search, Check, X,
-  MessageCircle, Star, ShieldCheck, Users, SlidersHorizontal, ChevronDown, Settings
+  Sparkles, User, Check, X,
+  MessageCircle, Star, ShieldCheck, Users, SlidersHorizontal
 } from "lucide-react";
 
 // --- TYPE IMPORTS ---
@@ -23,9 +22,9 @@ import type {
 // --- COMPONENT IMPORTS ---
 import MatchesSection from "@/components/MatchesSection";
 import Sidebar from "@/components/Sidebar";
-import NotificationBell from "@/components/NotificationBell";
+import DashboardSubNav from "@/components/navigation/DashboardSubNav";
 import ProfileDetailsPanel from "@/components/ProfileDetailsPanel";
-import { calculateMatchScore } from "@/utils/matchEngine";
+import { calculateGunaScore } from "@/utils/matchEngine";
 import { notifyInterestSent } from "@/utils/notifications";
 import { useShortlist } from "@/contexts/ShortlistContext";
 import { toast } from "sonner";
@@ -37,8 +36,8 @@ export default function Dashboard() {
 
   // --- UI STATE ---
   const [activeTab, setActiveTab] = useState<'explorer' | 'requests' | 'connections' | 'shortlist'>('explorer');
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // --- NEW: SELECTED PROFILE STATE (For Slide-Over) ---
   const [selectedProfile, setSelectedProfile] = useState<MatchProfile | null>(null);
@@ -54,9 +53,6 @@ export default function Dashboard() {
   const [matchesLoading, setMatchesLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<{ id: string; email?: string } | null>(null);
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
-  const [userName, setUserName] = useState("User");
-  const [userPhoto, setUserPhoto] = useState<string | null>(null);
-  const [completionPercent, setCompletionPercent] = useState(0); 
   
   // --- GUARDIAN STATE ---
   const [isCollaborator, setIsCollaborator] = useState(false);
@@ -150,9 +146,11 @@ export default function Dashboard() {
           } else if (connection.status === 'rejected') connectionStatus = 'rejected';
         }
 
+        const gunaResult = userProfile ? calculateGunaScore(p, userProfile) : undefined;
         return {
           ...p,
-          score: calculateMatchScore(p, userProfile),
+          score: gunaResult?.legacyScore ?? 0,
+          gunaResult,
           connectionStatus
         };
       });
@@ -292,14 +290,6 @@ export default function Dashboard() {
       
       if (profile) {
           setUserProfile(profile);
-          setUserName(profile.full_name?.split(' ')[0] || "User");
-          setUserPhoto(profile.image_url);
-          
-          if (!isCollaborator) {
-             const fields = [profile.full_name, profile.image_url, profile.bio, profile.location, profile.profession, profile.education, profile.gothra, profile.audio_bio_url];
-             const filled = fields.filter(f => f && f.length > 0).length;
-             setCompletionPercent(Math.round((filled / fields.length) * 100));
-          }
       }
 
       // 3. Matches will be fetched by the debounced filter effect when userProfile is set
@@ -371,164 +361,57 @@ export default function Dashboard() {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-  };
-
   // Server-side filtering is now handled by /api/matches
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-50 font-sans">
       
-      {/* --- HEADER --- */}
-      <nav className="border-b border-stone-900 bg-stone-950/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" aria-label="Pravara Home">
-              <Image
-                src="/logo3.png"
-                alt="Pravara"
-                width={110}
-                height={38}
-                className="object-contain [mix-blend-mode:lighten] hover:brightness-110 transition-all duration-300"
-                priority
-              />
-            </Link>
-            
-            <div className="hidden md:flex bg-stone-900 rounded-full p-1 border border-stone-800 items-center">
-              <button onClick={() => setActiveTab('explorer')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'explorer' ? 'bg-stone-800 text-stone-200 shadow-sm' : 'text-stone-500 hover:text-stone-300'}`}>Explorer</button>
-              {!isCollaborator && (
-                <>
-                    <Link href="/dashboard/requests" className="px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 text-stone-500 hover:text-stone-300">Requests {requests.length > 0 && <span className="bg-haldi-600 text-stone-950 text-[10px] font-bold px-1.5 rounded-full">{requests.length}</span>}</Link>
-                    <Link href="/dashboard/chat" className="px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 text-stone-500 hover:text-stone-300">
-                      Chat
-                      {globalUnreadCount > 0 && (
-                        <span className="bg-haldi-500 text-black text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center animate-pulse">
-                          {globalUnreadCount}
-                        </span>
-                      )}
-                    </Link>
-                </>
-              )}
-              <Link href="/dashboard/shortlist" className="ml-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 text-stone-500 hover:text-stone-300">Shortlist {shortlistCount > 0 && <span className="bg-haldi-600 text-stone-950 text-[10px] font-bold px-1.5 rounded-full">{shortlistCount}</span>}</Link>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-             {/* Global Search Bar */}
-             <div className="relative hidden lg:block">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-500" />
-                <input 
-                   type="text" 
-                   placeholder="Search profiles, locations..."
-                   value={filters.searchTerm}
-                   onChange={(e) => setFilters({...filters, searchTerm: e.target.value})}
-                   className="bg-stone-900 border border-stone-800 rounded-full py-2 pl-10 pr-4 text-sm text-stone-300 w-64 focus:border-haldi-500/50 focus:outline-none transition-colors"
-                />
-             </div>
-
-             <NotificationBell />
-             
-             {/* User Menu with Dropdown */}
-             <div className="relative">
-                <button 
-                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                   className="flex items-center gap-3 hover:bg-stone-900/50 rounded-full pr-3 transition-colors group"
-                >
-                   {/* Avatar with Circular Progress Ring */}
-                   <div className="relative">
-                      <svg className="w-11 h-11 -rotate-90">
-                         <circle cx="22" cy="22" r="20" fill="none" stroke="#292524" strokeWidth="2.5"/>
-                         <circle 
-                            cx="22" cy="22" r="20" 
-                            fill="none" 
-                            stroke="#d97706" 
-                            strokeWidth="2.5"
-                            strokeDasharray={`${completionPercent * 1.256} 125.6`}
-                            strokeLinecap="round"
-                            className="transition-all duration-500"
-                         />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                         <div className="w-8 h-8 rounded-full bg-haldi-700 flex items-center justify-center text-stone-950 font-bold overflow-hidden border border-haldi-600">
-                            {userPhoto ? <img src={userPhoto} alt="Me" className="w-full h-full object-cover" /> : <span>{userName[0]}</span>}
-                         </div>
-                      </div>
-                   </div>
-                   
-                   {/* Name and Greeting */}
-                   <div className="text-left hidden sm:block">
-                      <div className="font-serif text-stone-200 leading-tight">
-                         <span className="text-stone-400">Namaste, </span>
-                         <span className="text-haldi-500 font-bold">{userName}</span>
-                      </div>
-                      {currentUser?.id && (
-                         <div className="text-[10px] text-stone-600 font-mono mt-0.5">
-                            ID: PRV-{currentUser.id.slice(0, 4).toUpperCase()}
-                         </div>
-                      )}
-                   </div>
-                   <ChevronDown className="w-4 h-4 text-stone-500 group-hover:text-stone-300 transition-colors hidden sm:block" />
-                </button>
-
-                {/* Dropdown Menu */}
-                {dropdownOpen && (
-                   <div className="absolute right-0 mt-2 w-56 bg-stone-900 border border-stone-800 rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-50">
-                      <div className="p-3 border-b border-stone-800 bg-stone-950/50">
-                         <div className="text-xs text-stone-500 uppercase tracking-wider">Profile Strength</div>
-                         <div className="flex items-center gap-2 mt-1">
-                            <div className="flex-1 h-1.5 bg-stone-800 rounded-full overflow-hidden">
-                               <div className="h-full bg-haldi-600 rounded-full transition-all duration-1000" style={{ width: `${completionPercent}%` }} />
-                            </div>
-                            <span className="text-xs font-bold text-haldi-500">{completionPercent}%</span>
-                         </div>
-                      </div>
-                      <Link href="/dashboard/edit-profile" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-stone-800 transition-colors text-stone-300 hover:text-white">
-                         <User className="w-4 h-4" /> <span className="text-sm font-medium">Edit Profile</span>
-                      </Link>
-                      <Link href="/dashboard/edit-profile" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-stone-800 transition-colors text-stone-300 hover:text-white">
-                         <SlidersHorizontal className="w-4 h-4" /> <span className="text-sm font-medium">Partner Preferences</span>
-                      </Link>
-                      <div className="border-t border-stone-800 my-1"></div>
-                      <Link href="/settings" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-stone-800 transition-colors text-stone-300 hover:text-white">
-                         <Settings className="w-4 h-4" /> <span className="text-sm font-medium">Account Settings</span>
-                      </Link>
-                      <a href="#" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-stone-800 transition-colors text-stone-300 hover:text-white">
-                         <ShieldCheck className="w-4 h-4" /> <span className="text-sm font-medium">Help Center</span>
-                      </a>
-                      <div className="border-t border-stone-800">
-                         <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 hover:bg-red-950/30 transition-colors text-red-400 hover:text-red-300 w-full text-left">
-                            <LogOut className="w-4 h-4" /> <span className="text-sm font-medium">Sign Out</span>
-                         </button>
-                      </div>
-                   </div>
-                )}
-             </div>
-          </div>
-        </div>
-      </nav>
+      {/* --- SHARED NAVBAR --- */}
+      <DashboardSubNav
+        showDashboardNav
+        activeSection="explore"
+        searchValue={filters.searchTerm}
+        onSearchChange={(v) => setFilters(f => ({ ...f, searchTerm: v }))}
+        requestsBadge={requests.length}
+        chatBadge={globalUnreadCount}
+        shortlistBadge={shortlistCount}
+      />
 
       <main className="container mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
-        
+
         {/* --- SIDEBAR --- */}
-        <div className="w-full lg:w-80 flex-none">
-          {activeTab === 'explorer' && (
-            <Sidebar
-              isOpen={mobileFiltersOpen}
-              onClose={() => setMobileFiltersOpen(false)}
-              filters={filters}
-              setFilters={setFilters}
-              updateFilter={updateFilter}
-              toggleFilter={toggleFilter}
-              resetFilters={resetFilters}
-              matchCount={matches.length}
-            />
-          )}
-        </div>
+        {activeTab === 'explorer' && (
+          <div className={`flex-none transition-all duration-300 ${sidebarCollapsed ? 'lg:w-10' : 'w-full lg:w-72'}`}>
+            {/* Collapse toggle (desktop only) */}
+            <div className="hidden lg:flex justify-end mb-2">
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(c => !c)}
+                title={sidebarCollapsed ? 'Show filters' : 'Hide filters'}
+                className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-haldi-400 transition-colors"
+              >
+                <SlidersHorizontal size={13} />
+                {!sidebarCollapsed && <span>Hide Filters</span>}
+              </button>
+            </div>
+
+            <div className={`${sidebarCollapsed ? 'hidden lg:hidden' : 'block'}`}>
+              <Sidebar
+                isOpen={mobileFiltersOpen}
+                onClose={() => setMobileFiltersOpen(false)}
+                filters={filters}
+                setFilters={setFilters}
+                updateFilter={updateFilter}
+                toggleFilter={toggleFilter}
+                resetFilters={resetFilters}
+                matchCount={matches.length}
+              />
+            </div>
+          </div>
+        )}
 
         {/* --- MAIN CONTENT --- */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto min-w-0">
           
             {/* 1. EXPLORER TAB (Using Smart Matches Section) */}
             {activeTab === 'explorer' && (
@@ -547,8 +430,16 @@ export default function Dashboard() {
                 {requests.length === 0 && <div className="text-center py-10 text-stone-500 italic">No pending requests.</div>}
                 {requests.map((req) => (
                    <div key={req.id} className="flex items-center justify-between p-4 bg-stone-900 border border-stone-800 rounded-2xl">
-                      <div className="flex items-center gap-4"><div className="w-16 h-16 rounded-xl bg-stone-800 overflow-hidden">{req.sender.image_url ? <img src={req.sender.image_url} className="w-full h-full object-cover" /> : <User className="w-8 h-8 m-auto text-stone-600"/>}</div><div><h4 className="text-lg font-serif text-stone-100">{req.sender.full_name}</h4><p className="text-sm text-stone-500">{req.sender.profession}</p></div></div>
-                      <div className="flex gap-2"><button onClick={() => handleResponse(req.id, 'rejected')} className="p-3 rounded-xl bg-stone-950 border border-stone-800 text-stone-400 hover:text-red-400"><X className="w-5 h-5" /></button><button onClick={() => handleResponse(req.id, 'accepted')} className="px-6 py-3 rounded-xl bg-haldi-600 hover:bg-haldi-500 text-stone-950 font-bold flex items-center gap-2"><Check className="w-4 h-4" /> Accept</button></div>
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-xl bg-stone-800 overflow-hidden">
+                          {req.sender.image_url ? <img src={req.sender.image_url} alt={req.sender.full_name} className="w-full h-full object-cover" /> : <User className="w-8 h-8 m-auto text-stone-600"/>}
+                        </div>
+                        <div><h4 className="text-lg font-serif text-stone-100">{req.sender.full_name}</h4><p className="text-sm text-stone-500">{req.sender.profession}</p></div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button type="button" aria-label="Decline request" onClick={() => handleResponse(req.id, 'rejected')} className="p-3 rounded-xl bg-stone-950 border border-stone-800 text-stone-400 hover:text-red-400"><X className="w-5 h-5" /></button>
+                        <button type="button" onClick={() => handleResponse(req.id, 'accepted')} className="px-6 py-3 rounded-xl bg-haldi-600 hover:bg-haldi-500 text-stone-950 font-bold flex items-center gap-2"><Check className="w-4 h-4" /> Accept</button>
+                      </div>
                    </div>
                 ))}
              </div>
@@ -559,7 +450,14 @@ export default function Dashboard() {
              <div className="grid gap-4">
                 {connections.map((person) => (
                    <div key={person.id} className="p-6 bg-gradient-to-r from-stone-900 to-stone-950 border border-haldi-900/40 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
-                      <div className="flex items-center gap-4 w-full"><div className="w-20 h-20 rounded-full border-2 border-haldi-600/30 p-1"><div className="w-full h-full rounded-full overflow-hidden bg-stone-800">{person.image_url ? <img src={person.image_url} className="w-full h-full object-cover" /> : <User className="w-8 h-8 m-auto text-stone-600"/>}</div></div><div><h3 className="text-xl font-serif text-stone-100">{person.full_name}</h3><div className="flex items-center gap-2 text-haldi-500 text-sm font-bold mt-1"><Sparkles className="w-3 h-3" /> Connected</div></div></div>
+                      <div className="flex items-center gap-4 w-full">
+                        <div className="w-20 h-20 rounded-full border-2 border-haldi-600/30 p-1" aria-hidden="true">
+                          <div className="w-full h-full rounded-full overflow-hidden bg-stone-800">
+                            {person.image_url ? <img src={person.image_url} alt="" className="w-full h-full object-cover" /> : <User className="w-8 h-8 m-auto text-stone-600"/>}
+                          </div>
+                        </div>
+                        <div><h3 className="text-xl font-serif text-stone-100">{person.full_name}</h3><div className="flex items-center gap-2 text-haldi-500 text-sm font-bold mt-1"><Sparkles className="w-3 h-3" /> Connected</div></div>
+                      </div>
                       <Link href="/chat" className="flex-1 md:flex-none py-3 px-5 rounded-xl bg-haldi-600 hover:bg-haldi-500 text-stone-950 font-bold flex items-center justify-center gap-2"><MessageCircle className="w-4 h-4" /> Chat</Link>
                    </div>
                 ))}
@@ -577,12 +475,12 @@ export default function Dashboard() {
                     return (
                         <div key={item.id} className={`relative bg-stone-900 border rounded-2xl overflow-hidden shadow-xl ${isFamilyRec ? 'border-haldi-500/50 shadow-haldi-900/10' : 'border-stone-800'}`}>
                             {isFamilyRec && <div className="bg-haldi-900/20 p-3 border-b border-haldi-500/20 flex items-center gap-3"><Users className="w-3 h-3 text-haldi-500" /><span className="text-haldi-500 text-xs font-bold uppercase">Family Rec</span></div>}
-                            <div className="h-64 bg-stone-800 relative">{match.image_url ? <img src={match.image_url} className="w-full h-full object-cover opacity-90" /> : <User className="w-20 h-20 m-auto text-stone-700 absolute inset-0" />}
-                                <button onClick={() => handleRemoveShortlist(item.id)} className="absolute top-2 right-2 p-2 bg-stone-950/50 hover:bg-red-900 text-white rounded-full"><X className="w-4 h-4" /></button>
+                            <div className="h-64 bg-stone-800 relative">
+                              {match.image_url ? <img src={match.image_url} alt="" className="w-full h-full object-cover opacity-90" /> : <User className="w-20 h-20 m-auto text-stone-700 absolute inset-0" aria-hidden="true" />}
+                              <button type="button" aria-label={`Remove ${match.full_name} from shortlist`} onClick={() => handleRemoveShortlist(item.id)} className="absolute top-2 right-2 p-2 bg-stone-950/50 hover:bg-red-900 text-white rounded-full"><X className="w-4 h-4" /></button>
                             </div>
                             <div className="p-5"><h3 className="text-xl font-serif text-stone-100">{match.full_name}</h3>
-                            {/* Updated to open Slide-Over instead of redirecting */}
-                            <button onClick={() => setSelectedProfile({ ...match, score: 0 })} className="block mt-4 w-full text-center py-3 rounded-xl bg-stone-100 text-stone-950 font-bold text-sm">View Profile</button>
+                            <button type="button" onClick={() => setSelectedProfile({ ...match, score: 0 })} className="block mt-4 w-full text-center py-3 rounded-xl bg-stone-100 text-stone-950 font-bold text-sm">View Profile</button>
                             </div>
                         </div>
                     );
@@ -598,7 +496,8 @@ export default function Dashboard() {
         isOpen={!!selectedProfile}
         onClose={() => setSelectedProfile(null)}
         profile={selectedProfile}
-        isPremium={false}
+        gunaResult={selectedProfile?.gunaResult}
+        isPremium={userProfile?.membership_tier === 'Gold' || userProfile?.membership_tier === 'Concierge'}
         onConnect={() => {
           if (selectedProfile) {
             handleSendInterest(selectedProfile.id);

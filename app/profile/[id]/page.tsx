@@ -116,7 +116,7 @@ export default function ProfileDetailsPage() {
 
     return (
         <div className="min-h-screen bg-stone-950 pb-20 font-sans">
-            <DashboardSubNav backLabel="Back to Sutradhar" backHref="/dashboard" />
+            <DashboardSubNav backLabel="Back to Dashboard" backHref="/dashboard" />
 
             {/* ── HERO ─────────────────────────────────────────────────────── */}
             <div className="relative border-b border-stone-800 overflow-hidden">

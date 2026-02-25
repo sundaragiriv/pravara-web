@@ -50,9 +50,9 @@ export default function Footer() {
         <div className="space-y-3">
           <h4 className="text-stone-100 font-bold uppercase tracking-widest text-xs">Company</h4>
           <ul className="space-y-2 text-stone-500">
-            <li><Link href="/about#sutradhar" className="hover:text-haldi-500 transition-colors">About Sutradhar</Link></li>
+            <li><Link href="/about" className="hover:text-haldi-500 transition-colors">About Pravara</Link></li>
             <li><Link href="/about#values" className="hover:text-haldi-500 transition-colors">Our Values</Link></li>
-            <li><Link href="/about#contact" className="hover:text-haldi-500 transition-colors">Contact Us</Link></li>
+            <li><Link href="/membership" className="hover:text-haldi-500 transition-colors">Membership</Link></li>
           </ul>
         </div>
 
@@ -69,7 +69,7 @@ export default function Footer() {
         {/* Connect Column */}
         <div className="space-y-3">
           <h4 className="text-stone-100 font-bold uppercase tracking-widest text-xs">Connect</h4>
-          <Link href="/faq" className="block text-stone-500 hover:text-haldi-500 transition-colors">FAQ</Link>
+          <Link href="/support" className="block text-stone-500 hover:text-haldi-500 transition-colors">Support Center</Link>
           {/* Social icons — hrefs are placeholders until accounts are created */}
           <div className="flex items-center gap-4 pt-1">
             <a href="#" aria-label="Facebook" className="text-stone-600 hover:text-[#1877F2] transition-colors">

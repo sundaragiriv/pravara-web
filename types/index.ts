@@ -46,6 +46,29 @@ export interface Profile {
   audio_bio_url: string | null;
   video_bio_url: string | null;
 
+  // Location (added with add_location_and_partner_fields migration)
+  country?: string | null;
+  state?: string | null;
+
+  // Partner Preferences (extended)
+  partner_min_age?: number | null;
+  partner_max_age?: number | null;
+  partner_diet?: string | null;
+  partner_marital_status?: string | null;
+  partner_location_pref?: string | null;
+  partner_education_min?: string | null;
+  partner_notes?: string | null;
+
+  // Media
+  voice_intro_url?: string | null;
+  video_intro_url?: string | null;
+
+  // Membership
+  membership_tier?: 'Basic' | 'Gold' | 'Concierge' | null;
+  subscription_start_date?: string | null;
+  subscription_end_date?: string | null;
+  subscription_billing?: 'monthly' | 'annual' | null;
+
   // Verification
   is_verified?: boolean;
   is_visible?: boolean;
@@ -117,6 +140,8 @@ export interface ApiResponse<T> {
 // Match types for dashboard
 export interface MatchProfile extends Profile {
   score: number;
+  /** Full Ashtakoot result — available when calculateGunaScore has been run */
+  gunaResult?: import('@/utils/matchEngine').GunaResult;
   connectionStatus?: 'none' | 'sent' | 'received' | 'connected' | 'rejected';
   isShortlisted?: boolean;
 }

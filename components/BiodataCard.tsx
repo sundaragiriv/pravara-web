@@ -29,12 +29,23 @@ function CornerOrnament({ className }: { className?: string }) {
 }
 
 // ── Vedic Guna label ───────────────────────────────────────────────────────
-function gunaInfo(score: number) {
+function gunaInfo(profile: BiodataCardProps['profile']) {
+  const gr = profile.gunaResult;
+  if (gr?.sagothra)    return { gunas: 0,          label: 'Sagothra', textClass: 'text-red-400',    badgeBorder: 'border-red-500'  };
+  if (gr?.nadiDosha)   return { gunas: gr.total,   label: 'Nadi ⚠',  textClass: 'text-orange-400', badgeBorder: 'border-orange-500' };
+  if (gr)              {
+    const { total, label } = gr;
+    if (total >= 27) return { gunas: total, label: 'Uttama',   textClass: 'text-emerald-400', badgeBorder: 'border-gold'    };
+    if (total >= 18) return { gunas: total, label: 'Madhyama', textClass: 'text-haldi-300',   badgeBorder: 'border-gold'    };
+    return                   { gunas: total, label: 'Alpa',     textClass: 'text-stone-400',   badgeBorder: 'border-gold/60' };
+  }
+  // Legacy fallback (no gunaResult yet)
+  const score = profile.score;
   if (score === 0) return { gunas: 0, label: 'Sagothra', textClass: 'text-red-400', badgeBorder: 'border-red-500' };
   const gunas = Math.floor((score / 100) * 36);
-  if (gunas >= 27) return { gunas, label: 'Uttama',   textClass: 'text-emerald-400', badgeBorder: 'border-gold' };
-  if (gunas >= 18) return { gunas, label: 'Madhyama', textClass: 'text-haldi-300',   badgeBorder: 'border-gold' };
-  return             { gunas, label: 'Alpa',     textClass: 'text-stone-400',   badgeBorder: 'border-gold/60' };
+  if (gunas >= 27) return { gunas, label: 'Uttama',   textClass: 'text-emerald-400', badgeBorder: 'border-gold'    };
+  if (gunas >= 18) return { gunas, label: 'Madhyama', textClass: 'text-haldi-300',   badgeBorder: 'border-gold'    };
+  return                   { gunas, label: 'Alpa',     textClass: 'text-stone-400',   badgeBorder: 'border-gold/60' };
 }
 
 export default function BiodataCard({
@@ -46,10 +57,11 @@ export default function BiodataCard({
   onSendInterest,
   scrollMode = false,
 }: BiodataCardProps) {
-  const { gunas, label: gunaLabel, textClass: gunaTextClass, badgeBorder } = gunaInfo(profile.score);
+  const { gunas, label: gunaLabel, textClass: gunaTextClass, badgeBorder } = gunaInfo(profile);
+  const gr = profile.gunaResult;
 
   const dataFields = [
-    { label: 'Vedic Gunas', value: `${gunas}/36 — ${gunaLabel}`, textClass: gunaTextClass },
+    { label: 'Pravara Match', value: `${gunas}/36 — ${gunaLabel}`, textClass: gunaTextClass },
     { label: 'Profession',  value: profile.profession,  icon: <Briefcase size={9} /> },
     { label: 'Education',   value: profile.education,   icon: <GraduationCap size={9} /> },
     { label: 'Diet',        value: profile.diet,        icon: <Utensils size={9} /> },
@@ -110,11 +122,11 @@ export default function BiodataCard({
         <div className={`absolute top-3 right-3 z-20 w-[52px] h-[52px] rounded-full flex flex-col
                          items-center justify-center bg-stone-900/95 border-2 ${badgeBorder}
                          shadow-[0_0_14px_rgba(0,0,0,0.6)]`}>
-          <span className={`text-[15px] font-bold leading-none ${profile.score === 0 ? 'text-red-400' : 'text-haldi-300'}`}>
-            {profile.score === 0 ? '✗' : profile.score}
+          <span className={`text-[15px] font-bold leading-none ${gunaTextClass}`}>
+            {(gr?.sagothra || gunas === 0) ? '✗' : gunas}
           </span>
           <span className="text-[8px] leading-none mt-0.5 uppercase tracking-wide text-stone-400">
-            {profile.score === 0 ? 'sagoth' : 'gunas'}
+            {gr?.sagothra ? 'sagoth' : '/36'}
           </span>
         </div>
 
@@ -156,6 +168,15 @@ export default function BiodataCard({
           <span className="text-[10px] text-stone-600">Vedic details not yet filled</span>
         )}
       </div>
+
+      {/* ── DOSHA FLAGS ───────────────────────────────────────────── */}
+      {gr && (gr.nadiDosha || gr.bhakootDosha || gr.ganaDosha) && (
+        <div className="relative z-20 flex-shrink-0 flex flex-wrap gap-1 px-4 py-1.5 border-b border-gold/10">
+          {gr.nadiDosha    && <span className="px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-bold rounded bg-orange-900/30 border border-orange-600/40 text-orange-300">⚠ Nadi Dosha</span>}
+          {gr.bhakootDosha && <span className="px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-bold rounded bg-red-900/25 border border-red-600/35 text-red-300">⚠ Bhakoot</span>}
+          {gr.ganaDosha    && <span className="px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-bold rounded bg-yellow-900/25 border border-yellow-600/35 text-yellow-300">⚠ Gana</span>}
+        </div>
+      )}
 
       {/* ── BIODATA GRID ──────────────────────────────────────────── */}
       <div className="relative z-20 flex-grow px-4 py-3 grid grid-cols-2 gap-x-4 gap-y-2.5 content-start">

@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Heart, MessageCircle, MapPin, Briefcase,
-  Star, ExternalLink, Clock, GraduationCap,
+  Star, ExternalLink, Clock, GraduationCap, AlertTriangle,
 } from 'lucide-react';
 import { useShortlist } from '@/contexts/ShortlistContext';
+import type { GunaResult } from '@/utils/matchEngine';
 
 interface ProfileDetailsPanelProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface ProfileDetailsPanelProps {
   profile: any;
   onConnect?: () => void;
   isPremium?: boolean;
+  gunaResult?: GunaResult;
 }
 
 // ── Corner ornament (same as BiodataCard) ─────────────────────────────────
@@ -41,6 +43,7 @@ export default function ProfileDetailsPanel({
   profile,
   onConnect,
   isPremium = false,
+  gunaResult,
 }: ProfileDetailsPanelProps) {
   const { isShortlisted, toggle } = useShortlist();
   const shortlisted = profile ? isShortlisted(profile.id) : false;
@@ -56,8 +59,19 @@ export default function ProfileDetailsPanel({
   const isPending   = connectionStatus === 'sent' || connectionStatus === 'pending';
   const isConnected = connectionStatus === 'connected';
 
-  const score = profile.matchPercentage ?? profile.score ?? 0;
-  const { gunas, label: gunaLabel, textClass: gunaTextClass, barClass: gunaBarClass, badgeBorder } = gunaInfo(score);
+  // Prefer attached gunaResult; fall back to legacy score conversion
+  const gr = gunaResult ?? profile.gunaResult;
+  const score = gr ? gr.total : (profile.matchPercentage ?? profile.score ?? 0);
+  const { gunas, label: gunaLabel, textClass: gunaTextClass, barClass: gunaBarClass, badgeBorder } = gr
+    ? (() => {
+        const g = gr.total;
+        if (gr.sagothra)  return { gunas: 0, label: 'Sagothra', textClass: 'text-red-400',    barClass: 'from-red-600 to-red-400',             badgeBorder: 'border-red-500'    };
+        if (gr.nadiDosha) return { gunas: g, label: 'Nadi ⚠',   textClass: 'text-orange-400', barClass: 'from-orange-600 to-orange-400',        badgeBorder: 'border-orange-500' };
+        if (g >= 27)      return { gunas: g, label: 'Uttama',   textClass: 'text-emerald-400', barClass: 'from-emerald-600 to-emerald-400',     badgeBorder: 'border-gold'       };
+        if (g >= 18)      return { gunas: g, label: 'Madhyama', textClass: 'text-haldi-300',   barClass: 'from-haldi-600 to-haldi-400',         badgeBorder: 'border-gold'       };
+        return                   { gunas: g, label: 'Alpa',     textClass: 'text-stone-400',   barClass: 'from-stone-600 to-stone-500',         badgeBorder: 'border-gold/60'    };
+      })()
+    : gunaInfo(score);
 
   const displayName = profile.full_name || profile.name || 'Unknown';
   const gothra      = profile.gothra || profile.community;
@@ -169,11 +183,11 @@ export default function ProfileDetailsPanel({
                   <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full
                                    flex flex-col items-center justify-center
                                    bg-stone-950 border-2 ${badgeBorder} shadow-lg shadow-black/60`}>
-                    <span className={`text-[13px] font-bold leading-none ${score === 0 ? 'text-red-400' : 'text-haldi-300'}`}>
-                      {score === 0 ? '✗' : score}
+                    <span className={`text-[13px] font-bold leading-none ${gunaTextClass}`}>
+                      {(gr?.sagothra || gunas === 0) ? '✗' : gunas}
                     </span>
                     <span className="text-[7px] leading-none mt-0.5 uppercase tracking-wide text-stone-400">
-                      {score === 0 ? 'sagoth' : 'gunas'}
+                      {gr?.sagothra ? 'sagoth' : gr ? '/36' : 'gunas'}
                     </span>
                   </div>
                 </div>
@@ -257,16 +271,51 @@ export default function ProfileDetailsPanel({
                 </div>
               )}
 
-              {/* ── BHRUGU COMPATIBILITY ───────────────────────────────── */}
-              <div className="flex-shrink-0 px-4 py-3 rounded-xl border border-gold/20 bg-gold/[0.03]">
-                <div className="flex items-center justify-between mb-2">
+              {/* ── PARTNER PREFERENCES SUMMARY ────────────────────────── */}
+              {(profile.partner_min_age || profile.partner_max_age || profile.partner_diet || profile.partner_marital_status || profile.partner_location_pref) && (
+                <div className="flex-shrink-0 px-4 py-2.5 rounded-lg border border-stone-700/60 bg-stone-900/30">
+                  <p className="text-[8.5px] uppercase tracking-[0.13em] font-semibold mb-1.5 text-stone-500">
+                    Looking For
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(profile.partner_min_age || profile.partner_max_age) && (
+                      <span className="px-2 py-0.5 text-[10px] rounded bg-stone-800 border border-stone-700 text-stone-300">
+                        {profile.partner_min_age ?? 18}–{profile.partner_max_age ?? 60} yrs
+                      </span>
+                    )}
+                    {profile.partner_diet && profile.partner_diet !== 'No Preference' && (
+                      <span className="px-2 py-0.5 text-[10px] rounded bg-stone-800 border border-stone-700 text-stone-300">
+                        {profile.partner_diet}
+                      </span>
+                    )}
+                    {profile.partner_marital_status && profile.partner_marital_status !== 'No Preference' && (
+                      <span className="px-2 py-0.5 text-[10px] rounded bg-stone-800 border border-stone-700 text-stone-300">
+                        {profile.partner_marital_status}
+                      </span>
+                    )}
+                    {profile.partner_location_pref && (
+                      <span className="px-2 py-0.5 text-[10px] rounded bg-stone-800 border border-stone-700 text-stone-300">
+                        {profile.partner_location_pref}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ── PRAVARA COMPATIBILITY ──────────────────────────────── */}
+              <div className="flex-shrink-0 px-4 py-3 rounded-xl border border-gold/20 bg-gold/[0.03] space-y-2">
+
+                {/* Header */}
+                <div className="flex items-center justify-between">
                   <span className="text-[9px] uppercase tracking-[0.15em] font-bold text-haldi-500">
-                    Bhrugu Compatibility
+                    Pravara Compatibility
                   </span>
                   <span className={`text-xs font-bold ${gunaTextClass}`}>
                     {gunas}/36 · {gunaLabel}
                   </span>
                 </div>
+
+                {/* Total bar */}
                 <div className="h-1.5 rounded-full overflow-hidden bg-stone-800">
                   <motion.div
                     className={`h-full rounded-full bg-gradient-to-r ${gunaBarClass}`}
@@ -275,9 +324,62 @@ export default function ProfileDetailsPanel({
                     transition={{ duration: 0.9, delay: 0.2, ease: 'easeOut' }}
                   />
                 </div>
-                {!isPremium && (
-                  <p className="text-[10px] mt-1.5 text-stone-600">
-                    Upgrade for detailed Mind · Nadi · Bhakoot breakdown →
+
+                {/* Smart summary line */}
+                {gr?.summaryLine && (
+                  <p className={`text-[10px] leading-relaxed ${
+                    gr.sagothra || gr.nadiDosha ? 'text-orange-400' : 'text-stone-400'
+                  }`}>
+                    {gr.summaryLine}
+                  </p>
+                )}
+
+                {/* Dosha warnings */}
+                {gr && (gr.nadiDosha || gr.bhakootDosha || gr.ganaDosha) && (
+                  <div className="flex flex-wrap gap-1 pt-0.5">
+                    {gr.nadiDosha    && <span className="flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-bold rounded bg-orange-900/30 border border-orange-600/40 text-orange-300"><AlertTriangle size={8}/> Nadi Dosha</span>}
+                    {gr.bhakootDosha && <span className="flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-bold rounded bg-red-900/25 border border-red-600/35 text-red-300"><AlertTriangle size={8}/> Bhakoot</span>}
+                    {gr.ganaDosha    && <span className="flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-bold rounded bg-yellow-900/25 border border-yellow-600/35 text-yellow-300"><AlertTriangle size={8}/> Gana</span>}
+                  </div>
+                )}
+
+                {/* Per-Kuta mini bars — shown when gunaResult is available */}
+                {gr && !gr.sagothra && (
+                  <div className="pt-1 grid grid-cols-2 gap-x-4 gap-y-1.5">
+                    {(
+                      [
+                        { key: 'nadi',    label: 'Nadi',    s: gr.breakdown.nadi    },
+                        { key: 'gana',    label: 'Gana',    s: gr.breakdown.gana    },
+                        { key: 'bhakoot', label: 'Bhakoot', s: gr.breakdown.bhakoot },
+                        { key: 'yoni',    label: 'Yoni',    s: gr.breakdown.yoni    },
+                        { key: 'graha',   label: 'Graha',   s: gr.breakdown.graha   },
+                        { key: 'tara',    label: 'Tara',    s: gr.breakdown.tara    },
+                      ] as Array<{ key: string; label: string; s: { score: number; max: number } }>
+                    ).map(({ key, label, s }) => (
+                      <div key={key} className="min-w-0">
+                        <div className="flex justify-between mb-0.5">
+                          <span className="text-[8px] uppercase tracking-wider text-stone-500">{label}</span>
+                          <span className="text-[8px] text-stone-400">{s.score}/{s.max}</span>
+                        </div>
+                        <div className="h-1 rounded-full overflow-hidden bg-stone-800">
+                          <motion.div
+                            className={`h-full rounded-full ${
+                              s.score === 0 ? 'bg-red-500' : s.score >= s.max * 0.75 ? 'bg-emerald-500' : 'bg-haldi-500'
+                            }`}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(s.score / s.max) * 100}%` }}
+                            transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* No gunaResult yet — upsell to complete Vedic details */}
+                {!gr && (
+                  <p className="text-[10px] mt-0.5 text-stone-600">
+                    Add Nakshatra & Gothra to unlock full Ashtakoot breakdown →
                   </p>
                 )}
               </div>
