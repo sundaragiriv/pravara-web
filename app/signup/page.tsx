@@ -103,7 +103,7 @@ export default function SignupPage() {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/onboarding` },
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding` },
       });
       if (authError) throw authError;
       if (!authData.user) throw new Error("No user created");
@@ -299,11 +299,11 @@ export default function SignupPage() {
             <p className="text-center text-stone-500 text-[11px] leading-relaxed px-1">
               By clicking &ldquo;Begin My Journey with Narada AI&rdquo;, you confirm you are 18 years
               or older and agree to our{" "}
-              <Link href="/terms" className="text-haldi-600 hover:text-haldi-400 underline underline-offset-2 transition-colors">
+              <Link href="/legal/terms" className="text-haldi-600 hover:text-haldi-400 underline underline-offset-2 transition-colors">
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link href="/privacy" className="text-haldi-600 hover:text-haldi-400 underline underline-offset-2 transition-colors">
+              <Link href="/legal/privacy" className="text-haldi-600 hover:text-haldi-400 underline underline-offset-2 transition-colors">
                 Privacy Policy
               </Link>
               . Pravara may use your contact information for account and service notifications.
