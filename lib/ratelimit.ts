@@ -52,6 +52,7 @@ export const RATE_LIMITS = {
   biographer: { key: "biographer", requests: 10, window: "1 m" },
   sutradhar: { key: "sutradhar", requests: 20, window: "1 m" },
   matches: { key: "matches", requests: 60, window: "1 m" },
+  support: { key: "support", requests: 5, window: "10 m" },
 } satisfies Record<string, RateLimitPreset>;
 
 export function getClientIP(request: Request): string {

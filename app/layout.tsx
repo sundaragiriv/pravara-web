@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import { Toaster } from "sonner";
 
 import SutradharWidget from "@/components/SutradharWidget";
+import { getSiteUrl } from "@/lib/env";
 
 import "./globals.css";
 import { Providers } from "./providers";
@@ -11,9 +12,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://pravara.com"),
+  metadataBase: new URL(getSiteUrl()),
   title: "Pravara | Modern Heritage Matrimony",
-  description: "AI-Powered Vedic Matrimony for the Brahmin Community. Join 500 founding members.",
+  description: "A modern matrimony platform rooted in heritage, compatibility, and intentional matchmaking.",
   icons: {
     icon: "/logo3.png",
     apple: "/logo3.png",
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Pravara - Modern Heritage Matrimony",
-    description: "AI-Powered Vedic Matrimony for the Brahmin Community",
+    description: "A modern matrimony platform rooted in heritage, compatibility, and intentional matchmaking.",
     images: [{ url: "/logo3.png", width: 480, height: 200 }],
     type: "website",
   },

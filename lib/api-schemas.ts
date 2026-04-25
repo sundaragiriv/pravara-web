@@ -28,7 +28,16 @@ export const sutradharHintRequestSchema = z.object({
   partnerProfile: partnerProfileSchema.default({}),
 });
 
+export const supportRequestSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  email: z.email().trim().max(160),
+  subject: z.string().trim().min(1).max(120),
+  message: z.string().trim().min(10).max(5_000),
+  tier: z.enum(["Basic", "Gold", "Concierge"]),
+});
+
 export type BiographerMessage = z.infer<typeof biographerMessageSchema>;
+export type SupportRequest = z.infer<typeof supportRequestSchema>;
 
 export function toOpenAIHistory(messages: BiographerMessage[]) {
   return messages.map((message) => ({

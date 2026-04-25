@@ -74,10 +74,10 @@ export default async function TermsPage() {
               <h2 className="text-xl font-serif text-stone-100 mb-4">4. Subscriptions and payments</h2>
               <ul className="space-y-3 list-none">
                 {[
-                  "Paid plans are billed monthly. You may cancel at any time.",
-                  "Cancellation takes effect at the end of the current billing period. No partial refunds.",
-                  "Gold plan: 7-day money-back guarantee from first payment.",
-                  "Concierge plan: subject to the specific terms agreed at the time of enrolment.",
+                  "Paid membership checkout may be limited, staged, or unavailable while the platform is being rolled out.",
+                  "If a paid plan is offered to you, the exact price, billing terms, and renewal rules will be shown before you complete payment.",
+                  "Until automated checkout is enabled, membership changes may be handled directly by the Pravara team.",
+                  "Any concierge engagement is governed by the specific service terms presented at the time of enrolment.",
                 ].map((item) => (
                   <li key={item} className="flex gap-3 text-sm leading-relaxed">
                     <span className="text-haldi-500 mt-1 flex-shrink-0">—</span>
@@ -90,7 +90,7 @@ export default async function TermsPage() {
             <section>
               <h2 className="text-xl font-serif text-stone-100 mb-4">5. The AI Sutradhar</h2>
               <p className="text-sm leading-relaxed">
-                Sutradhar is an AI assistant that helps you build your profile and discover matches. It does not make decisions on your behalf. All connection requests, messages, and profile updates require your active initiation. Sutradhar's suggestions are guides, not instructions. We do not guarantee that AI-generated recommendations will lead to a match.
+                Sutradhar is an AI assistant that helps you build your profile and discover matches. It does not make decisions on your behalf. All connection requests, messages, and profile updates require your active initiation. Sutradhar&apos;s suggestions are guides, not instructions. We do not guarantee that AI-generated recommendations will lead to a match.
               </p>
             </section>
 

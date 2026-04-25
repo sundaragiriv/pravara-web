@@ -1,13 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import {
-  Sparkles, User, Check, X,
-  MessageCircle, Star, ShieldCheck, Users, SlidersHorizontal
-} from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 
 // --- TYPE IMPORTS ---
 import type {
@@ -24,6 +20,10 @@ import MatchesSection from "@/components/MatchesSection";
 import Sidebar from "@/components/Sidebar";
 import DashboardSubNav from "@/components/navigation/DashboardSubNav";
 import ProfileDetailsPanel from "@/components/ProfileDetailsPanel";
+import ConnectionsPanel from "./components/ConnectionsPanel";
+import RequestsPanel from "./components/RequestsPanel";
+import ShortlistPanel from "./components/ShortlistPanel";
+import { DEFAULT_DASHBOARD_FILTERS, type DashboardTab } from "./constants";
 import { calculateGunaScore } from "@/utils/matchEngine";
 import { notifyInterestSent } from "@/utils/notifications";
 import { useShortlist } from "@/contexts/ShortlistContext";
@@ -32,11 +32,15 @@ import { toast } from "sonner";
 
 export default function Dashboard() {
   const router = useRouter();
-  const supabase = createClient();
-  const { toggle: toggleShortlist, count: shortlistCount } = useShortlist();
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
+  if (!supabaseRef.current) {
+    supabaseRef.current = createClient();
+  }
+  const supabase = supabaseRef.current;
+  const { count: shortlistCount } = useShortlist();
 
   // --- UI STATE ---
-  const [activeTab, setActiveTab] = useState<'explorer' | 'requests' | 'connections' | 'shortlist'>('explorer');
+  const [activeTab] = useState<DashboardTab>("explorer");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
@@ -66,18 +70,7 @@ export default function Dashboard() {
   const [globalUnreadCount, setGlobalUnreadCount] = useState(0); 
   
   // --- FILTER ENGINE STATE ---
-  const [filters, setFilters] = useState({
-    minAge: 21,
-    maxAge: 40,
-    location: "",
-    community: "",
-    searchTerm: "",
-    diet: [] as string[],
-    visa: "",
-    minHeight: "",
-    maxHeight: "",
-    gothra: ""
-  });
+  const [filters, setFilters] = useState<DashboardFilters>(DEFAULT_DASHBOARD_FILTERS);
 
   // --- DEBOUNCED FILTER FETCH ---
   const filterDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -99,10 +92,7 @@ export default function Dashboard() {
   };
 
   const resetFilters = () => {
-    setFilters({
-      minAge: 21, maxAge: 40, location: "", community: "", searchTerm: "",
-      diet: [], visa: "", minHeight: "", maxHeight: "", gothra: ""
-    });
+    setFilters(DEFAULT_DASHBOARD_FILTERS);
   };
 
   // --- SERVER-SIDE FILTERED FETCH ---
@@ -191,7 +181,7 @@ export default function Dashboard() {
 
   // --- GLOBAL MESSAGE NOTIFICATIONS ---
   // Fetch unread count function (extracted for reuse)
-  const fetchUnreadCount = async (userId: string) => {
+  const fetchUnreadCount = useCallback(async (userId: string) => {
     const { count, error } = await supabase
       .from('messages')
       .select('*', { count: 'exact', head: true })
@@ -203,7 +193,7 @@ export default function Dashboard() {
     } else {
       setGlobalUnreadCount(count || 0);
     }
-  };
+  }, [supabase]);
 
   // Refetch unread count whenever user returns to this page (visibility change)
   useEffect(() => {
@@ -215,7 +205,7 @@ export default function Dashboard() {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [currentUser]);
+  }, [currentUser, fetchUnreadCount]);
 
   // Initial fetch and realtime subscription
   useEffect(() => {
@@ -234,7 +224,7 @@ export default function Dashboard() {
           schema: 'public',
           table: 'messages'
         },
-        (payload: any) => {
+        (payload: { eventType: "INSERT" | "UPDATE" | "DELETE"; new: { sender_id?: string } }) => {
           if (payload.eventType === 'INSERT' && payload.new.sender_id !== currentUser.id) {
             setGlobalUnreadCount((prev) => prev + 1);
           } else if (payload.eventType === 'UPDATE') {
@@ -245,7 +235,7 @@ export default function Dashboard() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [currentUser]);
+  }, [currentUser, fetchUnreadCount, supabase]);
 
   // Force reload Shortlist whenever tab is clicked
   useEffect(() => {
@@ -328,18 +318,6 @@ export default function Dashboard() {
     setRequests(prev => prev.filter(r => r.id !== connectionId)); 
     await supabase.from('connections').update({ status }).eq('id', connectionId);
     fetchData(); 
-  };
-
-  // Shortlist toggle — delegates to ShortlistContext (global source of truth).
-  // Context handles optimistic update, DB write, and rollback on error.
-  const handleShortlist = (profileId: string) => {
-    if (isCollaborator && !collaboratorPerms.shortlist) {
-      toast.error("Your role doesn't allow shortlisting");
-      return;
-    }
-    toggleShortlist(profileId);
-    // Refresh the shortlist tab data so it stays in sync if the tab is currently open
-    if (activeTab === 'shortlist') fetchShortlistOnly();
   };
 
   const handleSendInterest = async (receiverId: string) => {
@@ -437,66 +415,22 @@ export default function Dashboard() {
 
           {/* 2. REQUESTS TAB (Your Original Logic) */}
           {activeTab === 'requests' && !isCollaborator && (
-             <div className="space-y-4">
-                {requests.length === 0 && <div className="text-center py-10 text-stone-500 italic">No pending requests.</div>}
-                {requests.map((req) => (
-                   <div key={req.id} className="flex items-center justify-between p-4 bg-stone-900 border border-stone-800 rounded-2xl">
-                      <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-xl bg-stone-800 overflow-hidden">
-                          {req.sender.image_url ? <img src={req.sender.image_url} alt={req.sender.full_name} className="w-full h-full object-cover" /> : <User className="w-8 h-8 m-auto text-stone-600"/>}
-                        </div>
-                        <div><h4 className="text-lg font-serif text-stone-100">{req.sender.full_name}</h4><p className="text-sm text-stone-500">{req.sender.profession}</p></div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button type="button" aria-label="Decline request" onClick={() => handleResponse(req.id, 'rejected')} className="p-3 rounded-xl bg-stone-950 border border-stone-800 text-stone-400 hover:text-red-400"><X className="w-5 h-5" /></button>
-                        <button type="button" onClick={() => handleResponse(req.id, 'accepted')} className="px-6 py-3 rounded-xl bg-haldi-600 hover:bg-haldi-500 text-stone-950 font-bold flex items-center gap-2"><Check className="w-4 h-4" /> Accept</button>
-                      </div>
-                   </div>
-                ))}
-             </div>
+            <RequestsPanel requests={requests} onRespond={handleResponse} />
           )}
 
           {/* 3. CONNECTIONS TAB (Your Original Logic) */}
           {activeTab === 'connections' && !isCollaborator && (
-             <div className="grid gap-4">
-                {connections.map((person) => (
-                   <div key={person.id} className="p-6 bg-gradient-to-r from-stone-900 to-stone-950 border border-haldi-900/40 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
-                      <div className="flex items-center gap-4 w-full">
-                        <div className="w-20 h-20 rounded-full border-2 border-haldi-600/30 p-1" aria-hidden="true">
-                          <div className="w-full h-full rounded-full overflow-hidden bg-stone-800">
-                            {person.image_url ? <img src={person.image_url} alt="" className="w-full h-full object-cover" /> : <User className="w-8 h-8 m-auto text-stone-600"/>}
-                          </div>
-                        </div>
-                        <div><h3 className="text-xl font-serif text-stone-100">{person.full_name}</h3><div className="flex items-center gap-2 text-haldi-500 text-sm font-bold mt-1"><Sparkles className="w-3 h-3" /> Connected</div></div>
-                      </div>
-                      <Link href="/dashboard/chat" className="flex-1 md:flex-none py-3 px-5 rounded-xl bg-haldi-600 hover:bg-haldi-500 text-stone-950 font-bold flex items-center justify-center gap-2"><MessageCircle className="w-4 h-4" /> Chat</Link>
-                   </div>
-                ))}
-             </div>
+            <ConnectionsPanel connections={connections} />
           )}
 
           {/* 4. SHORTLIST TAB (Your Original Logic) */}
           {activeTab === 'shortlist' && (
-            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {shortlist.length === 0 && <div className="col-span-3 text-center py-12 border border-dashed border-stone-800 rounded-2xl bg-stone-900/20"><Star className="w-8 h-8 text-stone-600 mx-auto mb-3" /><h3 className="text-stone-300 font-medium">Your Treasury is Empty</h3><p className="text-stone-500 text-sm mt-1">Star profiles to save them here.</p></div>}
-                {shortlist.map((item) => {
-                    const match = item.profile; 
-                    const isFamilyRec = item.added_by_email !== currentUser?.email;
-                    if (!match) return null; 
-                    return (
-                        <div key={item.id} className={`relative bg-stone-900 border rounded-2xl overflow-hidden shadow-xl ${isFamilyRec ? 'border-haldi-500/50 shadow-haldi-900/10' : 'border-stone-800'}`}>
-                            {isFamilyRec && <div className="bg-haldi-900/20 p-3 border-b border-haldi-500/20 flex items-center gap-3"><Users className="w-3 h-3 text-haldi-500" /><span className="text-haldi-500 text-xs font-bold uppercase">Family Rec</span></div>}
-                            <div className="h-64 bg-stone-800 relative">
-                              {match.image_url ? <img src={match.image_url} alt="" className="w-full h-full object-cover opacity-90" /> : <User className="w-20 h-20 m-auto text-stone-700 absolute inset-0" aria-hidden="true" />}
-                              <button type="button" aria-label={`Remove ${match.full_name} from shortlist`} onClick={() => handleRemoveShortlist(item.id)} className="absolute top-2 right-2 p-2 bg-stone-950/50 hover:bg-red-900 text-white rounded-full"><X className="w-4 h-4" /></button>
-                            </div>
-                            <div className="p-5"><h3 className="text-xl font-serif text-stone-100">{match.full_name}</h3>
-                            <button type="button" onClick={() => setSelectedProfile({ ...match, score: 0 })} className="block mt-4 w-full text-center py-3 rounded-xl bg-stone-100 text-stone-950 font-bold text-sm">View Profile</button>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
+            <ShortlistPanel
+              shortlist={shortlist}
+              currentUserEmail={currentUser?.email}
+              onRemoveShortlist={handleRemoveShortlist}
+              onProfileSelect={setSelectedProfile}
+            />
           )}
         </div>
       </main>
@@ -512,7 +446,9 @@ export default function Dashboard() {
         onConnect={() => {
           if (selectedProfile) {
             handleSendInterest(selectedProfile.id);
-            setSelectedProfile((prev: any) => ({ ...prev, connectionStatus: 'sent' }));
+            setSelectedProfile((prev) => (
+              prev ? { ...prev, connectionStatus: "sent" } : prev
+            ));
           }
         }}
       />

@@ -1,96 +1,94 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Check, Crown, Star, Sparkles, ArrowLeft,
-  ChevronDown, ChevronUp, Zap, Shield, MessageCircle, Users, Heart, Loader2
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Crown,
+  Heart,
+  Loader2,
+  MessageCircle,
+  Shield,
+  Sparkles,
+  Star,
+  Users,
+  Zap,
 } from "lucide-react";
-import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { createClient } from "@/utils/supabase/client";
 
 type Tier = "Basic" | "Gold" | "Concierge";
+type BillingMode = "monthly" | "annual";
 
-// ── Tier definitions ──────────────────────────────────────────────────────────
-const TIERS: {
+type TierConfig = {
   id: Tier;
   name: string;
   icon: React.ElementType;
-  color: string;
   monthlyPrice: number;
   annualPrice: number;
   badge: string | null;
   description: string;
   features: string[];
   notIncluded: string[];
-}[] = [
+};
+
+const TIERS: TierConfig[] = [
   {
     id: "Basic",
     name: "Basic",
     icon: Heart,
-    color: "stone",
     monthlyPrice: 0,
     annualPrice: 0,
     badge: null,
-    description: "Explore Pravara and discover compatible matches with core features.",
+    description: "Explore Pravara with the core profile, discovery, and connection experience.",
     features: [
-      "View up to 10 matches/day",
-      "Basic Nakshatra compatibility score",
-      "Send 3 interests/month",
-      "Profile visible to all members",
-      "Community feed access",
+      "Create and maintain your profile",
+      "Discover compatible profiles",
+      "View core compatibility signals",
+      "Send a limited number of interests",
+      "Use the product during rollout",
     ],
     notIncluded: [
-      "Full Ashtakoot Guna Milan report",
-      "Unlimited interests",
-      "Chat with matches",
-      "Vedic Compatibility Engine",
-      "Concierge matchmaker",
+      "Expanded compatibility insights",
+      "Priority placement",
+      "High-touch concierge support",
     ],
   },
   {
     id: "Gold",
     name: "Gold",
     icon: Star,
-    color: "haldi",
     monthlyPrice: 29,
     annualPrice: 249,
     badge: "Most Popular",
-    description: "Full matchmaking power — AI-curated matches, chat, and deep Vedic reports.",
+    description: "Deeper matching tools and a richer guided experience for active members and families.",
     features: [
-      "Unlimited daily matches",
-      "Full Ashtakoot Guna Milan (all 8 Kutas)",
-      "Unlimited interests",
-      "Chat with accepted matches",
-      "Vedic Compatibility report (horoscope matching)",
-      "Priority profile placement",
-      "Advanced filters (Nakshatra, Gotra, diet, visa)",
-      "Read receipts & message timestamps",
+      "Everything in Basic",
+      "Deeper compatibility context",
+      "Higher visibility in discovery flows",
+      "Expanded filtering and matchmaking tools",
+      "Priority consideration for future releases",
     ],
-    notIncluded: [
-      "Personal Concierge matchmaker",
-      "Curated shortlist by expert",
-    ],
+    notIncluded: ["Dedicated concierge workflow"],
   },
   {
     id: "Concierge",
     name: "Concierge",
     icon: Crown,
-    color: "purple",
     monthlyPrice: 79,
     annualPrice: 699,
     badge: "White Glove",
-    description: "A personal Vedic matchmaker + full platform access. For the discerning family.",
+    description: "A high-touch matchmaking layer for members who want a guided, hands-on experience.",
     features: [
       "Everything in Gold",
-      "Dedicated Vedic matchmaker",
-      "Weekly curated shortlist (5 profiles)",
-      "Background verification support",
-      "Horoscope matching by Jyotishi",
-      "Family profile review",
-      "WhatsApp concierge support",
-      "Early access to new features",
+      "Direct coordination with the Pravara team",
+      "Manual guidance during rollout",
+      "Priority handling for complex requirements",
+      "Access to concierge-specific onboarding",
     ],
     notIncluded: [],
   },
@@ -100,63 +98,62 @@ const TIER_ORDER: Tier[] = ["Basic", "Gold", "Concierge"];
 
 const FAQS = [
   {
-    q: "Can I upgrade or downgrade at any time?",
-    a: "Yes. Upgrades are effective immediately with prorated billing. Downgrades take effect at the end of your current billing cycle.",
+    q: "Can I upgrade or downgrade online right now?",
+    a: "Self-serve billing is still being finalized. For now, plan changes are handled directly by the Pravara team.",
   },
   {
-    q: "What payment methods do you accept?",
-    a: "We accept all major credit/debit cards (Visa, Mastercard, Amex), PayPal, and UPI/Indian payment methods (Razorpay coming soon). All payments are processed securely.",
+    q: "What payment methods are currently live?",
+    a: "Automated checkout is not publicly live yet. When billing is enabled, the accepted methods and renewal rules will be shown clearly before purchase.",
   },
   {
-    q: "Is there a free trial for Gold?",
-    a: "New members get a 7-day free trial of Gold features. No credit card required to start.",
+    q: "Are launch offers or founding-member plans available?",
+    a: "Some rollout or founding-member offers may be handled manually. If an offer applies to you, it will be communicated directly and clearly.",
   },
   {
-    q: "What is Vedic Compatibility?",
-    a: "Pravara's deep horoscope-matching engine (Bhrugu Engine) — analyzes Ashtakoot across all 8 Kutas, Nadi Dosha exceptions, Mangal Dosha, and cultural alignment beyond the surface Guna score.",
+    q: "What does Concierge mean at this stage?",
+    a: "Concierge is a high-touch service tier. During rollout, access is handled directly by the Pravara team rather than through automated checkout.",
   },
   {
-    q: "How does Concierge matchmaking work?",
-    a: "A trained Vedic compatibility advisor reviews your profile, understands your family's preferences, and curates 5 verified matches each week, handling introductions.",
-  },
-  {
-    q: "Can I cancel anytime?",
-    a: "Yes. Cancel from Settings at any time — you retain access until the end of your billing period. No refunds for partial months.",
+    q: "How do cancellations work while billing is being finalized?",
+    a: "Until billing is fully enabled, membership changes and cancellations are handled directly by the Pravara team.",
   },
 ];
 
-// ── Component ─────────────────────────────────────────────────────────────────
+const VALID_COUPONS: Record<string, number> = {
+  PRAVARA10: 10,
+  VEDIC20: 20,
+  FOUNDING15: 15,
+};
+
 export default function MembershipPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+  const [billing, setBilling] = useState<BillingMode>("monthly");
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponError, setCouponError] = useState("");
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [loadingTier, setLoadingTier] = useState(true);
   const [currentTier, setCurrentTier] = useState<Tier>("Basic");
   const [upgrading, setUpgrading] = useState<Tier | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
-  const VALID_COUPONS: Record<string, number> = {
-    PRAVARA10: 10,
-    VEDIC20: 20,
-    FOUNDING15: 15,
-  };
-
   const discount = couponApplied ? (VALID_COUPONS[coupon.toUpperCase()] ?? 0) : 0;
 
-  // ── Fetch current user tier ────────────────────────────────────────────────
   useEffect(() => {
     async function fetchTier() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
         router.push("/login");
         return;
       }
+
       setUserId(user.id);
+
       const { data } = await supabase
         .from("profiles")
         .select("membership_tier, subscription_billing")
@@ -166,168 +163,152 @@ export default function MembershipPage() {
       if (data?.membership_tier) {
         setCurrentTier(data.membership_tier as Tier);
       }
+
       if (data?.subscription_billing) {
-        setBilling(data.subscription_billing as "monthly" | "annual");
+        setBilling(data.subscription_billing as BillingMode);
       }
+
       setLoadingTier(false);
     }
+
     fetchTier();
-  }, []);
+  }, [router, supabase]);
 
-  // ── Handle upgrade/downgrade ───────────────────────────────────────────────
-  const handleChangePlan = async (targetTier: Tier) => {
-    if (!userId) return;
-    setUpgrading(targetTier);
-
-    // TODO: Wire Stripe/Razorpay checkout here.
-    // For now: update membership_tier directly (dev/demo mode).
-    const now = new Date();
-    const endDate = new Date(now);
-    if (billing === "annual") {
-      endDate.setFullYear(endDate.getFullYear() + 1);
-    } else {
-      endDate.setDate(endDate.getDate() + 30);
-    }
-
-    const updatePayload: Record<string, unknown> = {
-      membership_tier: targetTier,
-      subscription_billing: targetTier === "Basic" ? null : billing,
-      subscription_start_date: targetTier === "Basic" ? null : now.toISOString(),
-      subscription_end_date: targetTier === "Basic" ? null : endDate.toISOString(),
-    };
-
-    const { error } = await supabase
-      .from("profiles")
-      .update(updatePayload)
-      .eq("id", userId);
-
-    if (error) {
-      toast.error("Could not update plan. Please try again.");
-    } else {
-      setCurrentTier(targetTier);
-      const isUpgrade = TIER_ORDER.indexOf(targetTier) > TIER_ORDER.indexOf(currentTier);
-      toast.success(
-        isUpgrade
-          ? `Welcome to ${targetTier}! Your new features are active.`
-          : `Plan changed to ${targetTier}. Changes take effect next cycle.`
-      );
-    }
-    setUpgrading(null);
-  };
-
-  const getPrice = (tier: (typeof TIERS)[0]) => {
+  const getPrice = (tier: TierConfig) => {
     if (tier.monthlyPrice === 0) return "Free";
     const base = billing === "annual" ? tier.annualPrice : tier.monthlyPrice;
     if (discount > 0) return `$${(base * (1 - discount / 100)).toFixed(0)}`;
     return `$${base}`;
   };
 
-  const getPeriodLabel = (tier: (typeof TIERS)[0]) => {
-    if (tier.monthlyPrice === 0) return "forever";
+  const getPeriodLabel = (tier: TierConfig) => {
+    if (tier.monthlyPrice === 0) return "during rollout";
     return billing === "annual" ? "/year" : "/month";
+  };
+
+  const annualSavings = (tier: TierConfig) => {
+    if (tier.monthlyPrice === 0) return null;
+    return tier.monthlyPrice * 12 - tier.annualPrice;
   };
 
   const getCtaLabel = (tierId: Tier) => {
     if (tierId === currentTier) return "Current Plan";
     const isUpgrade = TIER_ORDER.indexOf(tierId) > TIER_ORDER.indexOf(currentTier);
-    return isUpgrade ? `Upgrade to ${tierId}` : `Downgrade to ${tierId}`;
+    return isUpgrade ? `Ask about ${tierId}` : `Switch to ${tierId}`;
   };
 
-  const isCtaDisabled = (tierId: Tier) => tierId === currentTier;
+  const handleChangePlan = async (targetTier: Tier) => {
+    if (!userId) return;
 
-  const annualSavings = (tier: (typeof TIERS)[0]) => {
-    if (tier.monthlyPrice === 0) return null;
-    return tier.monthlyPrice * 12 - tier.annualPrice;
+    setUpgrading(targetTier);
+    toast.message(
+      `Self-serve ${targetTier} changes are not live yet. Contact support and we will help you with the right plan.`,
+    );
+    setUpgrading(null);
+    router.push("/support");
   };
 
-  // ── Loading state ──────────────────────────────────────────────────────────
   if (loadingTier) {
     return (
-      <div className="min-h-screen bg-stone-950 flex items-center justify-center">
-        <Loader2 size={28} className="text-haldi-400 animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-stone-950">
+        <Loader2 size={28} className="animate-spin text-haldi-400" />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-50">
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-stone-950/90 backdrop-blur border-b border-stone-900">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-stone-400 hover:text-stone-100 text-sm transition-colors">
+      <header className="sticky top-0 z-30 border-b border-stone-900 bg-stone-950/90 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm text-stone-400 transition-colors hover:text-stone-100"
+          >
             <ArrowLeft size={15} />
             Back to Home
           </Link>
-          <Link href="/" className="font-serif text-lg text-haldi-400 tracking-wide">
+          <Link href="/" className="font-serif text-lg tracking-wide text-haldi-400">
             Pravara
           </Link>
-          <Link href="/support" className="text-stone-500 hover:text-stone-300 text-sm transition-colors">
+          <Link
+            href="/support"
+            className="text-sm text-stone-500 transition-colors hover:text-stone-300"
+          >
             Need help?
           </Link>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-16">
-
-        {/* Hero */}
-        <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-haldi-500/10 border border-haldi-500/20 text-haldi-400 text-sm font-medium mb-6">
+      <main className="mx-auto max-w-6xl px-6 py-16">
+        <div className="mb-14 text-center">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-haldi-500/20 bg-haldi-500/10 px-4 py-1.5 text-sm font-medium text-haldi-400">
             <Sparkles size={13} />
             Pravara Membership
           </div>
-          <h1 className="text-4xl md:text-5xl font-serif text-stone-100 mb-4">
-            Choose your path to <span className="text-haldi-400">your perfect union</span>
+          <h1 className="mb-4 text-4xl font-serif text-stone-100 md:text-5xl">
+            Choose the level of support that fits your journey
           </h1>
-          <p className="text-stone-400 text-lg max-w-xl mx-auto">
-            From exploring to fully guided — every tier unlocks a deeper experience of Vedic-rooted matchmaking.
+          <p className="mx-auto max-w-2xl text-lg text-stone-400">
+            Membership pricing is visible for planning purposes. Automated checkout is still being
+            finalized, so plan changes are currently handled directly by the Pravara team.
           </p>
-          {/* Current plan indicator */}
-          <div className="mt-4 inline-flex items-center gap-2 text-sm text-stone-500">
+
+          <div className="mt-6 inline-flex items-center gap-2 text-sm text-stone-500">
             You are on the
-            <span className={`font-bold uppercase tracking-wide ${
-              currentTier === "Concierge" ? "text-purple-400" :
-              currentTier === "Gold" ? "text-haldi-400" :
-              "text-stone-400"
-            }`}>
+            <span
+              className={`font-bold uppercase tracking-wide ${
+                currentTier === "Concierge"
+                  ? "text-purple-400"
+                  : currentTier === "Gold"
+                    ? "text-haldi-400"
+                    : "text-stone-400"
+              }`}
+            >
               {currentTier}
             </span>
             plan
           </div>
         </div>
 
-        {/* Billing toggle */}
-        <div className="flex items-center justify-center gap-4 mb-10">
+        <div className="mb-10 flex items-center justify-center gap-4">
           <button
             type="button"
             onClick={() => setBilling("monthly")}
-            className={`text-sm font-medium transition-colors ${billing === "monthly" ? "text-stone-100" : "text-stone-500"}`}
+            className={`text-sm font-medium transition-colors ${
+              billing === "monthly" ? "text-stone-100" : "text-stone-500"
+            }`}
           >
-            Monthly
+            Monthly view
           </button>
           <button
             type="button"
-            aria-label="Toggle billing period"
+            aria-label="Toggle billing period preview"
             onClick={() => setBilling(billing === "monthly" ? "annual" : "monthly")}
-            className={`relative w-12 h-6 rounded-full transition-colors ${billing === "annual" ? "bg-haldi-500" : "bg-stone-700"}`}
+            className={`relative h-6 w-12 rounded-full transition-colors ${
+              billing === "annual" ? "bg-haldi-500" : "bg-stone-700"
+            }`}
           >
             <span
-              className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${billing === "annual" ? "translate-x-6" : "translate-x-0.5"}`}
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                billing === "annual" ? "translate-x-6" : "translate-x-0.5"
+              }`}
             />
           </button>
           <button
             type="button"
             onClick={() => setBilling("annual")}
-            className={`text-sm font-medium transition-colors flex items-center gap-1.5 ${billing === "annual" ? "text-stone-100" : "text-stone-500"}`}
+            className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
+              billing === "annual" ? "text-stone-100" : "text-stone-500"
+            }`}
           >
-            Annual
-            <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 font-semibold">
-              Save up to 30%
+            Annual view
+            <span className="rounded-full bg-green-500/20 px-2 py-0.5 text-xs font-semibold text-green-400">
+              Planning only
             </span>
           </button>
         </div>
 
-        {/* Tier cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-3">
           {TIERS.map((tier) => {
             const Icon = tier.icon;
             const isGold = tier.id === "Gold";
@@ -340,95 +321,115 @@ export default function MembershipPage() {
             return (
               <div
                 key={tier.id}
-                className={`relative rounded-2xl border p-6 flex flex-col transition-all ${
+                className={`relative flex flex-col rounded-2xl border p-6 transition-all ${
                   isCurrent
                     ? isGold
-                      ? "border-haldi-500/60 bg-haldi-500/8 shadow-xl shadow-haldi-500/10 ring-1 ring-haldi-500/30"
+                      ? "border-haldi-500/60 bg-haldi-500/8 ring-1 ring-haldi-500/30"
                       : isConcierge
-                      ? "border-purple-500/60 bg-purple-500/8 ring-1 ring-purple-500/30"
-                      : "border-stone-600 bg-stone-900/70 ring-1 ring-stone-600/50"
+                        ? "border-purple-500/60 bg-purple-500/8 ring-1 ring-purple-500/30"
+                        : "border-stone-600 bg-stone-900/70 ring-1 ring-stone-600/50"
                     : isGold
-                    ? "border-haldi-500/30 bg-haldi-500/5"
-                    : isConcierge
-                    ? "border-purple-500/25 bg-purple-500/5"
-                    : "border-stone-800 bg-stone-900/50"
+                      ? "border-haldi-500/30 bg-haldi-500/5"
+                      : isConcierge
+                        ? "border-purple-500/25 bg-purple-500/5"
+                        : "border-stone-800 bg-stone-900/50"
                 }`}
               >
-                {/* Current plan ribbon */}
                 {isCurrent && (
-                  <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold tracking-wider ${
-                    isConcierge ? "bg-purple-600 text-white" :
-                    isGold ? "bg-haldi-500 text-stone-950" :
-                    "bg-stone-700 text-stone-200"
-                  }`}>
-                    ✓ Current Plan
+                  <div
+                    className={`absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-xs font-bold tracking-wider ${
+                      isConcierge
+                        ? "bg-purple-600 text-white"
+                        : isGold
+                          ? "bg-haldi-500 text-stone-950"
+                          : "bg-stone-700 text-stone-200"
+                    }`}
+                  >
+                    Current Plan
                   </div>
                 )}
+
                 {!isCurrent && tier.badge && (
-                  <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold tracking-wider ${
-                    isGold ? "bg-haldi-500 text-stone-950" : "bg-purple-600 text-white"
-                  }`}>
+                  <div
+                    className={`absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-xs font-bold tracking-wider ${
+                      isGold ? "bg-haldi-500 text-stone-950" : "bg-purple-600 text-white"
+                    }`}
+                  >
                     {tier.badge}
                   </div>
                 )}
 
-                {/* Icon + Name */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                    isGold ? "bg-haldi-500/20" : isConcierge ? "bg-purple-500/20" : "bg-stone-800"
-                  }`}>
-                    <Icon size={18} className={isGold ? "text-haldi-400" : isConcierge ? "text-purple-400" : "text-stone-400"} />
+                <div className="mb-4 flex items-center gap-3">
+                  <div
+                    className={`flex h-9 w-9 items-center justify-center rounded-lg ${
+                      isGold
+                        ? "bg-haldi-500/20"
+                        : isConcierge
+                          ? "bg-purple-500/20"
+                          : "bg-stone-800"
+                    }`}
+                  >
+                    <Icon
+                      size={18}
+                      className={
+                        isGold
+                          ? "text-haldi-400"
+                          : isConcierge
+                            ? "text-purple-400"
+                            : "text-stone-400"
+                      }
+                    />
                   </div>
                   <h2 className="text-lg font-serif text-stone-100">{tier.name}</h2>
                 </div>
 
-                {/* Price */}
                 <div className="mb-1">
                   <span className="text-4xl font-bold text-stone-100">{getPrice(tier)}</span>
-                  <span className="text-stone-500 text-sm ml-1">{getPeriodLabel(tier)}</span>
+                  <span className="ml-1 text-sm text-stone-500">{getPeriodLabel(tier)}</span>
                 </div>
                 {billing === "annual" && savings && (
-                  <p className="text-green-400 text-xs mb-2">Save ${savings}/year vs monthly</p>
+                  <p className="mb-2 text-xs text-green-400">Preview savings: ${savings}/year</p>
                 )}
 
-                <p className="text-stone-400 text-sm mb-6">{tier.description}</p>
+                <p className="mb-6 text-sm text-stone-400">{tier.description}</p>
 
-                {/* CTA */}
                 <button
                   type="button"
-                  disabled={isCtaDisabled(tier.id) || isLoadingThis}
-                  onClick={() => !isCtaDisabled(tier.id) && handleChangePlan(tier.id)}
-                  className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all mb-6 flex items-center justify-center gap-2 ${
+                  disabled={isCurrent || isLoadingThis}
+                  onClick={() => !isCurrent && handleChangePlan(tier.id)}
+                  className={`mb-6 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all ${
                     isCurrent
-                      ? "bg-stone-800 text-stone-500 cursor-default"
+                      ? "cursor-default bg-stone-800 text-stone-500"
                       : isUpgrade
-                      ? isGold
-                        ? "bg-haldi-500 hover:bg-haldi-400 text-stone-950 shadow-md shadow-haldi-500/30"
-                        : "bg-purple-600 hover:bg-purple-500 text-white"
-                      : "bg-stone-800 hover:bg-stone-700 text-stone-400"
+                        ? isGold
+                          ? "bg-haldi-500 text-stone-950 shadow-md shadow-haldi-500/30 hover:bg-haldi-400"
+                          : "bg-purple-600 text-white hover:bg-purple-500"
+                        : "bg-stone-800 text-stone-400 hover:bg-stone-700"
                   }`}
                 >
-                  {isLoadingThis ? (
-                    <Loader2 size={15} className="animate-spin" />
-                  ) : (
-                    getCtaLabel(tier.id)
-                  )}
+                  {isLoadingThis ? <Loader2 size={15} className="animate-spin" /> : getCtaLabel(tier.id)}
                 </button>
 
-                {/* Features */}
-                <ul className="space-y-2.5 flex-1">
-                  {tier.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-stone-300">
-                      <Check size={14} className={`mt-0.5 flex-shrink-0 ${
-                        isGold ? "text-haldi-400" : isConcierge ? "text-purple-400" : "text-green-500"
-                      }`} />
-                      {f}
+                <ul className="flex-1 space-y-2.5">
+                  {tier.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2 text-sm text-stone-300">
+                      <Check
+                        size={14}
+                        className={`mt-0.5 flex-shrink-0 ${
+                          isGold
+                            ? "text-haldi-400"
+                            : isConcierge
+                              ? "text-purple-400"
+                              : "text-green-500"
+                        }`}
+                      />
+                      {feature}
                     </li>
                   ))}
-                  {tier.notIncluded.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-stone-600 line-through">
-                      <span className="mt-0.5 flex-shrink-0 w-3.5 h-3.5" />
-                      {f}
+                  {tier.notIncluded.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2 text-sm text-stone-600 line-through">
+                      <span className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                      {feature}
                     </li>
                   ))}
                 </ul>
@@ -437,20 +438,19 @@ export default function MembershipPage() {
           })}
         </div>
 
-        {/* Coupon code */}
-        <div className="max-w-md mx-auto mb-16">
-          <p className="text-center text-stone-500 text-sm mb-3">Have a promo code?</p>
+        <div className="mx-auto mb-16 max-w-md">
+          <p className="mb-3 text-center text-sm text-stone-500">Founding access code</p>
           <div className="flex gap-2">
             <input
               type="text"
               value={coupon}
-              onChange={(e) => {
-                setCoupon(e.target.value);
+              onChange={(event) => {
+                setCoupon(event.target.value);
                 setCouponApplied(false);
                 setCouponError("");
               }}
-              placeholder="Enter coupon code"
-              className="flex-1 bg-stone-900 border border-stone-800 rounded-xl px-4 py-2.5 text-sm text-stone-100 placeholder:text-stone-600 focus:outline-none focus:border-haldi-500/50 transition-colors"
+              placeholder="Enter invitation code"
+              className="flex-1 rounded-xl border border-stone-800 bg-stone-900 px-4 py-2.5 text-sm text-stone-100 transition-colors placeholder:text-stone-600 focus:border-haldi-500/50 focus:outline-none"
             />
             <button
               type="button"
@@ -461,59 +461,62 @@ export default function MembershipPage() {
                   setCouponError("");
                 } else {
                   setCouponApplied(false);
-                  setCouponError("Invalid code. Try PRAVARA10.");
+                  setCouponError("Unknown code. Contact support if you were given a manual offer.");
                 }
               }}
-              className="px-5 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-xl text-sm font-medium transition-colors"
+              className="rounded-xl bg-stone-800 px-5 py-2.5 text-sm font-medium text-stone-200 transition-colors hover:bg-stone-700"
             >
-              Apply
+              Check
             </button>
           </div>
           {couponApplied && (
-            <p className="text-green-400 text-xs mt-2 flex items-center gap-1">
+            <p className="mt-2 flex items-center gap-1 text-xs text-green-400">
               <Check size={12} />
-              {discount}% discount applied!
+              {discount}% planning discount recognized.
             </p>
           )}
-          {couponError && <p className="text-red-400 text-xs mt-2">{couponError}</p>}
+          {couponError && <p className="mt-2 text-xs text-red-400">{couponError}</p>}
         </div>
 
-        {/* Trust badges */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+        <div className="mb-16 grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
-            { icon: Shield, label: "Secure Payments", sub: "256-bit SSL encrypted" },
-            { icon: Zap, label: "Instant Activation", sub: "Upgrade takes effect immediately" },
-            { icon: MessageCircle, label: "Cancel Anytime", sub: "No long-term commitment" },
-            { icon: Users, label: "500+ Families", sub: "Joined in the first 6 months" },
+            { icon: Shield, label: "Staged Rollout", sub: "Billing is being enabled carefully" },
+            { icon: Zap, label: "Manual Activation", sub: "The team currently handles plan changes" },
+            { icon: MessageCircle, label: "Support Assisted", sub: "Membership requests go through support" },
+            { icon: Users, label: "Founding Access", sub: "Some early offers may be handled manually" },
           ].map(({ icon: Icon, label, sub }) => (
-            <div key={label} className="flex flex-col items-center text-center p-4 bg-stone-900/40 border border-stone-800/60 rounded-xl">
-              <Icon size={20} className="text-haldi-400 mb-2" />
-              <p className="text-stone-200 text-sm font-medium">{label}</p>
-              <p className="text-stone-500 text-xs mt-0.5">{sub}</p>
+            <div
+              key={label}
+              className="flex flex-col items-center rounded-xl border border-stone-800/60 bg-stone-900/40 p-4 text-center"
+            >
+              <Icon size={20} className="mb-2 text-haldi-400" />
+              <p className="text-sm font-medium text-stone-200">{label}</p>
+              <p className="mt-0.5 text-xs text-stone-500">{sub}</p>
             </div>
           ))}
         </div>
 
-        {/* FAQ */}
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-2xl font-serif text-stone-100 text-center mb-8">Frequently Asked Questions</h2>
+        <div className="mx-auto max-w-2xl">
+          <h2 className="mb-8 text-center text-2xl font-serif text-stone-100">
+            Frequently Asked Questions
+          </h2>
           <div className="space-y-2">
-            {FAQS.map((faq, i) => (
-              <div key={i} className="border border-stone-800 rounded-xl overflow-hidden">
+            {FAQS.map((faq, index) => (
+              <div key={faq.q} className="overflow-hidden rounded-xl border border-stone-800">
                 <button
                   type="button"
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between px-5 py-4 text-left text-stone-200 text-sm font-medium hover:bg-stone-900/50 transition-colors"
+                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                  className="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-medium text-stone-200 transition-colors hover:bg-stone-900/50"
                 >
                   {faq.q}
-                  {openFaq === i ? (
-                    <ChevronUp size={15} className="text-stone-500 flex-shrink-0 ml-3" />
+                  {openFaq === index ? (
+                    <ChevronUp size={15} className="ml-3 flex-shrink-0 text-stone-500" />
                   ) : (
-                    <ChevronDown size={15} className="text-stone-500 flex-shrink-0 ml-3" />
+                    <ChevronDown size={15} className="ml-3 flex-shrink-0 text-stone-500" />
                   )}
                 </button>
-                {openFaq === i && (
-                  <div className="px-5 pb-4 text-stone-400 text-sm leading-relaxed border-t border-stone-800">
+                {openFaq === index && (
+                  <div className="border-t border-stone-800 px-5 pb-4 text-sm leading-relaxed text-stone-400">
                     <div className="pt-3">{faq.a}</div>
                   </div>
                 )}
@@ -522,14 +525,13 @@ export default function MembershipPage() {
           </div>
         </div>
 
-        {/* Bottom */}
-        <div className="text-center mt-16 pt-10 border-t border-stone-900">
-          <p className="text-stone-500 text-sm">
-            Questions?{" "}
+        <div className="mt-16 border-t border-stone-900 pt-10 text-center">
+          <p className="text-sm text-stone-500">
+            Questions about membership?{" "}
             <a href="mailto:support@pravara.com" className="text-haldi-400 hover:underline">
               support@pravara.com
-            </a>
-            {" "}or visit our{" "}
+            </a>{" "}
+            or visit the{" "}
             <Link href="/support" className="text-haldi-400 hover:underline">
               Support Center
             </Link>

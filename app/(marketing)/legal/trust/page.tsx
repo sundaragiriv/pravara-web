@@ -60,7 +60,7 @@ export default async function TrustPage() {
               title: "Reporting & Moderation",
               color: "text-kumkum-400",
               bg: "bg-kumkum-900/10 border-kumkum-900/50",
-              desc: "Every profile and message can be reported. Reports are reviewed by our team within 48 hours. Verified harassment, fake profiles, or content violations result in immediate suspension. Severe cases result in permanent bans.",
+              desc: "Profiles and messages can be reported for review. We investigate abuse reports, may restrict or remove accounts that violate platform rules, and continue tightening moderation as the platform matures.",
             },
           ].map((pillar) => (
             <div key={pillar.title} className={`p-6 rounded-2xl border ${pillar.bg}`}>
@@ -77,7 +77,7 @@ export default async function TrustPage() {
         <div className="bg-stone-900/50 border border-stone-800 rounded-3xl p-8 mb-16">
           <h2 className="text-2xl font-serif text-stone-100 mb-6">Zero tolerance</h2>
           <p className="text-stone-400 text-sm leading-relaxed mb-6">
-            The following result in immediate and permanent removal from Pravara, with no appeal:
+            The following are treated as severe violations and may result in immediate account restriction or removal:
           </p>
           <div className="grid md:grid-cols-2 gap-4">
             {[
