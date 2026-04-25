@@ -32,6 +32,9 @@ node_modules/
 # misc
 .DS_Store
 *.pem
+*.docx
+nul
+.claude/
 
 # debug
 npm-debug.log*

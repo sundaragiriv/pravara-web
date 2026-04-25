@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { OpenAI } from "openai";
 
+import { biographerRequestSchema, toOpenAIHistory } from "@/lib/api-schemas";
 import { RATE_LIMITS, enforceRateLimit } from "@/lib/ratelimit";
 import { sanitizePlainText, sanitizeProfileValue } from "@/lib/sanitize";
 import { VEDIC_DATA, getPravaraOptionsForGothra } from "@/lib/vedicData";
@@ -101,9 +102,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const { messages, currentProfile } = await req.json();
-    const lastUserMessage = sanitizePlainText(String(messages[messages.length - 1]?.content || ""));
-    const lastAiQuestion = sanitizePlainText(String(messages[messages.length - 2]?.content || ""));
+    const payload = biographerRequestSchema.safeParse(await req.json());
+    if (!payload.success) {
+      return NextResponse.json({ error: "Invalid request payload" }, { status: 400 });
+    }
+
+    const { messages, currentProfile } = payload.data;
+    const conversation = toOpenAIHistory(messages);
+    const lastUserMessage = sanitizePlainText(String(conversation[conversation.length - 1]?.content || ""));
+    const lastAiQuestion = sanitizePlainText(String(conversation[conversation.length - 2]?.content || ""));
 
     const isAskingPartnerPrefs =
       lastAiQuestion.toLowerCase().includes("partner") ||
@@ -170,7 +177,11 @@ Rules:
         if (key === "partner_preferences") {
           const existing = String(updatedProfile.partner_preferences || "");
           const nextValue = String(value);
-          updatedProfile[key] = existing && !existing.includes(nextValue) ? `${existing}. ${nextValue}` : nextValue;
+          updatedProfile[key] = existing
+            ? existing.includes(nextValue)
+              ? existing
+              : `${existing}. ${nextValue}`
+            : nextValue;
           return;
         }
 
@@ -339,7 +350,7 @@ Rules:
           role: "system",
           content: `You are Sutradhar, an intelligent and culturally conscious matrimonial assistant. ${systemInstruction}`,
         },
-        ...messages,
+        ...conversation,
       ],
       temperature: 0.8,
     });

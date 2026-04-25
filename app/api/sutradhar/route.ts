@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
+import { sutradharRequestSchema } from "@/lib/api-schemas";
 import { RATE_LIMITS, enforceRateLimit } from "@/lib/ratelimit";
 import { sanitizePlainText, sanitizeProfileValue } from "@/lib/sanitize";
 import { createClient } from "@/utils/supabase/server";
@@ -101,9 +102,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const { message, contextPath } = await request.json();
-    const sanitizedMessage = sanitizePlainText(String(message ?? ""));
-    const sanitizedContextPath = sanitizePlainText(String(contextPath ?? "/"));
+    const payload = sutradharRequestSchema.safeParse(await request.json());
+    if (!payload.success) {
+      return NextResponse.json({ error: "Invalid request payload" }, { status: 400 });
+    }
+
+    const { message, contextPath } = payload.data;
+    const sanitizedMessage = sanitizePlainText(message);
+    const sanitizedContextPath = sanitizePlainText(contextPath || "/");
 
     const systemPrompt = `
       You are "Sutradhar", the intelligent agent for Pravara Matrimony.

@@ -1,44 +1,44 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { NextResponse } from "next/server";
+
+import { sutradharHintRequestSchema } from "@/lib/api-schemas";
+import { sanitizePlainText } from "@/lib/sanitize";
+import { createClient } from "@/utils/supabase/server";
 
 export async function POST(request: Request) {
   try {
-    // Auth check
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { partnerProfile } = body;
+    const payload = sutradharHintRequestSchema.safeParse(await request.json());
+    if (!payload.success) {
+      return NextResponse.json({ error: "Invalid request payload" }, { status: 400 });
+    }
 
-    // --- MOCK INTELLIGENCE ENGINE ---
-    // In the future, this is where you call OpenAI.
-    // For now, we generate contextual hints based on available data.
-    
-    const name = partnerProfile?.full_name?.split(' ')[0] || "them";
-    const city = partnerProfile?.location || "their city";
-    const job = partnerProfile?.profession || "their work";
-    const community = partnerProfile?.sub_community || "community";
+    const { partnerProfile } = payload.data;
+
+    const name = sanitizePlainText(String(partnerProfile.full_name || "")).split(" ")[0] || "them";
+    const city = sanitizePlainText(String(partnerProfile.location || "")) || "their city";
+    const job = sanitizePlainText(String(partnerProfile.profession || "")) || "their work";
+    const community = sanitizePlainText(String(partnerProfile.sub_community || "")) || "community";
 
     const hints = [
       `Sutradhar notices you both value ${community}. Ask about their family traditions.`,
       `Since ${name} is in ${city}, ask about the best food spots there.`,
       `"I saw your profile mentions ${job}. How do you find the work-life balance?"`,
       `Break the ice: "Sutradhar thinks our stars might align. Do you believe in horoscopes?"`,
-      `Ask ${name}: "What is the one thing you are looking for that you haven't found yet?"`
+      `Ask ${name}: "What is the one thing you are looking for that you have not found yet?"`,
     ];
 
-    // Pick a random hint
     const randomHint = hints[Math.floor(Math.random() * hints.length)];
 
-    // Add a slight delay to make it feel like "thinking"
-    await new Promise(resolve => setTimeout(resolve, 800));
-
     return NextResponse.json({ hint: randomHint });
-    
-  } catch (error) {
+
+  } catch {
     return NextResponse.json({ hint: "Ask them about their hobbies and what they do for fun!" });
   }
 }
