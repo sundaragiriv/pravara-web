@@ -254,9 +254,9 @@ export default function MembershipPage() {
       {/* Header */}
       <header className="sticky top-0 z-30 bg-stone-950/90 backdrop-blur border-b border-stone-900">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2 text-stone-400 hover:text-stone-100 text-sm transition-colors">
+          <Link href="/" className="flex items-center gap-2 text-stone-400 hover:text-stone-100 text-sm transition-colors">
             <ArrowLeft size={15} />
-            Back to Dashboard
+            Back to Home
           </Link>
           <Link href="/" className="font-serif text-lg text-haldi-400 tracking-wide">
             Pravara

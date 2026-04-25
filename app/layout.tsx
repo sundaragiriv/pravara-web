@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
-import "./globals.css";
-import { Toaster } from 'sonner';
+import { Toaster } from "sonner";
+
 import SutradharWidget from "@/components/SutradharWidget";
+
+import "./globals.css";
 import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -18,7 +20,7 @@ export const metadata: Metadata = {
     shortcut: "/logo3.png",
   },
   openGraph: {
-    title: "Pravara — Modern Heritage Matrimony",
+    title: "Pravara - Modern Heritage Matrimony",
     description: "AI-Powered Vedic Matrimony for the Brahmin Community",
     images: [{ url: "/logo3.png", width: 480, height: 200 }],
     type: "website",
@@ -28,14 +30,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body 
+      <body
         className={`${inter.variable} ${playfair.variable} font-sans bg-stone-950 text-stone-50 antialiased`}
         suppressHydrationWarning
       >
         <Providers>
           {children}
           <SutradharWidget />
-          {/* Sonner Toaster for global toast notifications */}
           <Toaster position="top-center" richColors closeButton />
         </Providers>
       </body>

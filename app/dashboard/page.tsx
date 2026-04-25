@@ -469,7 +469,7 @@ export default function Dashboard() {
                         </div>
                         <div><h3 className="text-xl font-serif text-stone-100">{person.full_name}</h3><div className="flex items-center gap-2 text-haldi-500 text-sm font-bold mt-1"><Sparkles className="w-3 h-3" /> Connected</div></div>
                       </div>
-                      <Link href="/chat" className="flex-1 md:flex-none py-3 px-5 rounded-xl bg-haldi-600 hover:bg-haldi-500 text-stone-950 font-bold flex items-center justify-center gap-2"><MessageCircle className="w-4 h-4" /> Chat</Link>
+                      <Link href="/dashboard/chat" className="flex-1 md:flex-none py-3 px-5 rounded-xl bg-haldi-600 hover:bg-haldi-500 text-stone-950 font-bold flex items-center justify-center gap-2"><MessageCircle className="w-4 h-4" /> Chat</Link>
                    </div>
                 ))}
              </div>

@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState, useRef } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
+
 import { createClient } from "@/utils/supabase/client";
-import { LayoutDashboard, LogOut, ChevronDown } from "lucide-react";
 
 interface MarketingNavProps {
   isLoggedIn: boolean;
@@ -25,13 +26,13 @@ export default function MarketingNav({ isLoggedIn, userAvatar, userName }: Marke
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close dropdown on outside click
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setDropdownOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -43,9 +44,13 @@ export default function MarketingNav({ isLoggedIn, userAvatar, userName }: Marke
     router.refresh();
   };
 
-  // Derive initials for avatar fallback
   const initials = userName
-    ? userName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    ? userName
+        .split(" ")
+        .map((name) => name[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
     : "P";
 
   return (
@@ -57,16 +62,14 @@ export default function MarketingNav({ isLoggedIn, userAvatar, userName }: Marke
       }`}
     >
       <div className="container mx-auto px-6 h-20 flex items-center justify-between">
-
-        {/* Logo — always goes to home */}
         <Link
           href="/"
           className="flex items-center group"
-          aria-label="Pravara — Modern Heritage Matrimony"
+          aria-label="Pravara - Modern Heritage Matrimony"
         >
           <Image
             src="/logo3.png"
-            alt="Pravara — Modern Heritage Matrimony"
+            alt="Pravara - Modern Heritage Matrimony"
             width={160}
             height={54}
             className="object-contain [mix-blend-mode:lighten] group-hover:brightness-110 transition-all duration-300"
@@ -74,17 +77,15 @@ export default function MarketingNav({ isLoggedIn, userAvatar, userName }: Marke
           />
         </Link>
 
-        {/* Nav Links */}
         <div className="flex items-center gap-4">
           {isLoggedIn ? (
             <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
-                onClick={() => setDropdownOpen((v) => !v)}
+                onClick={() => setDropdownOpen((value) => !value)}
                 aria-label="Open account menu"
                 className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-stone-900/60 border border-stone-800 hover:border-stone-700 transition-all duration-200"
               >
-                {/* Avatar */}
                 <div className="w-8 h-8 rounded-full overflow-hidden bg-haldi-900/30 border border-haldi-500/30 flex items-center justify-center flex-shrink-0">
                   {userAvatar ? (
                     <img src={userAvatar} alt={userName || "You"} className="w-full h-full object-cover" />
@@ -92,11 +93,14 @@ export default function MarketingNav({ isLoggedIn, userAvatar, userName }: Marke
                     <span className="text-haldi-400 text-xs font-bold font-serif">{initials}</span>
                   )}
                 </div>
-                <ChevronDown className={`w-3.5 h-3.5 text-stone-400 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`} />
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-stone-400 transition-transform duration-200 ${
+                    dropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
               </button>
 
-              {/* Dropdown */}
-              {dropdownOpen && (
+              {dropdownOpen ? (
                 <div className="absolute right-0 top-full mt-2 w-44 bg-stone-950 border border-stone-800 rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-50">
                   <Link
                     href="/dashboard"
@@ -116,7 +120,7 @@ export default function MarketingNav({ isLoggedIn, userAvatar, userName }: Marke
                     Sign Out
                   </button>
                 </div>
-              )}
+              ) : null}
             </div>
           ) : (
             <>
