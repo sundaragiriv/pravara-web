@@ -12,9 +12,17 @@ interface MarketingNavProps {
   isLoggedIn: boolean;
   userAvatar?: string | null;
   userName?: string | null;
+  launchMode?: boolean;
+  foundingCount?: number;
 }
 
-export default function MarketingNav({ isLoggedIn, userAvatar, userName }: MarketingNavProps) {
+export default function MarketingNav({
+  isLoggedIn,
+  userAvatar,
+  userName,
+  launchMode = false,
+  foundingCount,
+}: MarketingNavProps) {
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -88,6 +96,7 @@ export default function MarketingNav({ isLoggedIn, userAvatar, userName }: Marke
               >
                 <div className="w-8 h-8 rounded-full overflow-hidden bg-haldi-900/30 border border-haldi-500/30 flex items-center justify-center flex-shrink-0">
                   {userAvatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={userAvatar} alt={userName || "You"} className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-haldi-400 text-xs font-bold font-serif">{initials}</span>
@@ -125,24 +134,39 @@ export default function MarketingNav({ isLoggedIn, userAvatar, userName }: Marke
           ) : (
             <>
               <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-                <Link
-                  href="/membership"
-                  className="text-stone-400 hover:text-haldi-400 transition-colors duration-200"
-                >
-                  Membership
-                </Link>
-                <Link
-                  href="/login"
-                  className="text-stone-400 hover:text-haldi-400 transition-colors duration-200"
-                >
-                  Login
-                </Link>
+                {launchMode ? (
+                  <>
+                    <span className="rounded-full border border-haldi-500/20 bg-haldi-500/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-haldi-400">
+                      Founding cohort
+                    </span>
+                    {typeof foundingCount === "number" && (
+                      <span className="text-stone-400">
+                        {foundingCount} of 500 early members joined
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/membership"
+                      className="text-stone-400 hover:text-haldi-400 transition-colors duration-200"
+                    >
+                      Membership
+                    </Link>
+                    <Link
+                      href="/login"
+                      className="text-stone-400 hover:text-haldi-400 transition-colors duration-200"
+                    >
+                      Login
+                    </Link>
+                  </>
+                )}
               </div>
               <Link
-                href="/signup"
+                href={launchMode ? "/register" : "/signup"}
                 className="bg-haldi-600 hover:bg-haldi-500 text-stone-950 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-200 hover:scale-105"
               >
-                Join Free
+                {launchMode ? "Register Free" : "Join Free"}
               </Link>
             </>
           )}

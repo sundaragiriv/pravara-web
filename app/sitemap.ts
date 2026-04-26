@@ -8,6 +8,7 @@ const PUBLIC_ROUTES = [
   "/legal/privacy",
   "/legal/terms",
   "/legal/trust",
+  "/register",
   "/support",
 ];
 

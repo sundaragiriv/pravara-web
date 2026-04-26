@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 // Upgrade 3: Context-aware useEffect for chat history injection
-import { Sparkles, X, Send, MessageCircle } from "lucide-react";
+import { Sparkles, X, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function SutradharWidget() {
@@ -25,7 +25,16 @@ export default function SutradharWidget() {
   }, [messages, isOpen]);
 
   // Hide on auth pages, onboarding, and chat (which has its own Sutradhar hint)
-  if (pathname === '/login' || pathname === '/' || pathname === '/signup' || pathname === '/onboarding' || pathname === '/dashboard/chat') return null;
+  if (
+    pathname === "/login" ||
+    pathname === "/" ||
+    pathname === "/register" ||
+    pathname === "/signup" ||
+    pathname === "/onboarding" ||
+    pathname === "/dashboard/chat"
+  ) {
+    return null;
+  }
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -48,7 +57,7 @@ export default function SutradharWidget() {
 
       const data = await response.json();
       setMessages(prev => [...prev, { role: 'ai', content: data.reply || "I am reflecting on that..." }]);
-    } catch (error) {
+    } catch {
       setMessages(prev => [...prev, { role: 'ai', content: "My connection to the divine cloud is interrupted. Please try again." }]);
     } finally {
       setLoading(false);

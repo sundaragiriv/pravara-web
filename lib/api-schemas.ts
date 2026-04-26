@@ -36,8 +36,20 @@ export const supportRequestSchema = z.object({
   tier: z.enum(["Basic", "Gold", "Concierge"]),
 });
 
+export const launchRegistrationSchema = z.object({
+  full_name: z.string().trim().min(2).max(120),
+  age: z.coerce.number().int().min(18).max(80),
+  gender: z.enum(["Male", "Female", "Other"]),
+  profession: z.string().trim().min(2).max(120),
+  location: z.string().trim().min(2).max(160),
+  email: z.email().trim().max(160),
+  phone: z.string().trim().min(7).max(24),
+  source: z.string().trim().max(64).optional(),
+});
+
 export type BiographerMessage = z.infer<typeof biographerMessageSchema>;
 export type SupportRequest = z.infer<typeof supportRequestSchema>;
+export type LaunchRegistrationRequest = z.infer<typeof launchRegistrationSchema>;
 
 export function toOpenAIHistory(messages: BiographerMessage[]) {
   return messages.map((message) => ({
