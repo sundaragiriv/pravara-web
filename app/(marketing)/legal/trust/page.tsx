@@ -1,6 +1,7 @@
 import MarketingNav from "@/components/navigation/MarketingNav";
 import { createClient } from "@/utils/supabase/server";
 import { PRE_LAUNCH_ENABLED } from "@/lib/env";
+import { CONTACT_EMAIL } from "@/lib/site";
 import { ShieldCheck, Eye, Users, AlertTriangle } from "lucide-react";
 
 export const metadata = {
@@ -104,11 +105,11 @@ export default async function TrustPage() {
             If you encounter a profile or message that makes you uncomfortable, use the in-app report button or email us directly. We take every report seriously.
           </p>
           <a
-            href="mailto:safety@pravara.com"
+            href={`mailto:${CONTACT_EMAIL}`}
             className="inline-flex items-center gap-2 px-8 py-4 bg-stone-100 hover:bg-white text-stone-950 font-bold rounded-full transition-all hover:scale-105"
           >
             <ShieldCheck className="w-4 h-4" />
-            safety@pravara.com
+            {CONTACT_EMAIL}
           </a>
         </div>
       </div>

@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { CONTACT_EMAIL } from "@/lib/site";
+
 export default function Footer() {
   return (
     <footer className="border-t border-stone-900 bg-stone-950 px-6 py-12">
@@ -71,10 +73,10 @@ export default function Footer() {
             FAQ
           </Link>
           <a
-            href="mailto:support@pravara.com"
+            href={`mailto:${CONTACT_EMAIL}`}
             className="block text-stone-500 transition-colors hover:text-haldi-500"
           >
-            support@pravara.com
+            {CONTACT_EMAIL}
           </a>
           <p className="text-stone-600">Built for families who value clarity, trust, and cultural fit.</p>
           <p className="mt-4 text-xs text-stone-700">(c) 2026 Pravara Inc.</p>

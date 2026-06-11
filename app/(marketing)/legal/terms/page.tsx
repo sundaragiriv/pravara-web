@@ -1,6 +1,7 @@
 import MarketingNav from "@/components/navigation/MarketingNav";
 import { createClient } from "@/utils/supabase/server";
 import { PRE_LAUNCH_ENABLED } from "@/lib/env";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata = {
   title: "Terms of Service | Pravara",
@@ -113,7 +114,7 @@ export default async function TermsPage() {
               <h2 className="text-xl font-serif text-stone-100 mb-4">8. Contact</h2>
               <p className="text-sm leading-relaxed">
                 Questions about these terms? Email{" "}
-                <a href="mailto:legal@pravara.com" className="text-haldi-500 hover:underline">legal@pravara.com</a>.
+                <a href={`mailto:${CONTACT_EMAIL}`} className="text-haldi-500 hover:underline">{CONTACT_EMAIL}</a>.
               </p>
             </section>
 

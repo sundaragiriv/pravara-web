@@ -3,6 +3,7 @@ import Image from "next/image";
 import { createClient } from "@/utils/supabase/server";
 import MarketingNav from "@/components/navigation/MarketingNav";
 import { PRE_LAUNCH_ENABLED } from "@/lib/env";
+import { CONTACT_EMAIL } from "@/lib/site";
 import { Sparkles, ShieldCheck, Heart, Users, ScrollText, Eye, Zap } from "lucide-react";
 
 export default async function AboutPage() {
@@ -169,10 +170,10 @@ export default async function AboutPage() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
               <a
-                href="mailto:hello@pravara.com"
+                href={`mailto:${CONTACT_EMAIL}`}
                 className="px-8 py-4 bg-haldi-600 hover:bg-haldi-500 text-stone-950 font-bold rounded-full transition-all hover:scale-105"
               >
-                hello@pravara.com
+                {CONTACT_EMAIL}
               </a>
               <Link
                 href="/faq"

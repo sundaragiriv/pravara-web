@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+
+import { CONTACT_EMAIL } from "@/lib/site";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -176,9 +178,9 @@ export default function SupportPage() {
             {
               icon: Mail,
               title: "Email Support",
-              detail: "support@pravara.com",
+              detail: CONTACT_EMAIL,
               sub: "Primary support channel",
-              href: "mailto:support@pravara.com",
+              href: `mailto:${CONTACT_EMAIL}`,
             },
             {
               icon: Clock,
@@ -413,8 +415,8 @@ export default function SupportPage() {
                 {submitError && (
                   <p className="text-sm text-red-400">
                     {submitError} If needed, email{" "}
-                    <a href="mailto:support@pravara.com" className="underline">
-                      support@pravara.com
+                    <a href={`mailto:${CONTACT_EMAIL}`} className="underline">
+                      {CONTACT_EMAIL}
                     </a>
                     .
                   </p>

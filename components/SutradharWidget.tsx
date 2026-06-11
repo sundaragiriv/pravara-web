@@ -24,15 +24,13 @@ export default function SutradharWidget() {
     scrollToBottom();
   }, [messages, isOpen]);
 
-  // Hide on auth pages, onboarding, and chat (which has its own Sutradhar hint)
-  if (
-    pathname === "/login" ||
-    pathname === "/" ||
-    pathname === "/register" ||
-    pathname === "/signup" ||
-    pathname === "/onboarding" ||
-    pathname === "/dashboard/chat"
-  ) {
+  // Sutradhar is a member-only guide. Show it ONLY inside the member area
+  // (dashboard + profile views), never on public marketing/legal/auth/funnel
+  // pages. /dashboard/chat has its own Sutradhar, so exclude it.
+  const isMemberSurface =
+    (pathname.startsWith("/dashboard") && pathname !== "/dashboard/chat") ||
+    pathname.startsWith("/profile/");
+  if (!isMemberSurface) {
     return null;
   }
 

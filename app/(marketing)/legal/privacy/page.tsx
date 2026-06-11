@@ -1,6 +1,7 @@
 import MarketingNav from "@/components/navigation/MarketingNav";
 import { createClient } from "@/utils/supabase/server";
 import { PRE_LAUNCH_ENABLED } from "@/lib/env";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata = {
   title: "Privacy Policy | Pravara",
@@ -91,7 +92,7 @@ export default async function PrivacyPage() {
               <h2 className="text-xl font-serif text-stone-100 mb-4">5. Your rights</h2>
               <p className="text-sm leading-relaxed mb-3">
                 You may request to access, correct, or delete your personal data at any time by contacting us at{" "}
-                <a href="mailto:privacy@pravara.com" className="text-haldi-500 hover:underline">privacy@pravara.com</a>.
+                <a href={`mailto:${CONTACT_EMAIL}`} className="text-haldi-500 hover:underline">{CONTACT_EMAIL}</a>.
                 Account deletion will remove all profile data within 30 days. Chat messages may be retained for safety review for up to 90 days after deletion.
               </p>
             </section>
@@ -107,7 +108,7 @@ export default async function PrivacyPage() {
               <h2 className="text-xl font-serif text-stone-100 mb-4">7. Contact</h2>
               <p className="text-sm leading-relaxed">
                 Questions about your privacy? Email{" "}
-                <a href="mailto:privacy@pravara.com" className="text-haldi-500 hover:underline">privacy@pravara.com</a>.
+                <a href={`mailto:${CONTACT_EMAIL}`} className="text-haldi-500 hover:underline">{CONTACT_EMAIL}</a>.
               </p>
             </section>
 

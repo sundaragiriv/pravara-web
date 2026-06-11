@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 type Tier = "Basic" | "Gold" | "Concierge";
 type BillingMode = "monthly" | "annual";
@@ -528,8 +529,8 @@ export default function MembershipPage() {
         <div className="mt-16 border-t border-stone-900 pt-10 text-center">
           <p className="text-sm text-stone-500">
             Questions about membership?{" "}
-            <a href="mailto:support@pravara.com" className="text-haldi-400 hover:underline">
-              support@pravara.com
+            <a href={`mailto:${CONTACT_EMAIL}`} className="text-haldi-400 hover:underline">
+              {CONTACT_EMAIL}
             </a>{" "}
             or visit the{" "}
             <Link href="/support" className="text-haldi-400 hover:underline">

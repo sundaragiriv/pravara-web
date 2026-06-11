@@ -2,10 +2,11 @@ import "server-only";
 
 import { Resend } from "resend";
 import type { LaunchRegistrationRequest, SupportRequest } from "@/lib/api-schemas";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const emailFrom = process.env.EMAIL_FROM;
-const supportInbox = process.env.SUPPORT_EMAIL || "support@pravara.com";
+const supportInbox = process.env.SUPPORT_EMAIL || CONTACT_EMAIL;
 const launchInbox = process.env.LAUNCH_EMAIL || supportInbox;
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
