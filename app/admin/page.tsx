@@ -440,10 +440,16 @@ export default function AdminPage() {
             <span className="text-stone-700 hidden sm:inline">·</span>
             <span className="hidden sm:inline">{adminName}</span>
           </div>
-          <button type="button" onClick={async () => { await supabase.auth.signOut(); router.push("/"); }}
-            className="flex items-center gap-2 text-stone-500 hover:text-red-400 text-sm transition-colors">
-            <LogOut className="w-4 h-4" /><span className="hidden sm:inline">Sign Out</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <Link href="/admin/cohort"
+              className="flex items-center gap-2 text-stone-400 hover:text-haldi-400 text-sm transition-colors">
+              <BarChart2 className="w-4 h-4" /><span className="hidden sm:inline">Cohort</span>
+            </Link>
+            <button type="button" onClick={async () => { await supabase.auth.signOut(); router.push("/"); }}
+              className="flex items-center gap-2 text-stone-500 hover:text-red-400 text-sm transition-colors">
+              <LogOut className="w-4 h-4" /><span className="hidden sm:inline">Sign Out</span>
+            </button>
+          </div>
         </div>
       </header>
 
