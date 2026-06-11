@@ -178,6 +178,50 @@
       radial-gradient(ellipse at 50% 0%, rgba(201, 162, 74, 0.05) 0%, transparent 55%),
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Cpath d='M0 4L4 0' stroke='%23C9A24A' stroke-width='0.5' stroke-opacity='0.065'/%3E%3C/svg%3E");
   }
+
+  /* ── Festive launch flourishes ─────────────────────────────────────── */
+  /* Designer CTA: a slow light-sheen that sweeps across, then rests. */
+  .btn-sheen {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .btn-sheen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 32%, rgba(255, 255, 255, 0.5) 50%, transparent 68%);
+    transform: translateX(-130%);
+    animation: btn-sheen-sweep 4.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* Warm gold gradient fill for the primary festive button. */
+  .btn-festive {
+    background-image: linear-gradient(135deg, #f4c542 0%, #f59e0b 52%, #d98014 100%);
+  }
+
+  /* Thin auspicious gold rule with soft glow — a toran/garland divider. */
+  .gold-rule {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.55), transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn-sheen::after {
+      animation: none;
+      opacity: 0;
+    }
+  }
+}
+
+@keyframes btn-sheen-sweep {
+  0%, 18% {
+    transform: translateX(-130%);
+  }
+  62%, 100% {
+    transform: translateX(130%);
+  }
 }
 
 @keyframes launch-shine {

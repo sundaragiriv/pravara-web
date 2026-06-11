@@ -54,6 +54,7 @@ export const RATE_LIMITS = {
   matches: { key: "matches", requests: 60, window: "1 m" },
   support: { key: "support", requests: 5, window: "10 m" },
   launchRegister: { key: "launch-register", requests: 8, window: "10 m" },
+  launchAnalytics: { key: "launch-analytics", requests: 80, window: "10 m" },
 } satisfies Record<string, RateLimitPreset>;
 
 export function getClientIP(request: Request): string {
@@ -84,10 +85,20 @@ export async function enforceRateLimit(
   }
 
   const key = identifier?.trim() ? identifier.trim() : `ip:${getClientIP(request)}`;
-  const result = await limiter.limit(key);
 
-  return {
-    success: result.success,
-    headers: buildHeaders(result.limit, result.remaining, result.reset),
-  };
+  try {
+    const result = await limiter.limit(key);
+    return {
+      success: result.success,
+      headers: buildHeaders(result.limit, result.remaining, result.reset),
+    };
+  } catch (error) {
+    // Fail open: if the limiter backend (Upstash) is unreachable, never take the
+    // whole route down with it — allow the request and log for visibility.
+    console.warn(
+      `Rate limiter unavailable for "${preset.key}", allowing request:`,
+      error instanceof Error ? error.message : String(error),
+    );
+    return { success: true, headers: {} };
+  }
 }

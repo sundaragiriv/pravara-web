@@ -7,7 +7,7 @@ import LaunchCtaLink from "@/components/launch/LaunchCtaLink";
 import LaunchPageView from "@/components/launch/LaunchPageView";
 
 const ctaClass =
-  "poster-button-glow inline-flex items-center justify-center gap-2 rounded-sm bg-haldi-500 px-10 py-4 text-sm font-bold uppercase tracking-[0.2em] text-stone-950 transition-all hover:scale-[1.02] hover:bg-haldi-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-haldi-300 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950";
+  "btn-sheen btn-festive poster-button-glow inline-flex items-center justify-center gap-2 rounded-sm px-10 py-4 text-sm font-bold uppercase tracking-[0.2em] text-stone-950 transition-all hover:scale-[1.02] hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-haldi-300 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950";
 
 /**
  * Pre-launch microsite home — the minimal "founding circle" invitation splash.
