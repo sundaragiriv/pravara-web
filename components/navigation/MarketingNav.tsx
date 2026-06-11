@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 
+import LaunchCtaLink from "@/components/launch/LaunchCtaLink";
 import { createClient } from "@/utils/supabase/client";
 
 interface MarketingNavProps {
@@ -139,11 +140,11 @@ export default function MarketingNav({
                     <span className="rounded-full border border-haldi-500/20 bg-haldi-500/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-haldi-400">
                       Founding cohort
                     </span>
-                    {typeof foundingCount === "number" && (
-                      <span className="text-stone-400">
-                        {foundingCount} of 500 early members joined
-                      </span>
-                    )}
+                    <span className="text-stone-400">
+                      {typeof foundingCount === "number" && foundingCount > 0
+                        ? `${foundingCount} founding seats claimed`
+                        : "Founding intake is open"}
+                    </span>
                   </>
                 ) : (
                   <>
@@ -162,12 +163,22 @@ export default function MarketingNav({
                   </>
                 )}
               </div>
-              <Link
-                href={launchMode ? "/register" : "/signup"}
-                className="bg-haldi-600 hover:bg-haldi-500 text-stone-950 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-200 hover:scale-105"
-              >
-                {launchMode ? "Register Free" : "Join Free"}
-              </Link>
+              {launchMode ? (
+                <LaunchCtaLink
+                  href="/register"
+                  source="marketing-nav"
+                  className="bg-haldi-600 hover:bg-haldi-500 text-stone-950 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-200 hover:scale-105"
+                >
+                  Register Free
+                </LaunchCtaLink>
+              ) : (
+                <Link
+                  href="/signup"
+                  className="bg-haldi-600 hover:bg-haldi-500 text-stone-950 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-200 hover:scale-105"
+                >
+                  Join Free
+                </Link>
+              )}
             </>
           )}
         </div>

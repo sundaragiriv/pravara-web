@@ -1,5 +1,6 @@
 import MarketingNav from "@/components/navigation/MarketingNav";
 import { createClient } from "@/utils/supabase/server";
+import { PRE_LAUNCH_ENABLED } from "@/lib/env";
 import { ShieldCheck, Eye, Users, AlertTriangle } from "lucide-react";
 
 export const metadata = {
@@ -13,7 +14,7 @@ export default async function TrustPage() {
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-50 font-sans">
-      <MarketingNav isLoggedIn={!!user} />
+      <MarketingNav isLoggedIn={!!user} launchMode={PRE_LAUNCH_ENABLED} />
 
       {/* Hero */}
       <div className="pt-32 pb-16 text-center px-6">

@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import MarketingNav from "@/components/navigation/MarketingNav";
+import { PRE_LAUNCH_ENABLED } from "@/lib/env";
 
 export const metadata = {
   title: "FAQ | Pravara",
@@ -90,7 +91,7 @@ export default async function FaqPage() {
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-50 font-sans">
-      <MarketingNav isLoggedIn={!!user} userAvatar={userAvatar} userName={userName} />
+      <MarketingNav isLoggedIn={!!user} userAvatar={userAvatar} userName={userName} launchMode={PRE_LAUNCH_ENABLED} />
 
       {/* Hero */}
       <div className="pt-32 pb-16 text-center px-6">

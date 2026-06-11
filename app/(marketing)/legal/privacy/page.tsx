@@ -1,5 +1,6 @@
 import MarketingNav from "@/components/navigation/MarketingNav";
 import { createClient } from "@/utils/supabase/server";
+import { PRE_LAUNCH_ENABLED } from "@/lib/env";
 
 export const metadata = {
   title: "Privacy Policy | Pravara",
@@ -14,7 +15,7 @@ export default async function PrivacyPage() {
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-50 font-sans">
-      <MarketingNav isLoggedIn={!!user} />
+      <MarketingNav isLoggedIn={!!user} launchMode={PRE_LAUNCH_ENABLED} />
 
       <div className="pt-32 pb-24 px-6">
         <div className="container mx-auto max-w-3xl">

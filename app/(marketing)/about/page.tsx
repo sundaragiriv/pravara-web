@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/server";
 import MarketingNav from "@/components/navigation/MarketingNav";
+import { PRE_LAUNCH_ENABLED } from "@/lib/env";
 import { Sparkles, ShieldCheck, Heart, Users, ScrollText, Eye, Zap } from "lucide-react";
 
 export default async function AboutPage() {
@@ -22,7 +23,7 @@ export default async function AboutPage() {
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-50 font-sans selection:bg-haldi-500/30">
-      <MarketingNav isLoggedIn={!!user} userAvatar={userAvatar} userName={userName} />
+      <MarketingNav isLoggedIn={!!user} userAvatar={userAvatar} userName={userName} launchMode={PRE_LAUNCH_ENABLED} />
 
       {/* Hero */}
       <section className="relative pt-36 pb-24 overflow-hidden">

@@ -328,7 +328,10 @@ export default function AdminPage() {
     setLoading(true);
     const { data, error } = await supabase.from("site_config").select("*").order("key");
     if (error) toast.error(error.message);
-    else setConfig(data as SiteConfig[]);
+    // `pre_registration_mode` is a dead key — launch gating is driven solely by the
+    // PRE_LAUNCH_ENABLED env var (see lib/env.ts + middleware.ts). Hide it so no one
+    // flips it expecting an effect.
+    else setConfig((data as SiteConfig[]).filter((c) => c.key !== "pre_registration_mode"));
     setLoading(false);
   }, []);
 

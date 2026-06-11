@@ -16,8 +16,7 @@ export default function Footer() {
             />
           </Link>
           <p className="leading-relaxed text-stone-500">
-            Tradition meets intelligence. A modern matchmaking platform for families who value heritage,
-            safety, and clear intent.
+            Tradition, intelligence, and trust in one serious marriage journey.
           </p>
         </div>
 
