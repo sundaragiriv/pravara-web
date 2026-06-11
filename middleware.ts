@@ -37,14 +37,29 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // PROTECTED ROUTES: If user is NOT logged in, kick them to Login
-  if (!user && (request.nextUrl.pathname.startsWith("/dashboard") || request.nextUrl.pathname.startsWith("/onboarding"))) {
+  // PROTECTED ROUTES: If user is NOT logged in, kick them to Login.
+  // (Admin + settings were previously client-gated only, which served their
+  // shell/bundle to anyone — gate them server-side here like the dashboard.)
+  const protectedPrefixes = ["/dashboard", "/onboarding", "/settings", "/admin"];
+  if (!user && protectedPrefixes.some((p) => request.nextUrl.pathname.startsWith(p))) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // AUTH ROUTES: If user IS logged in, kick them to Dashboard (don't let them see login/signup)
   if (user && (request.nextUrl.pathname.startsWith("/login") || request.nextUrl.pathname.startsWith("/signup"))) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  // ADMIN ROUTES: a logged-in non-admin must not reach /admin.
+  if (user && request.nextUrl.pathname.startsWith("/admin") && !isAllowlistedAdminEmail(user.email)) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single();
+    if (!profile?.is_admin) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
   }
 
   // PRE-REGISTRATION GATING
