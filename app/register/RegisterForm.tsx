@@ -37,6 +37,8 @@ export default function RegisterForm({ foundingCount, foundingTarget }: Register
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<null | "new" | "already">(null);
   const [copied, setCopied] = useState(false);
+  // Remember what they submitted so we can carry it into account creation.
+  const [lead, setLead] = useState<{ name: string; email: string } | null>(null);
 
   const joined = typeof foundingCount === "number" ? foundingCount : null;
   const pct = useMemo(
@@ -76,6 +78,7 @@ export default function RegisterForm({ foundingCount, foundingTarget }: Register
         | null;
 
       if (response.status === 409 && payload?.alreadyRegistered) {
+        setLead({ name: form.full_name, email: form.email });
         setDone("already");
         return;
       }
@@ -83,6 +86,7 @@ export default function RegisterForm({ foundingCount, foundingTarget }: Register
         throw new Error(payload?.error || "Unable to complete registration right now.");
       }
 
+      setLead({ name: form.full_name, email: form.email });
       setDone("new");
       setForm(INITIAL_STATE);
     } catch (submitError) {
@@ -97,6 +101,9 @@ export default function RegisterForm({ foundingCount, foundingTarget }: Register
   // ── Confirmation (new join OR already-registered) ─────────────────────────
   if (done) {
     const already = done === "already";
+    const buildHref = lead
+      ? `/signup?email=${encodeURIComponent(lead.email)}&name=${encodeURIComponent(lead.name)}`
+      : "/signup";
     return (
       <div className="relative mx-auto max-w-2xl rounded-3xl border border-emerald-500/25 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.16),transparent_40%),rgba(6,95,70,0.16)] p-8 shadow-2xl shadow-black/30">
         {!already && <PetalBurst />}
@@ -110,10 +117,25 @@ export default function RegisterForm({ foundingCount, foundingTarget }: Register
           {already ? "Your seat is already reserved." : "Your founding seat is reserved."}
         </h2>
         <p className="mt-4 text-base leading-relaxed text-stone-300">
-          When matching opens in about three months, you&apos;ll be in the first wave — with{" "}
-          <span className="font-semibold text-haldi-200">3 months of premium, free</span>. We&apos;ll email
-          you before anyone else.
+          Now make it count — build your founding profile so you&apos;re matched with the right people the
+          moment we open. Founders with a complete profile get{" "}
+          <span className="font-semibold text-haldi-200">first access</span> and{" "}
+          <span className="font-semibold text-haldi-200">3 months of premium, free</span>.
         </p>
+
+        {/* Primary next step — convert the lead into a real, matchable profile */}
+        <div className="mt-7">
+          <Link
+            href={buildHref}
+            className="btn-sheen btn-festive launch-cta-glow inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-4 text-sm font-bold uppercase tracking-[0.14em] text-stone-950 transition-all hover:scale-[1.01] hover:brightness-105 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-haldi-300 focus:ring-offset-2 focus:ring-offset-stone-950"
+          >
+            Build my founding profile
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <p className="mt-2 text-center text-xs text-stone-500">
+            About 3 minutes — guided by Narada, our AI.
+          </p>
+        </div>
 
         {/* Referral — the fastest way to fill the circle */}
         <div className="mt-8 rounded-2xl border border-stone-800 bg-stone-950/60 p-5">
@@ -131,12 +153,9 @@ export default function RegisterForm({ foundingCount, foundingTarget }: Register
           </button>
         </div>
 
-        <div className="mt-8">
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center rounded-full bg-haldi-500 px-6 py-3 text-sm font-bold text-stone-950 transition-colors hover:bg-haldi-400 focus:outline-none focus:ring-2 focus:ring-haldi-300 focus:ring-offset-2 focus:ring-offset-stone-950"
-          >
-            Return Home
+        <div className="mt-6 text-center">
+          <Link href="/" className="text-xs text-stone-500 transition-colors hover:text-stone-300">
+            Maybe later — return home
           </Link>
         </div>
       </div>

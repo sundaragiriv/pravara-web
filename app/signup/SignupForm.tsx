@@ -37,9 +37,15 @@ function AppleIcon() {
   );
 }
 
-export default function SignupForm() {
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+export default function SignupForm({
+  initialEmail = "",
+  initialName = "",
+}: {
+  initialEmail?: string;
+  initialName?: string;
+}) {
+  const [fullName, setFullName] = useState(initialName);
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -66,7 +72,8 @@ export default function SignupForm() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        // Founders land in onboarding to build a real profile after confirming.
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
         data: { full_name: fullName.trim() },
       },
     });

@@ -1,21 +1,21 @@
 import { redirect } from "next/navigation";
 import Image from "next/image";
 
-import { PRE_LAUNCH_ENABLED } from "@/lib/env";
 import { createClient } from "@/utils/supabase/server";
 
 import SignupForm from "./SignupForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function SignupPage() {
-  // Pre-launch: there is no public account creation — funnel everyone into the
-  // founding-circle lead form so we keep growing the founder base.
-  if (PRE_LAUNCH_ENABLED) {
-    redirect("/register");
-  }
-
-  // Go-live: real account creation (email/password + OAuth).
+// Account creation is available in both modes now: during pre-launch this is the
+// second step of the founder funnel (lead form → account → onboarding → real
+// profile). Cold visitors are still funneled to /register (the low-friction lead
+// hook) first by the home/nav CTAs.
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ email?: string; name?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -23,6 +23,8 @@ export default async function SignupPage() {
   if (user) {
     redirect("/dashboard");
   }
+
+  const { email, name } = await searchParams;
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-stone-950 font-sans">
@@ -46,7 +48,7 @@ export default async function SignupPage() {
         </div>
       </div>
 
-      <SignupForm />
+      <SignupForm initialEmail={email ?? ""} initialName={name ?? ""} />
     </div>
   );
 }
