@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, Briefcase, Clock, Edit3, Lock, MapPin, Sparkles, UserCheck } from "lucide-react";
 
+import FounderVouchCard from "@/components/launch/FounderVouchCard";
 import { computeProfileStrength, LAUNCH_READY_THRESHOLD } from "@/lib/profile-strength";
 import { createClient } from "@/utils/supabase/server";
 
@@ -59,6 +60,15 @@ export default async function FoundingDashboardPage() {
   const compatibleCount = count ?? 0;
   const founders = (sample as CuratedFounder[] | null) ?? [];
   const firstName = (profile?.full_name as string | null)?.split(" ")[0] || "Founder";
+
+  // Trust loop — vouches this founder has received.
+  const { data: endorsementsData } = await supabase
+    .from("endorsements")
+    .select("id, endorser_name, relation, comment")
+    .eq("profile_id", user.id)
+    .order("created_at", { ascending: false });
+  const endorsements = endorsementsData ?? [];
+  const vouchPath = `/vouch/${user.id}?name=${encodeURIComponent(firstName)}`;
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-50">
@@ -172,6 +182,11 @@ export default async function FoundingDashboardPage() {
               Open search unlocks at launch
             </p>
           </section>
+        </div>
+
+        {/* ── Trust loop — vouches ────────────────────────────────────────── */}
+        <div className="mt-6">
+          <FounderVouchCard vouchPath={vouchPath} endorsements={endorsements} />
         </div>
 
         {/* ── Curated read-only wall ──────────────────────────────────────── */}
