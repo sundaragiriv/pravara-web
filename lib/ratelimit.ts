@@ -54,6 +54,7 @@ export const RATE_LIMITS = {
   matches: { key: "matches", requests: 60, window: "1 m" },
   support: { key: "support", requests: 5, window: "10 m" },
   launchRegister: { key: "launch-register", requests: 8, window: "10 m" },
+  vouch: { key: "vouch", requests: 5, window: "10 m" },
   launchAnalytics: { key: "launch-analytics", requests: 80, window: "10 m" },
 } satisfies Record<string, RateLimitPreset>;
 

@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { createClient } from "@/utils/supabase/client";
 import { CheckCircle2, HeartHandshake, Loader2 } from "lucide-react";
 
 const fieldClass =
@@ -26,16 +24,20 @@ export default function VouchForm({ profileId, name }: { profileId: string; name
     setLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const { error } = await supabase.from("endorsements").insert({
-      profile_id: profileId,
-      endorser_name: endorser.trim(),
-      relation,
-      comment: comment.trim(),
+    const res = await fetch("/api/vouch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        profile_id: profileId,
+        endorser_name: endorser.trim(),
+        relation,
+        comment: comment.trim(),
+      }),
     });
     setLoading(false);
-    if (error) {
-      setError("Could not submit your vouch right now. Please try again.");
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+      setError(payload?.error || "Could not submit your vouch right now. Please try again.");
       return;
     }
     setSubmitted(true);
