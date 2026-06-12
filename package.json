@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:prelaunch": "cross-env PRE_LAUNCH_ENABLED=true NODE_OPTIONS=--use-system-ca next dev",
+    "dev:golive": "cross-env PRE_LAUNCH_ENABLED=false NODE_OPTIONS=--use-system-ca next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -36,6 +38,7 @@
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.20",
     "babel-plugin-react-compiler": "1.0.0",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.0",
     "postcss": "^8.4.49",
