@@ -20,7 +20,7 @@ export const PRE_LAUNCH_ENABLED = parseBooleanEnv(
 const ADMIN_EMAIL_ALLOWLIST = new Set(parseCsvEnv(process.env.ADMIN_EMAILS));
 
 export function getSiteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL || "https://pravara.com";
+  return process.env.NEXT_PUBLIC_SITE_URL || "https://pravara.ai";
 }
 
 export function isAllowlistedAdminEmail(email: string | null | undefined): boolean {
