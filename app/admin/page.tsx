@@ -441,6 +441,10 @@ export default function AdminPage() {
             <span className="hidden sm:inline">{adminName}</span>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/admin/funnel"
+              className="flex items-center gap-2 text-stone-400 hover:text-haldi-400 text-sm transition-colors">
+              <BarChart2 className="w-4 h-4" /><span className="hidden sm:inline">Funnel</span>
+            </Link>
             <Link href="/admin/cohort"
               className="flex items-center gap-2 text-stone-400 hover:text-haldi-400 text-sm transition-colors">
               <BarChart2 className="w-4 h-4" /><span className="hidden sm:inline">Cohort</span>
