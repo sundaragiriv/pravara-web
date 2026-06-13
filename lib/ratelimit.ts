@@ -14,14 +14,35 @@ type RateLimitResult = {
   headers: RateLimitHeaders;
 };
 
-const redis =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? Redis.fromEnv()
-    : null;
+// Lazy + resilient: only build the client on first use, and never let a
+// missing/invalid/deleted Upstash config crash the build or a request. If Redis
+// is unavailable, rate limiting fails open (see enforceRateLimit).
+let redisResolved = false;
+let redis: Redis | null = null;
+
+function getRedis(): Redis | null {
+  if (redisResolved) return redis;
+  redisResolved = true;
+  const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+  if (url && token && /^https:\/\//i.test(url)) {
+    try {
+      redis = new Redis({ url, token });
+    } catch (error) {
+      console.warn(
+        "Upstash Redis unavailable — rate limiting disabled:",
+        error instanceof Error ? error.message : String(error),
+      );
+      redis = null;
+    }
+  }
+  return redis;
+}
 
 const limiterCache = new Map<string, Ratelimit>();
 
 function getLimiter({ key, requests, window }: RateLimitPreset): Ratelimit | null {
+  const redis = getRedis();
   if (!redis) return null;
 
   const cacheKey = `${key}:${requests}:${window}`;
