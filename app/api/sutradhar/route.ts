@@ -6,7 +6,13 @@ import { RATE_LIMITS, enforceRateLimit } from "@/lib/ratelimit";
 import { sanitizePlainText, sanitizeProfileValue } from "@/lib/sanitize";
 import { createClient } from "@/utils/supabase/server";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Lazy so the client isn't constructed at build time (Next "collecting page
+// data" would otherwise fail when OPENAI_API_KEY isn't in the build env).
+let _openai: OpenAI | null = null;
+function getOpenAI() {
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return _openai;
+}
 
 const ALLOWED_UPDATE_FIELDS = new Set([
   "bio",
@@ -121,7 +127,7 @@ export async function POST(request: Request) {
       - Be polite, Vedic, and concise.
     `;
 
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
       model: "gpt-4o",
       messages: [
         { role: "system", content: systemPrompt },

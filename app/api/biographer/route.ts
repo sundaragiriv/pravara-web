@@ -7,7 +7,13 @@ import { sanitizePlainText, sanitizeProfileValue } from "@/lib/sanitize";
 import { VEDIC_DATA, getPravaraOptionsForGothra } from "@/lib/vedicData";
 import { createClient } from "@/utils/supabase/server";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Lazy so the client isn't constructed at build time (Next "collecting page
+// data" would otherwise fail when OPENAI_API_KEY isn't in the build env).
+let _openai: OpenAI | null = null;
+function getOpenAI() {
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return _openai;
+}
 
 const VALID_PROFILE_COLUMNS = new Set([
   "full_name",
@@ -119,7 +125,7 @@ export async function POST(req: Request) {
       lastAiQuestion.toLowerCase().includes("spouse") ||
       lastAiQuestion.toLowerCase().includes("ideal match");
 
-    const extraction = await openai.chat.completions.create({
+    const extraction = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
@@ -343,7 +349,7 @@ Rules:
       )}. ${specificInstruction} Acknowledge their latest input naturally before asking the next question.`;
     }
 
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
