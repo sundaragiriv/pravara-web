@@ -69,6 +69,8 @@ const DIET_OPTIONS      = ['Vegetarian','Eggetarian','Non-Vegetarian','Vegan'];
 const EDUCATION_OPTIONS = ["Bachelor's","Master's / MBA","PhD","CA / CFA / CPA","MBBS / MD","Diploma","Other"];
 const MARITAL_OPTIONS   = ['Never Married','Divorced','Widowed','Awaiting Divorce'];
 const AGE_OPTIONS       = ['22','24','26','28','30','32','34','36','38','40','42','44'];
+const RAASI_LIST        = ['Mesha','Vrishabha','Mithuna','Karka','Simha','Kanya','Tula','Vrischika','Dhanu','Makara','Kumbha','Meena'];
+const HEIGHT_OPTIONS    = ["4'10\"","4'11\"","5'0\"","5'1\"","5'2\"","5'3\"","5'4\"","5'5\"","5'6\"","5'7\"","5'8\"","5'9\"","5'10\"","5'11\"","6'0\"","6'1\"","6'2\"","6'3\""];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STEP FLOW
@@ -92,6 +94,12 @@ const STEPS: Step[] = [
     id: 'name', type: 'freetext',
     question: () => "Namaste! I am Narada — your divine matchmaker.\n\nI'll guide you to your most compatible match using Vedic wisdom. Just answer a few questions — skip anything you're not sure about.\n\nMay I know your full name to begin?",
     field: 'full_name',
+  },
+  {
+    id: 'gender', type: 'structured',
+    question: pd => `Thank you, ${pd.full_name.split(' ')[0]}. And you are…?`,
+    chips: () => ['Male', 'Female', 'Other'],
+    onSelect: (val) => ({ gender: val }),
   },
   {
     id: 'language', type: 'structured',
@@ -166,6 +174,13 @@ const STEPS: Step[] = [
     },
   },
   {
+    id: 'raasi', type: 'structured',
+    question: () => 'Your Raasi (Moon sign)?',
+    chips: () => RAASI_LIST,
+    canSkip: true,
+    onSelect: (val) => ({ raasi: val }),
+  },
+  {
     id: 'checkpoint2', type: 'checkpoint',
     question: pd => {
       const extra = pd.nakshatra
@@ -189,11 +204,28 @@ const STEPS: Step[] = [
     onSelect: (val) => ({ marital_status: val }),
   },
   {
+    id: 'height', type: 'structured',
+    question: () => 'Your height?',
+    chips: () => HEIGHT_OPTIONS,
+    canSkip: true,
+    onSelect: (val) => ({ height: val }),
+  },
+  {
     id: 'education', type: 'structured',
     question: () => 'Highest qualification?',
     chips: () => EDUCATION_OPTIONS,
     canSkip: true,
     onSelect: (val) => ({ education: val }),
+  },
+  {
+    id: 'profession', type: 'freetext',
+    question: () => 'What do you do professionally?',
+    field: 'profession', canSkip: true,
+  },
+  {
+    id: 'location', type: 'freetext',
+    question: () => 'Which city do you call home?',
+    field: 'location', canSkip: true,
   },
   {
     id: 'age', type: 'structured',
@@ -203,10 +235,20 @@ const STEPS: Step[] = [
     onSelect: (val) => ({ age: val }),
   },
   {
+    id: 'bio', type: 'freetext',
+    question: () => 'Tell us a little about yourself — what matters to you, how you spend your days. A sentence or two is perfect.',
+    field: 'bio', canSkip: true,
+  },
+  {
+    id: 'partner', type: 'freetext',
+    question: () => 'And what are you hoping for in a life partner? Values, lifestyle, family — anything that matters to you.',
+    field: 'partner_preferences', canSkip: true,
+  },
+  {
     id: 'checkpoint3', type: 'checkpoint',
     question: pd => {
       const name = pd.full_name.split(' ')[0];
-      return `✦ Excellent, ${name}! Your profile is ready.\n\nYou can add profession, bio, and partner preferences from your profile settings. Your matches await — let's go!`;
+      return `✦ Beautiful, ${name}! Your founding profile is taking shape.\n\nThe more complete it is, the earlier you're matched when your circle opens — and founders get 3 months of premium, free. You can refine anything later from your dashboard.`;
     },
   },
 ];
@@ -224,7 +266,8 @@ const EMPTY: PD = {
 };
 
 const TRACKED_KEYS: (keyof PD)[] = [
-  'full_name','nakshatra','gothra','sub_community','diet','education','age'
+  'full_name','gender','nakshatra','gothra','raasi','sub_community','diet',
+  'education','height','age','profession','location','bio','partner_preferences'
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -384,7 +427,7 @@ export default function Onboarding() {
       });
       const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' });
       if (error) throw error;
-      toast.success('Profile saved! Your matches are ready.');
+      toast.success('Profile saved — welcome to your founding circle.');
       router.push('/dashboard');
     } catch (e: any) {
       toast.error(`Save failed: ${e.message}`);
@@ -582,6 +625,7 @@ export default function Onboarding() {
               { label: 'Community', value: pd.sub_community },
               { label: 'Gothra',    value: pd.gothra },
               { label: 'Nakshatra', value: pd.nakshatra },
+              { label: 'Raasi',     value: pd.raasi },
             ] as { label: string; value?: string }[]).filter(r => r.value).map(row => (
               <div key={row.label} className="flex justify-between items-center py-1">
                 <span className="text-[10px] text-stone-500">{row.label}</span>
@@ -597,7 +641,10 @@ export default function Onboarding() {
             <h4 className="text-[10px] text-stone-600 uppercase font-bold tracking-widest mb-2 pb-1 border-b border-stone-800">Personal</h4>
             {([
               { label: 'Age',       value: pd.age ? `${pd.age} yrs` : '' },
+              { label: 'Height',    value: pd.height },
               { label: 'Education', value: pd.education },
+              { label: 'Profession', value: pd.profession },
+              { label: 'Location',  value: pd.location },
               { label: 'Diet',      value: pd.diet },
               { label: 'Marital',   value: pd.marital_status },
             ] as { label: string; value?: string }[]).filter(r => r.value).map(row => (
@@ -621,7 +668,7 @@ export default function Onboarding() {
                        flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 disabled:opacity-70">
             {saving
               ? <Loader2 className="w-4 h-4 animate-spin" />
-              : <><ArrowRight className="w-4 h-4" /> Save &amp; View Matches</>
+              : <><ArrowRight className="w-4 h-4" /> Save &amp; Enter the Circle</>
             }
           </button>
         </div>
