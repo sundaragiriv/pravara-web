@@ -1,6 +1,32 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://ybwltjpsxpimwdttwken.supabase.co";
+const supabaseHost = supabaseUrl.replace(/^https?:\/\//, "");
+
+// Browser only talks to: itself, Supabase (REST + realtime websockets), and a
+// few image hosts. Sentry uses the same-origin /monitoring tunnel; OpenAI and
+// Upstash are server-side only, so they don't need connect-src entries.
+const isDev = process.env.NODE_ENV !== "production";
+// Dev needs the Next HMR websocket; prod doesn't (and shouldn't allow it).
+const devConnect = isDev ? " ws://localhost:* http://localhost:*" : "";
+
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  // Next injects inline bootstrap scripts; runtime/Turbopack may use eval.
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  `img-src 'self' data: blob: ${supabaseUrl} https://images.unsplash.com`,
+  "font-src 'self' data:",
+  `connect-src 'self' ${supabaseUrl} wss://${supabaseHost}${devConnect}`,
+  "upgrade-insecure-requests",
+].join("; ");
+
 const securityHeaders = [
   // Prevent the page from being embedded in an iframe (clickjacking)
   { key: "X-Frame-Options", value: "DENY" },
@@ -11,6 +37,10 @@ const securityHeaders = [
   // Force HTTPS for 2 years, include subdomains, eligible for preload list
   // NOTE: Only enable this once your domain is fully on HTTPS/Cloudflare
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  // Restrict resource origins (XSS / data-exfil hardening)
+  { key: "Content-Security-Policy", value: contentSecurityPolicy },
+  // Disable device APIs the app doesn't use
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), browsing-topics=()" },
 ];
 
 const nextConfig: NextConfig = {

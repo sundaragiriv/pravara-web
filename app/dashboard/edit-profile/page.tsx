@@ -248,9 +248,9 @@ export default function EditProfilePage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
             const filePath = `${user.id}/gallery/${Date.now()}-${file.name}`;
-            const { error: uploadError } = await supabase.storage.from('gallery').upload(filePath, file);
+            const { error: uploadError } = await supabase.storage.from('photos').upload(filePath, file);
             if (uploadError) throw uploadError;
-            const { data: { publicUrl } } = supabase.storage.from('gallery').getPublicUrl(filePath);
+            const { data: { publicUrl } } = supabase.storage.from('photos').getPublicUrl(filePath);
             const newGallery = [...(formData.gallery_images || []), publicUrl];
             setFormData((prev: any) => ({ ...prev, gallery_images: newGallery }));
             const { data: { user: u } } = await supabase.auth.getUser();
@@ -279,9 +279,9 @@ export default function EditProfilePage() {
             if (!user) return;
             const ext = file.name.split('.').pop();
             const filePath = `${user.id}/voice_${Date.now()}.${ext}`;
-            const { error: uploadError } = await supabase.storage.from('voice_intros').upload(filePath, file, { contentType: file.type });
+            const { error: uploadError } = await supabase.storage.from('audio_bios').upload(filePath, file, { contentType: file.type });
             if (uploadError) throw uploadError;
-            const { data: { publicUrl } } = supabase.storage.from('voice_intros').getPublicUrl(filePath);
+            const { data: { publicUrl } } = supabase.storage.from('audio_bios').getPublicUrl(filePath);
             setFormData((prev: any) => ({ ...prev, voice_intro_url: publicUrl }));
             toast.success("Voice intro uploaded!");
         } catch (error: any) {
