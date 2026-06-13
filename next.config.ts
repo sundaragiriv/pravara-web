@@ -97,8 +97,11 @@ export default withSentryConfig(nextConfig, {
   // For all available options, see:
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
 
-  // Upload a larger set of source maps for prettier stack traces (increases build time)
-  widenClientFileUpload: true,
+  // Don't upload source maps at build — avoids needing a valid SENTRY_AUTH_TOKEN
+  // (an invalid/expired token was failing the Vercel build with a 401). Runtime
+  // error monitoring still works via the DSN. Re-enable with a valid token later
+  // if you want readable (un-minified) stack traces in Sentry.
+  sourcemaps: { disable: true },
 
   // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
   // This can increase your server load as well as your hosting bill.
