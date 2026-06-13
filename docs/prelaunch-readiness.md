@@ -29,13 +29,16 @@ The pre-launch site is a **curated-live founder funnel** — it manufactures rea
 ## 2. Things To Do — full going-live analysis
 
 ### A. Security / "hacker-sealed"  (grounded in live Supabase advisors)
-- ☐ **P0** Enable RLS + public-read policy on 8 `ref_*` tables (languages, communities, sub_communities, gothras, nakshatras, raasis, yoni_compat, planet_friendship). *(8 ERROR-level advisories.)*
-- ☐ **P0** Add **Content-Security-Policy** header (currently absent) + `Permissions-Policy` (camera/mic/geo off). Existing: X-Frame-Options, HSTS, X-Content-Type-Options, Referrer-Policy.
-- ☐ **P0** Audit **public storage buckets** — 3 allow listing; ensure profile-photo bucket can't be enumerated (read-by-URL only, no list).
-- ☐ **P1** Set `search_path` on 3 functions (`notify_on_connection`, `update_updated_at_column`, `mark_messages_read`).
-- ☐ **P1** Review 4 SECURITY DEFINER functions executable by anon/auth — confirm none allow privilege escalation.
-- ☐ **P1** Review the 1 "RLS policy always true" advisory (confirm it's an intended public table, e.g. endorsements).
-- ☐ **P1** Enable Supabase **Leaked Password Protection** (Auth settings, HIBP check). *(1 advisory.)*
+- ☑ **P0** Enable RLS + public-read policy on 8 `ref_*` tables. *(Cleared 8 ERRORs.)*
+- ☑ **P0** Add **Content-Security-Policy** + `Permissions-Policy` headers (verified: 29/29 E2E pass under CSP).
+- ☑ **P0** Stop **public storage bucket** listing (dropped broad SELECT policies; serving via getPublicUrl unaffected).
+- ☑ **P1** Set `search_path` on 3 functions.
+- ☑ **P1** SECURITY DEFINER functions — revoked EXECUTE from PUBLIC on the 2 trigger fns.
+- ☑ **P1** "RLS policy always true" — was the endorsements public INSERT; now removed (writes go through rate-limited /api/vouch).
+- ☐ **P1** Enable Supabase **Leaked Password Protection** (Auth settings, HIBP check) — *your dashboard toggle, last advisor item.*
+- ☑ Disabled unused **GraphQL API** (`pg_graphql`) — cleared ~44 schema-exposure advisories.
+- ☑ Hardened **vouch** submission — rate-limited + validated `/api/vouch` (was a direct, unlimited client insert).
+- 📉 **Supabase security advisor: 65 → 2** (remaining: leaked-password toggle + cosmetic pg_trgm).
 - ☐ **P1** **Bot protection** on `/register`, `/signup`, `/login` — Cloudflare Turnstile or hCaptcha.
 - ☐ **P1** Put **pravara.ai behind Cloudflare** — WAF, DDoS, Bot Fight Mode, rate-limit login.
 - ☐ **P1** Auth hardening: email verification required before profile visible; login-attempt lockout; block disposable-email domains.
