@@ -2,6 +2,8 @@ import "server-only";
 
 import { Resend } from "resend";
 import type { LaunchRegistrationRequest, SupportRequest } from "@/lib/api-schemas";
+import { getSiteUrl } from "@/lib/env";
+import { founderWelcomeEmail, profileReminderEmail } from "@/lib/email-templates";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -83,24 +85,6 @@ function buildLaunchInboxText(input: LaunchRegistrationRequest): string {
   ].join("\n");
 }
 
-function buildLaunchAckText(input: LaunchRegistrationRequest): string {
-  return [
-    `Hi ${input.full_name},`,
-    "",
-    "You are on the founding list for Pravara.",
-    "",
-    "We are opening the platform carefully so the first members arrive to a high-intent, high-trust experience.",
-    "As a founding registrant, you will be considered for early access and launch benefits when we turn the lights on.",
-    "",
-    "What happens next:",
-    "- We review registrations as the founding cohort fills",
-    "- We email you when access opens for your cohort",
-    "- Founding members may receive launch-only premium benefits",
-    "",
-    "Pravara",
-  ].join("\n");
-}
-
 export async function sendLaunchRegistrationEmails(input: LaunchRegistrationRequest) {
   if (!resend || !emailFrom) {
     throw new Error("Email service is not configured");
@@ -114,11 +98,37 @@ export async function sendLaunchRegistrationEmails(input: LaunchRegistrationRequ
     text: buildLaunchInboxText(input),
   });
 
+  const firstName = input.full_name.split(" ")[0] || "";
+  const ctaUrl =
+    `${getSiteUrl()}/signup?email=${encodeURIComponent(input.email)}` +
+    `&name=${encodeURIComponent(input.full_name)}`;
+  const welcome = founderWelcomeEmail({ firstName, ctaUrl, contactEmail: supportInbox });
+
   await resend.emails.send({
     from: emailFrom,
     to: input.email,
     replyTo: launchInbox,
-    subject: "You are on the Pravara founding list",
-    text: buildLaunchAckText(input),
+    subject: welcome.subject,
+    html: welcome.html,
+    text: welcome.text,
+  });
+}
+
+/** Reminder to a registered founder who hasn't finished their profile. */
+export async function sendProfileReminderEmail(input: { email: string; full_name: string }) {
+  if (!resend || !emailFrom) return;
+  const firstName = input.full_name.split(" ")[0] || "";
+  const ctaUrl =
+    `${getSiteUrl()}/signup?email=${encodeURIComponent(input.email)}` +
+    `&name=${encodeURIComponent(input.full_name)}`;
+  const reminder = profileReminderEmail({ firstName, ctaUrl, contactEmail: supportInbox });
+
+  await resend.emails.send({
+    from: emailFrom,
+    to: input.email,
+    replyTo: launchInbox,
+    subject: reminder.subject,
+    html: reminder.html,
+    text: reminder.text,
   });
 }
