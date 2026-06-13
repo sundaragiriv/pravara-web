@@ -17,6 +17,10 @@ export const PRE_LAUNCH_ENABLED = parseBooleanEnv(
   process.env.PRE_LAUNCH_ENABLED ?? process.env.NEXT_PUBLIC_PRE_LAUNCH
 );
 
+// Flip MAINTENANCE_MODE=true in Vercel to show the maintenance screen to everyone
+// except admins. No redeploy needed beyond the env change.
+export const MAINTENANCE_MODE = parseBooleanEnv(process.env.MAINTENANCE_MODE);
+
 const ADMIN_EMAIL_ALLOWLIST = new Set(parseCsvEnv(process.env.ADMIN_EMAILS));
 
 export function getSiteUrl(): string {

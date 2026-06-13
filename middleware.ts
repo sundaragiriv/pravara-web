@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-import { isAllowlistedAdminEmail, PRE_LAUNCH_ENABLED } from "@/lib/env";
+import { isAllowlistedAdminEmail, MAINTENANCE_MODE, PRE_LAUNCH_ENABLED } from "@/lib/env";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -36,6 +36,18 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // MAINTENANCE MODE: serve the maintenance screen to everyone except admins.
+  // /login (so admins can sign in) and /api (auth callbacks, cron) stay open.
+  if (
+    MAINTENANCE_MODE &&
+    !isAllowlistedAdminEmail(user?.email) &&
+    !request.nextUrl.pathname.startsWith("/maintenance") &&
+    !request.nextUrl.pathname.startsWith("/login") &&
+    !request.nextUrl.pathname.startsWith("/api")
+  ) {
+    return NextResponse.rewrite(new URL("/maintenance", request.url));
+  }
 
   // PROTECTED ROUTES: If user is NOT logged in, kick them to Login.
   // (Admin + settings were previously client-gated only, which served their
