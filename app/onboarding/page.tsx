@@ -51,6 +51,11 @@ interface PD {
   community_id: string;
   marital_status: string;
   partner_preferences: string;
+  pravara: string;
+  dob: string;
+  manglik: string;
+  partner_min_age: string;
+  partner_max_age: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -181,6 +186,18 @@ const STEPS: Step[] = [
     onSelect: (val) => ({ raasi: val }),
   },
   {
+    id: 'pravara', type: 'freetext',
+    question: () => 'Your Pravara (rishi lineage)? Skip if you’re not sure.',
+    field: 'pravara', canSkip: true,
+  },
+  {
+    id: 'manglik', type: 'structured',
+    question: () => 'Are you Manglik (Mangal Dosha)?',
+    chips: () => ['No', 'Yes', 'Anshik (partial)', "Don't know"],
+    canSkip: true,
+    onSelect: (val) => ({ manglik: val }),
+  },
+  {
     id: 'checkpoint2', type: 'checkpoint',
     question: pd => {
       const extra = pd.nakshatra
@@ -235,9 +252,25 @@ const STEPS: Step[] = [
     onSelect: (val) => ({ age: val }),
   },
   {
+    id: 'dob', type: 'freetext',
+    question: () => 'Your date of birth? (e.g., 15 Aug 1996) — it powers your full Kundali match.',
+    field: 'dob', canSkip: true,
+  },
+  {
     id: 'bio', type: 'freetext',
     question: () => 'Tell us a little about yourself — what matters to you, how you spend your days. A sentence or two is perfect.',
     field: 'bio', canSkip: true,
+  },
+  {
+    id: 'partner_age', type: 'structured',
+    question: () => 'Preferred age range for your partner?',
+    chips: () => ['22-28', '24-30', '26-32', '28-34', '30-36', '32-40', 'No preference'],
+    canSkip: true,
+    onSelect: (val) => {
+      if (val.startsWith('No')) return {};
+      const [lo, hi] = val.split('-').map((s) => s.trim());
+      return { partner_min_age: lo, partner_max_age: hi };
+    },
   },
   {
     id: 'partner', type: 'freetext',
@@ -264,7 +297,8 @@ const STEP_FIELD: Partial<Record<string, keyof PD>> = {
   subcommunity: "sub_community_id", nakshatra: "nakshatra", gothra: "gothra", raasi: "raasi",
   diet: "diet", marital: "marital_status", height: "height", education: "education",
   profession: "profession", location: "location", age: "age", bio: "bio",
-  partner: "partner_preferences",
+  partner: "partner_preferences", pravara: "pravara", manglik: "manglik", dob: "dob",
+  partner_age: "partner_min_age",
 };
 
 function shouldSkipStep(s: Step, pd: PD): boolean {
@@ -280,6 +314,7 @@ const EMPTY: PD = {
   gothra:'', gothra_id:'', nakshatra:'', nakshatra_id:'', raasi:'',
   sub_community:'', sub_community_id:'', language_id:'',
   community_id:'', marital_status:'', partner_preferences:'',
+  pravara:'', dob:'', manglik:'', partner_min_age:'', partner_max_age:'',
 };
 
 const TRACKED_KEYS: (keyof PD)[] = [
@@ -448,7 +483,7 @@ export default function Onboarding() {
     try {
       const payload: Record<string, any> = { id: userId, updated_at: new Date().toISOString() };
       (Object.keys(d) as (keyof PD)[]).forEach(k => { if (d[k]) payload[k] = d[k]; });
-      ['language_id','community_id','sub_community_id','nakshatra_id','gothra_id'].forEach(k => {
+      ['language_id','community_id','sub_community_id','nakshatra_id','gothra_id','partner_min_age','partner_max_age'].forEach(k => {
         if (payload[k]) payload[k] = Number(payload[k]) || null;
       });
       const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' });
@@ -652,6 +687,8 @@ export default function Onboarding() {
               { label: 'Gothra',    value: pd.gothra },
               { label: 'Nakshatra', value: pd.nakshatra },
               { label: 'Raasi',     value: pd.raasi },
+              { label: 'Pravara',   value: pd.pravara },
+              { label: 'Manglik',   value: pd.manglik },
             ] as { label: string; value?: string }[]).filter(r => r.value).map(row => (
               <div key={row.label} className="flex justify-between items-center py-1">
                 <span className="text-[10px] text-stone-500">{row.label}</span>
