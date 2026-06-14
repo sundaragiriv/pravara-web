@@ -92,6 +92,10 @@ interface Step {
   field?: keyof PD;
   onSelect?: (val: string, pd: PD) => Partial<PD>;
   shouldSkip?: (pd: PD) => boolean;
+  // For freetext steps: validate/normalize the typed answer. Return the value to
+  // store, or null if it isn't valid (Narada re-asks with `parseError`).
+  parse?: (text: string) => string | null;
+  parseError?: string;
 }
 
 const STEPS: Step[] = [
@@ -255,6 +259,8 @@ const STEPS: Step[] = [
     id: 'dob', type: 'freetext',
     question: () => 'Your date of birth? (e.g., 15 Aug 1996) — it powers your full Kundali match.',
     field: 'dob', canSkip: true,
+    parse: parseDob,
+    parseError: 'I couldn’t read that as a date. Try a format like “15 Aug 1996” or 1996-08-15 — or tap Skip.',
   },
   {
     id: 'bio', type: 'freetext',
@@ -300,6 +306,58 @@ const STEP_FIELD: Partial<Record<string, keyof PD>> = {
   partner: "partner_preferences", pravara: "pravara", manglik: "manglik", dob: "dob",
   partner_age: "partner_min_age",
 };
+
+// Parse a human-typed date of birth into an ISO string (YYYY-MM-DD), or null if
+// it isn't a real, plausible birth date. Handles "15 Aug 1996", "August 15, 1996",
+// "1996-08-15", and numeric "MM/DD/YYYY" (US-first) / "DD/MM/YYYY".
+const MONTHS: Record<string, number> = {
+  jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+  jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+};
+function parseDob(raw: string): string | null {
+  const text = raw.trim();
+  if (!text) return null;
+  let y: number | undefined, m: number | undefined, d: number | undefined;
+
+  // ISO: 1996-08-15
+  const iso = text.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+  if (iso) { y = +iso[1]; m = +iso[2]; d = +iso[3]; }
+
+  // Month-name: "15 Aug 1996", "Aug 15 1996", "August 15, 1996"
+  if (y === undefined) {
+    const lower = text.toLowerCase();
+    const mon = lower.match(/jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec/);
+    const nums = lower.match(/\d+/g);
+    if (mon && nums) {
+      const year = nums.find(n => n.length === 4);
+      const day = nums.find(n => n.length <= 2 && +n >= 1 && +n <= 31);
+      if (year && day) { y = +year; m = MONTHS[mon[0]]; d = +day; }
+    }
+  }
+
+  // Numeric separators: MM/DD/YYYY (US default) or DD/MM/YYYY
+  if (y === undefined) {
+    const parts = text.split(/[-/.]/).map(s => s.trim());
+    if (parts.length === 3 && parts.every(p => /^\d+$/.test(p))) {
+      const [a, b, c] = parts.map(Number);
+      if (parts[0].length === 4) { y = a; m = b; d = c; }     // YYYY/MM/DD
+      else { y = c < 100 ? 1900 + c : c; m = a; d = b; }       // US MM/DD/YYYY
+      if (m! > 12 && d! <= 12) { const t = m; m = d; d = t; }  // looks like DD/MM → swap
+    }
+  }
+
+  if (!y || !m || !d || m < 1 || m > 12 || d < 1 || d > 31) return null;
+
+  // Must be a real calendar date (rejects e.g. 31 Feb)
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
+
+  // Plausible age: 18–100
+  const thisYear = new Date().getUTCFullYear();
+  if (y < thisYear - 100 || y > thisYear - 18) return null;
+
+  return `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
 
 function shouldSkipStep(s: Step, pd: PD): boolean {
   if (s.type === "checkpoint") return false;
@@ -442,8 +500,22 @@ export default function Onboarding() {
     setInput('');
 
     if (cur.type === 'freetext') {
+      // Validate/normalize typed answers (e.g. date of birth). If it doesn't
+      // pass, Narada re-asks instead of storing a value that would fail to save.
+      let value = text;
+      if (cur.parse) {
+        const parsed = cur.parse(text);
+        if (parsed === null) {
+          addMsg({
+            role: 'assistant',
+            content: cur.parseError ?? 'That didn’t look right — could you try again, or tap Skip?',
+          });
+          return;
+        }
+        value = parsed;
+      }
       const patch: Partial<PD> = {};
-      if (cur.field) (patch as any)[cur.field] = text;
+      if (cur.field) (patch as any)[cur.field] = value;
       const next = { ...pd, ...patch };
       update(patch);
       advance(next, step);
@@ -486,6 +558,8 @@ export default function Onboarding() {
       ['language_id','community_id','sub_community_id','nakshatra_id','gothra_id','partner_min_age','partner_max_age'].forEach(k => {
         if (payload[k]) payload[k] = Number(payload[k]) || null;
       });
+      // Backstop: never send a non-ISO value to the `dob` date column.
+      if (payload.dob && !/^\d{4}-\d{2}-\d{2}$/.test(payload.dob)) delete payload.dob;
       const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' });
       if (error) throw error;
       toast.success('Profile saved — welcome to your founding circle.');
