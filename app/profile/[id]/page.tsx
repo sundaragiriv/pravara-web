@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import AstroMatchCard from '@/components/AstroMatchCard';
-import { calculateMatchScore } from '@/utils/matchEngine';
+import { calculateMatchScore, calculateGunaScore, type GunaResult } from '@/utils/matchEngine';
 import { toast } from "sonner";
 import BhruguLoader from '@/components/BhruguLoader';
 import DashboardSubNav from '@/components/navigation/DashboardSubNav';
@@ -29,6 +29,7 @@ export default function ProfileDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [connectionStatus, setConnectionStatus] = useState<any>('none');
     const [matchScore, setMatchScore] = useState(0);
+    const [guna, setGuna] = useState<GunaResult | null>(null);
     const [isPremium, setIsPremium] = useState(false);
     const [galleryPhotos, setGalleryPhotos] = useState<string[]>([]);
 
@@ -53,6 +54,13 @@ export default function ProfileDetailsPage() {
                 setMatchScore(calculateMatchScore(myRes.data, targetRes.data));
                 const tier = myRes.data.membership_tier;
                 setIsPremium(tier === 'Gold' || tier === 'Concierge');
+
+                // Real Ashtakoot compatibility — only when both charts have the
+                // inputs the engine needs. Otherwise we show nothing (never fake numbers).
+                const hasCharts = (p: { nakshatra?: string; raasi?: string }) => !!(p?.nakshatra && p?.raasi);
+                if (hasCharts(myRes.data) && hasCharts(targetRes.data)) {
+                    setGuna(calculateGunaScore(myRes.data, targetRes.data));
+                }
             }
             if (connRes.data) {
                 const c = connRes.data;
@@ -362,32 +370,43 @@ export default function ProfileDetailsPage() {
                             <h4 className="text-haldi-500 font-serif text-base font-bold tracking-wide">Vedic Compatibility</h4>
                             <span className="px-3 py-1 bg-green-900/30 border border-green-500/30 rounded-full text-[10px] font-bold text-green-400 uppercase tracking-wider shadow-[0_0_10px_rgba(74,222,128,0.1)]">Strict Match</span>
                         </div>
-                        <div className={!isPremium ? "blur-sm select-none opacity-50 pointer-events-none transition-all duration-300" : "transition-all duration-300"}>
-                            <AstroMatchCard
-                                data={{
-                                    totalScore: profile.gunas || 28,
-                                    nadiScore: 8,
-                                    bhakootScore: 7,
-                                    ganaScore: 3,
-                                    yoniScore: 3,
-                                    isManglik: false,
-                                    partnerIsManglik: false
-                                }}
-                            />
-                        </div>
-                        {!isPremium && (
-                            <div className="absolute inset-0 top-12 z-10 flex flex-col items-center justify-center text-center">
-                                <div className="bg-stone-900/95 border border-haldi-500/30 p-4 rounded-xl shadow-2xl max-w-[200px]">
-                                    <Lock className="text-haldi-500 mx-auto mb-2" size={20} />
-                                    <p className="text-stone-300 text-xs font-bold mb-1">Vedic Compatibility Report</p>
-                                    <p className="text-stone-500 text-[10px] mb-2">Available on Gold & Concierge</p>
-                                    <Link
-                                        href="/membership"
-                                        className="block bg-haldi-600 hover:bg-haldi-500 text-stone-950 font-bold py-1.5 px-4 rounded-full text-xs transition text-center"
-                                    >
-                                        Upgrade
-                                    </Link>
+                        {guna ? (
+                            <>
+                                <div className={!isPremium ? "blur-sm select-none opacity-50 pointer-events-none transition-all duration-300" : "transition-all duration-300"}>
+                                    <AstroMatchCard
+                                        data={{
+                                            totalScore: guna.total,
+                                            nadiScore: guna.breakdown.nadi.score,
+                                            bhakootScore: guna.breakdown.bhakoot.score,
+                                            ganaScore: guna.breakdown.gana.score,
+                                            yoniScore: guna.breakdown.yoni.score,
+                                            destinyScore: guna.breakdown.tara.score + guna.breakdown.graha.score,
+                                        }}
+                                    />
                                 </div>
+                                {!isPremium && (
+                                    <div className="absolute inset-0 top-12 z-10 flex flex-col items-center justify-center text-center">
+                                        <div className="bg-stone-900/95 border border-haldi-500/30 p-4 rounded-xl shadow-2xl max-w-[200px]">
+                                            <Lock className="text-haldi-500 mx-auto mb-2" size={20} />
+                                            <p className="text-stone-300 text-xs font-bold mb-1">Vedic Compatibility Report</p>
+                                            <p className="text-stone-500 text-[10px] mb-2">Available on Gold & Concierge</p>
+                                            <Link
+                                                href="/membership"
+                                                className="block bg-haldi-600 hover:bg-haldi-500 text-stone-950 font-bold py-1.5 px-4 rounded-full text-xs transition text-center"
+                                            >
+                                                Upgrade
+                                            </Link>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div className="py-8 text-center">
+                                <Sparkles className="text-stone-600 mx-auto mb-3" size={22} />
+                                <p className="text-stone-300 text-sm font-medium mb-1">Compatibility not yet available</p>
+                                <p className="text-stone-500 text-xs max-w-[260px] mx-auto">
+                                    Detailed Ashtakoota matching unlocks once both profiles have their Nakshatra &amp; Raasi completed.
+                                </p>
                             </div>
                         )}
                     </div>
