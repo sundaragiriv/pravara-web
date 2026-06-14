@@ -257,6 +257,23 @@ const STEPS: Step[] = [
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Which profile field each question step fills — lets us skip anything we already
+// know (from the lead form or a prior session) instead of re-asking it.
+const STEP_FIELD: Partial<Record<string, keyof PD>> = {
+  name: "full_name", gender: "gender", language: "language_id", community: "sub_community",
+  subcommunity: "sub_community_id", nakshatra: "nakshatra", gothra: "gothra", raasi: "raasi",
+  diet: "diet", marital: "marital_status", height: "height", education: "education",
+  profession: "profession", location: "location", age: "age", bio: "bio",
+  partner: "partner_preferences",
+};
+
+function shouldSkipStep(s: Step, pd: PD): boolean {
+  if (s.type === "checkpoint") return false;
+  if (s.shouldSkip?.(pd)) return true;
+  const field = STEP_FIELD[s.id];
+  return Boolean(field && pd[field]);
+}
+
 const EMPTY: PD = {
   full_name:'', age:'', gender:'', height:'', location:'',
   profession:'', education:'', diet:'', bio:'', image_url:'',
@@ -298,7 +315,7 @@ export default function Onboarding() {
   // Advance to next un-skipped step
   const advance = useCallback((current: PD, fromStep: number) => {
     let next = fromStep + 1;
-    while (next < STEPS.length && STEPS[next].shouldSkip?.(current)) next++;
+    while (next < STEPS.length && shouldSkipStep(STEPS[next], current)) next++;
     if (next >= STEPS.length) {
       // All done — save
       setStep(next);
@@ -339,16 +356,25 @@ export default function Onboarding() {
         setPd(initial);
       }
 
-      const hasName = initial.full_name && initial.full_name !== 'Traveler';
-      const startIdx = hasName ? 1 : 0;
+      // Start at the first thing we DON'T already know — skip answered questions
+      // and the intro checkpoints so returning founders aren't re-asked.
+      let startIdx = 0;
+      while (
+        startIdx < STEPS.length &&
+        (STEPS[startIdx].type === 'checkpoint' || shouldSkipStep(STEPS[startIdx], initial))
+      ) {
+        startIdx++;
+      }
+      if (startIdx >= STEPS.length) startIdx = STEPS.length - 1; // all known → final checkpoint
       setStep(startIdx);
       const s = STEPS[startIdx];
       addMsg({
-        role: 'assistant',
+        role: s.type === 'checkpoint' ? 'checkpoint' : 'assistant',
         content: s.question(initial),
         chips: s.type === 'structured' ? s.chips?.(initial) : undefined,
         canSkip: s.canSkip,
       });
+      if (s.type === 'checkpoint') setTimeout(() => advance(initial, startIdx), 1600);
       setHasInit(true);
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
