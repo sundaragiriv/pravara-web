@@ -23,11 +23,11 @@ const contentSecurityPolicy = [
   "frame-ancestors 'none'",
   "form-action 'self'",
   // Next injects inline bootstrap scripts; runtime/Turbopack may use eval.
-  `script-src 'self' 'unsafe-inline' 'unsafe-eval'${fbScript}`,
+  `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com${fbScript}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${supabaseUrl} https://images.unsplash.com${fbConnectImg}`,
   "font-src 'self' data:",
-  `connect-src 'self' ${supabaseUrl} wss://${supabaseHost}${devConnect}${fbConnectImg}`,
+  `connect-src 'self' ${supabaseUrl} wss://${supabaseHost} https://vitals.vercel-insights.com https://va.vercel-scripts.com${devConnect}${fbConnectImg}`,
   "upgrade-insecure-requests",
 ].join("; ");
 

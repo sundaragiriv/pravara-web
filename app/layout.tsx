@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { Toaster } from "sonner";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import MetaPixel from "@/components/analytics/MetaPixel";
 import SutradharWidget from "@/components/SutradharWidget";
@@ -14,7 +16,10 @@ const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfa
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
-  title: "Pravara | Modern Heritage Matrimony",
+  title: {
+    default: "Pravara — Vedic Matrimony, by invitation",
+    template: "%s · Pravara",
+  },
   description: "A modern matrimony platform rooted in heritage, compatibility, and intentional matchmaking.",
   icons: {
     icon: "/logo3.png",
@@ -36,11 +41,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${inter.variable} ${playfair.variable} font-sans bg-stone-950 text-stone-50 antialiased`}
         suppressHydrationWarning
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Pravara",
+              url: getSiteUrl(),
+              logo: `${getSiteUrl()}/logo3.png`,
+              description:
+                "Vedic matrimony, by invitation — modern, trust-first matchmaking rooted in heritage.",
+            }),
+          }}
+        />
         <Providers>
           <MetaPixel />
           {children}
           <SutradharWidget />
           <Toaster position="top-center" richColors closeButton />
+          <Analytics />
+          <SpeedInsights />
         </Providers>
       </body>
     </html>
