@@ -11,6 +11,10 @@ const supabaseHost = supabaseUrl.replace(/^https?:\/\//, "");
 const isDev = process.env.NODE_ENV !== "production";
 // Dev needs the Next HMR websocket; prod doesn't (and shouldn't allow it).
 const devConnect = isDev ? " ws://localhost:* http://localhost:*" : "";
+// Meta Pixel domains — only permitted when a Pixel ID is configured.
+const metaOn = Boolean(process.env.NEXT_PUBLIC_META_PIXEL_ID);
+const fbScript = metaOn ? " https://connect.facebook.net" : "";
+const fbConnectImg = metaOn ? " https://www.facebook.com" : "";
 
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -19,11 +23,11 @@ const contentSecurityPolicy = [
   "frame-ancestors 'none'",
   "form-action 'self'",
   // Next injects inline bootstrap scripts; runtime/Turbopack may use eval.
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  `script-src 'self' 'unsafe-inline' 'unsafe-eval'${fbScript}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: ${supabaseUrl} https://images.unsplash.com`,
+  `img-src 'self' data: blob: ${supabaseUrl} https://images.unsplash.com${fbConnectImg}`,
   "font-src 'self' data:",
-  `connect-src 'self' ${supabaseUrl} wss://${supabaseHost}${devConnect}`,
+  `connect-src 'self' ${supabaseUrl} wss://${supabaseHost}${devConnect}${fbConnectImg}`,
   "upgrade-insecure-requests",
 ].join("; ");
 

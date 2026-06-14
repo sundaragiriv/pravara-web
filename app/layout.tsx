@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { Toaster } from "sonner";
 
+import MetaPixel from "@/components/analytics/MetaPixel";
 import SutradharWidget from "@/components/SutradharWidget";
 import { getSiteUrl } from "@/lib/env";
 
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         suppressHydrationWarning
       >
         <Providers>
+          <MetaPixel />
           {children}
           <SutradharWidget />
           <Toaster position="top-center" richColors closeButton />

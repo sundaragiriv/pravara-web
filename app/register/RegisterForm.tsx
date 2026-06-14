@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowRight, CheckCircle2, Loader2, Copy, Check } from "lucide-react";
 
+import { trackMetaEvent } from "@/components/analytics/MetaPixel";
 import PetalBurst from "@/components/launch/PetalBurst";
 
 type RegisterFormState = {
@@ -87,6 +88,7 @@ export default function RegisterForm({ foundingCount, foundingTarget }: Register
       }
 
       setLead({ name: form.full_name, email: form.email });
+      trackMetaEvent("Lead");
       setDone("new");
       setForm(INITIAL_STATE);
     } catch (submitError) {
