@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react";
 
 import LaunchAtmosphere from "@/components/launch/LaunchAtmosphere";
 import LaunchPageView from "@/components/launch/LaunchPageView";
-import { FOUNDING_MEMBER_TARGET, getLaunchRegistrationCount } from "@/lib/launch";
+import { getFounderProgress } from "@/lib/launch";
 import { createClient } from "@/utils/supabase/server";
 
 import RegisterForm from "./RegisterForm";
@@ -29,7 +29,7 @@ export default async function RegisterPage() {
     redirect("/dashboard");
   }
 
-  const foundingCount = await getLaunchRegistrationCount();
+  const founderProgress = await getFounderProgress();
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-stone-950 text-stone-50">
@@ -72,7 +72,7 @@ export default async function RegisterPage() {
           </div>
 
           <div className="mt-10">
-            <RegisterForm foundingCount={foundingCount} foundingTarget={FOUNDING_MEMBER_TARGET} />
+            <RegisterForm founderProgress={founderProgress} />
           </div>
         </div>
       </main>

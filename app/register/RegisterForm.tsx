@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ArrowRight, CheckCircle2, Loader2, Copy, Check } from "lucide-react";
 
 import { trackMetaEvent } from "@/components/analytics/MetaPixel";
 import PetalBurst from "@/components/launch/PetalBurst";
+import type { FounderProgress } from "@/lib/launch";
 
 type RegisterFormState = {
   full_name: string;
@@ -24,15 +25,14 @@ const INITIAL_STATE: RegisterFormState = {
 };
 
 type RegisterFormProps = {
-  foundingCount: number | null;
-  foundingTarget: number;
+  founderProgress: FounderProgress;
 };
 
 const fieldClass =
   "w-full rounded-xl border border-stone-800 bg-stone-900 px-4 py-3 text-stone-100 placeholder:text-stone-600 focus:border-haldi-500 focus:outline-none focus:ring-2 focus:ring-haldi-400/70";
 const labelClass = "mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-stone-300";
 
-export default function RegisterForm({ foundingCount, foundingTarget }: RegisterFormProps) {
+export default function RegisterForm({ founderProgress }: RegisterFormProps) {
   const [form, setForm] = useState<RegisterFormState>(INITIAL_STATE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,12 +40,6 @@ export default function RegisterForm({ foundingCount, foundingTarget }: Register
   const [copied, setCopied] = useState(false);
   // Remember what they submitted so we can carry it into account creation.
   const [lead, setLead] = useState<{ name: string; email: string } | null>(null);
-
-  const joined = typeof foundingCount === "number" ? foundingCount : null;
-  const pct = useMemo(
-    () => (joined === null ? null : Math.min(100, Math.round((joined / foundingTarget) * 100))),
-    [joined, foundingTarget],
-  );
 
   function updateField<K extends keyof RegisterFormState>(field: K, value: RegisterFormState[K]) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -167,28 +161,31 @@ export default function RegisterForm({ foundingCount, foundingTarget }: Register
   // ── Registration form ─────────────────────────────────────────────────────
   return (
     <div className="mx-auto max-w-2xl rounded-3xl border border-haldi-500/15 bg-[linear-gradient(180deg,rgba(18,15,13,0.88),rgba(10,8,7,0.94))] p-8 shadow-2xl shadow-black/40 backdrop-blur-md">
-      {/* Progress toward the first circle of 1,000 */}
-      <div>
-        <div className="flex items-baseline justify-between text-xs uppercase tracking-[0.18em]">
-          <span className="font-semibold text-haldi-300">Founder Circle</span>
-          <span className={joined === 0 ? "font-semibold text-haldi-200" : "text-stone-400"}>
-            {joined === null
-              ? "Intake open"
-              : joined === 0
-                ? "Be among the first"
-                : `${joined.toLocaleString()} of ${foundingTarget.toLocaleString()} joined`}
-          </span>
+      {/* Progress toward the first circle of 1,000 — only once the number
+          reads as momentum rather than emptiness (see FOUNDER_COUNT_DISPLAY_THRESHOLD). */}
+      {founderProgress.show ? (
+        <div>
+          <div className="flex items-baseline justify-between text-xs uppercase tracking-[0.18em]">
+            <span className="font-semibold text-haldi-300">Founder Circle</span>
+            <span className="text-stone-400">
+              {founderProgress.joined.toLocaleString()} of {founderProgress.target.toLocaleString()} founders
+              joined
+            </span>
+          </div>
+          <div className="launch-progress-shine mt-2 h-2 w-full overflow-hidden rounded-full bg-stone-800">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-haldi-500 via-amber-400 to-haldi-500 transition-[width] duration-700"
+              style={{ width: `${Math.max(founderProgress.pct, 4)}%` }}
+            />
+          </div>
         </div>
-        <div className="launch-progress-shine mt-2 h-2 w-full overflow-hidden rounded-full bg-stone-800">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-haldi-500 via-amber-400 to-haldi-500 transition-[width] duration-700"
-            style={{ width: `${pct === null ? 6 : Math.max(pct, 4)}%` }}
-          />
-        </div>
-      </div>
+      ) : null}
 
       {/* Toran — a small auspicious gold flourish framing the invitation */}
-      <div className="mt-6 flex items-center justify-center gap-3" aria-hidden="true">
+      <div
+        className={`${founderProgress.show ? "mt-6" : ""} flex items-center justify-center gap-3`}
+        aria-hidden="true"
+      >
         <span className="gold-rule w-14" />
         <span className="h-2.5 w-2.5 rotate-45 rounded-[2px] bg-gradient-to-br from-amber-200 to-haldi-500 shadow-[0_0_10px_rgba(251,191,36,0.6)]" />
         <span className="gold-rule w-14" />
