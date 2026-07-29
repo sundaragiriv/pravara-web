@@ -5,6 +5,7 @@ import { ArrowRight, Gem, ScrollText, Users } from "lucide-react";
 import LaunchAtmosphere from "@/components/launch/LaunchAtmosphere";
 import LaunchCtaLink from "@/components/launch/LaunchCtaLink";
 import LaunchPageView from "@/components/launch/LaunchPageView";
+import MandalaWatermark from "@/components/launch/MandalaWatermark";
 
 const ctaClass =
   "btn-sheen btn-festive launch-cta-glow inline-flex items-center justify-center gap-2 rounded-full px-10 py-4 text-sm font-bold uppercase tracking-[0.14em] text-stone-950 transition-all hover:scale-[1.02] hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-haldi-300 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950";
@@ -55,7 +56,11 @@ export default function LaunchHome({ isLoggedIn }: { isLoggedIn: boolean }) {
             viewport, which pushes the CTA below the real fold. Subtracting the
             wrapper's py-16 (8rem) plus 3rem keeps the CTA comfortably in view
             while still letting the trust layer peek and invite a scroll. */}
-        <section className="mx-auto flex min-h-[calc(100svh-11rem)] w-full max-w-3xl flex-col items-center justify-center">
+        <section className="relative mx-auto flex min-h-[calc(100svh-11rem)] w-full max-w-3xl flex-col items-center justify-center">
+          {/* Ceremonial watermark, centred on the wordmark and masked to fade at
+              the rim so it never competes with the headline. */}
+          <MandalaWatermark className="absolute left-1/2 top-1/2 -z-10 h-[520px] w-[520px] -translate-x-1/2 -translate-y-[58%] text-haldi-400/[0.11] [mask-image:radial-gradient(circle,black_35%,transparent_72%)] sm:h-[640px] sm:w-[640px]" />
+
           {/* Wordmark — login-style treatment: logo over a warm glow; the dark
               matte blends away via mix-blend-lighten. In normal flow → never overlaps. */}
           <div className="relative flex items-center justify-center">
@@ -77,8 +82,11 @@ export default function LaunchHome({ isLoggedIn }: { isLoggedIn: boolean }) {
             Exclusive pre-launch invitation
           </p>
 
+          {/* One gilded word, not the whole line — the shine reads as an accent
+              on "legacy" and stays a serif display face rather than a gradient. */}
           <h1 className="mt-6 text-balance font-serif text-4xl leading-[0.96] text-stone-50 short:mt-4 sm:text-5xl md:text-6xl xl:text-7xl">
-            For the legacy you carry and the future you are building.
+            For the <span className="text-gold-shine">legacy</span> you carry and the future you are
+            building.
           </h1>
 
           <p className="mt-6 max-w-xl text-base leading-relaxed text-stone-300 short:mt-4 md:text-lg">
@@ -110,8 +118,11 @@ export default function LaunchHome({ isLoggedIn }: { isLoggedIn: boolean }) {
 
         {/* Trust layer — the hero is an invitation; this is the reason to accept it. */}
         <section className="mx-auto w-full max-w-4xl border-t border-stone-900 pb-20 pt-20">
+          {/* Personal, not geographic. A country list dates fast and tells a
+              visitor nothing about themselves; gotra is an insider signal that
+              lands the same way in New Jersey, Toronto, Dubai, or Hyderabad. */}
           <p className="mx-auto max-w-2xl text-balance text-base leading-relaxed text-stone-300 md:text-lg">
-            For families rooted in Vedic tradition — in India and across the diaspora.
+            For families who still know their gotra — wherever they now call home.
           </p>
 
           <div className="mt-14 grid gap-10 text-left sm:grid-cols-3 sm:gap-8">
@@ -124,12 +135,31 @@ export default function LaunchHome({ isLoggedIn }: { isLoggedIn: boolean }) {
             ))}
           </div>
 
-          <figure className="mx-auto mt-16 max-w-2xl border-t border-stone-900 pt-10">
-            <blockquote className="text-balance font-serif text-lg leading-relaxed text-stone-300 md:text-xl">
+          {/* Framed as a note someone left, not a line of site copy: a bordered
+              card, an opening quotation mark, italic serif, and a signature set
+              off by a rule — so the eye reads "a person wrote this". */}
+          <figure className="vedic-card relative mx-auto mt-16 max-w-2xl rounded-3xl border border-haldi-500/15 px-8 py-10 text-left shadow-2xl shadow-black/30 sm:px-10">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute left-6 top-2 select-none font-serif text-6xl leading-none text-haldi-500/25 sm:left-8"
+            >
+              &ldquo;
+            </span>
+
+            <blockquote className="relative font-serif text-lg italic leading-relaxed text-stone-200 md:text-xl">
               {FOUNDER_NOTE}
             </blockquote>
-            <figcaption className="mt-5 text-xs uppercase tracking-[0.28em] text-haldi-300">
-              {FOUNDER_SIGNATURE}
+
+            <figcaption className="mt-7 flex items-center gap-4">
+              <span className="gold-rule w-10 shrink-0" aria-hidden="true" />
+              <span>
+                <span className="block font-serif text-base text-haldi-200">
+                  {FOUNDER_SIGNATURE}
+                </span>
+                <span className="mt-1 block text-[0.7rem] uppercase tracking-[0.24em] text-stone-500">
+                  Founding family, Pravara
+                </span>
+              </span>
             </figcaption>
           </figure>
         </section>

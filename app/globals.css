@@ -200,6 +200,21 @@
     background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.55), transparent);
   }
 
+  /* The CTA answers an approaching pointer: --cta-nearness runs 0 → 1 as the
+     cursor closes in (set by LaunchCtaLink), warming the gold halo. Falls back
+     to the resting glow when the variable is absent — touch, reduced motion,
+     and no-JS all render the static state. */
+  .cta-proximity {
+    --cta-nearness: 0;
+    box-shadow:
+      0 0 0 1px rgba(251, 191, 36, calc(0.08 + 0.14 * var(--cta-nearness))),
+      0 0 calc(40px + 34px * var(--cta-nearness))
+        rgba(251, 191, 36, calc(0.18 + 0.24 * var(--cta-nearness))),
+      0 0 calc(90px + 60px * var(--cta-nearness))
+        rgba(251, 191, 36, calc(0.06 + 0.12 * var(--cta-nearness)));
+    transition: box-shadow 260ms ease-out;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .btn-sheen::after {
       animation: none;

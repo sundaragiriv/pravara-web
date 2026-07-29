@@ -202,7 +202,25 @@ export default function RegisterForm({ founderProgress, aside }: RegisterFormPro
     <div className="grid items-center gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:gap-14">
       {aside}
 
-      <div className="mx-auto w-full max-w-2xl rounded-3xl border border-haldi-500/15 bg-[linear-gradient(180deg,rgba(18,15,13,0.88),rgba(10,8,7,0.94))] p-8 shadow-2xl shadow-black/40 backdrop-blur-md lg:mx-0">
+      <div className="relative mx-auto w-full max-w-2xl rounded-3xl border border-haldi-500/15 bg-[linear-gradient(180deg,rgba(18,15,13,0.88),rgba(10,8,7,0.94))] p-8 shadow-2xl shadow-black/40 backdrop-blur-md lg:mx-0">
+        {/* Toran corners — the invitation-card convention of marking the four
+            corners in gold. Pure borders, so they cost nothing to paint. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute left-3 top-3 h-6 w-6 rounded-tl-2xl border-l border-t border-haldi-500/30"
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute right-3 top-3 h-6 w-6 rounded-tr-2xl border-r border-t border-haldi-500/30"
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-3 left-3 h-6 w-6 rounded-bl-2xl border-b border-l border-haldi-500/30"
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-3 right-3 h-6 w-6 rounded-br-2xl border-b border-r border-haldi-500/30"
+        />
       {/* Progress toward the first circle of 1,000 — only once the number
           reads as momentum rather than emptiness (see FOUNDER_COUNT_DISPLAY_THRESHOLD). */}
       {founderProgress.show ? (
