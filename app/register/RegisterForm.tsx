@@ -26,6 +26,8 @@ const INITIAL_STATE: RegisterFormState = {
 
 type RegisterFormProps = {
   founderProgress: FounderProgress;
+  /** Left-column pitch. Dropped on success — by then it's arguing for something already done. */
+  aside: React.ReactNode;
 };
 
 /** Shown on the confirmation screen so "what now?" is answered without asking. */
@@ -51,7 +53,7 @@ const fieldClass =
   "w-full rounded-xl border border-stone-800 bg-stone-900 px-4 py-3 text-stone-100 placeholder:text-stone-600 focus:border-haldi-500 focus:outline-none focus:ring-2 focus:ring-haldi-400/70";
 const labelClass = "mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-stone-300";
 
-export default function RegisterForm({ founderProgress }: RegisterFormProps) {
+export default function RegisterForm({ founderProgress, aside }: RegisterFormProps) {
   const [form, setForm] = useState<RegisterFormState>(INITIAL_STATE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -197,7 +199,10 @@ export default function RegisterForm({ founderProgress }: RegisterFormProps) {
 
   // ── Registration form ─────────────────────────────────────────────────────
   return (
-    <div className="mx-auto max-w-2xl rounded-3xl border border-haldi-500/15 bg-[linear-gradient(180deg,rgba(18,15,13,0.88),rgba(10,8,7,0.94))] p-8 shadow-2xl shadow-black/40 backdrop-blur-md">
+    <div className="grid items-center gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:gap-14">
+      {aside}
+
+      <div className="mx-auto w-full max-w-2xl rounded-3xl border border-haldi-500/15 bg-[linear-gradient(180deg,rgba(18,15,13,0.88),rgba(10,8,7,0.94))] p-8 shadow-2xl shadow-black/40 backdrop-blur-md lg:mx-0">
       {/* Progress toward the first circle of 1,000 — only once the number
           reads as momentum rather than emptiness (see FOUNDER_COUNT_DISPLAY_THRESHOLD). */}
       {founderProgress.show ? (
@@ -375,6 +380,7 @@ export default function RegisterForm({ founderProgress }: RegisterFormProps) {
           </p>
         </div>
       </form>
+      </div>
     </div>
   );
 }
