@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowRight, CheckCircle2, Loader2, Copy, Check } from "lucide-react";
+import { ArrowRight, CheckCircle2, Loader2, Copy, Check, Crown, Mail, Sparkles } from "lucide-react";
 
 import { trackMetaEvent } from "@/components/analytics/MetaPixel";
 import PetalBurst from "@/components/launch/PetalBurst";
@@ -27,6 +27,25 @@ const INITIAL_STATE: RegisterFormState = {
 type RegisterFormProps = {
   founderProgress: FounderProgress;
 };
+
+/** Shown on the confirmation screen so "what now?" is answered without asking. */
+const WHAT_HAPPENS_NEXT = [
+  {
+    icon: Mail,
+    title: "A confirmation email",
+    copy: "Arriving within a minute. Check spam if it doesn't.",
+  },
+  {
+    icon: Sparkles,
+    title: "Early access when matching opens",
+    copy: "Founders are let in before anyone else, in about three months.",
+  },
+  {
+    icon: Crown,
+    title: "Priority for the first 1,000",
+    copy: "Founding seats keep their benefits — including 3 months of premium, free.",
+  },
+];
 
 const fieldClass =
   "w-full rounded-xl border border-stone-800 bg-stone-900 px-4 py-3 text-stone-100 placeholder:text-stone-600 focus:border-haldi-500 focus:outline-none focus:ring-2 focus:ring-haldi-400/70";
@@ -131,6 +150,24 @@ export default function RegisterForm({ founderProgress }: RegisterFormProps) {
           <p className="mt-2 text-center text-xs text-stone-500">
             About 3 minutes — guided by Narada, our AI.
           </p>
+        </div>
+
+        {/* What happens next — answers the question before it's asked */}
+        <div className="mt-8 border-t border-stone-800/80 pt-7">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-stone-400">
+            What happens next
+          </p>
+          <ul className="mt-5 space-y-4">
+            {WHAT_HAPPENS_NEXT.map(({ icon: Icon, title, copy }) => (
+              <li key={title} className="flex gap-3">
+                <Icon className="mt-0.5 h-4 w-4 shrink-0 text-haldi-400" aria-hidden="true" />
+                <div>
+                  <p className="text-sm font-semibold text-stone-200">{title}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-stone-400">{copy}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Referral — the fastest way to fill the circle */}
@@ -331,8 +368,10 @@ export default function RegisterForm({ founderProgress }: RegisterFormProps) {
             )}
           </button>
 
-          <p className="mt-3 text-center text-xs text-stone-500">
-            Takes under a minute. Confirmation by email.
+          {/* One line, not two — the button shouldn't be sandwiched between
+              two pieces of microcopy that both promise a confirmation email. */}
+          <p className="mt-3 text-center text-xs leading-relaxed text-stone-500">
+            Takes under a minute. Confirmation by email — we&apos;ll reach out when matching opens.
           </p>
         </div>
       </form>
