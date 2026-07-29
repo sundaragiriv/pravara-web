@@ -3,6 +3,10 @@ import { createClient } from "@/utils/supabase/server";
 import { PRE_LAUNCH_ENABLED } from "@/lib/env";
 import { CONTACT_EMAIL } from "@/lib/site";
 
+// Reads auth state, so it is never really static. Declaring that up front keeps
+// the build from attempting a prerender that needs Supabase env vars present.
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Terms of Service",
   description: "The terms governing your use of the Pravara platform.",

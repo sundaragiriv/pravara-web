@@ -4,6 +4,10 @@ import { PRE_LAUNCH_ENABLED } from "@/lib/env";
 import { CONTACT_EMAIL } from "@/lib/site";
 import { ShieldCheck, Eye, Users, AlertTriangle } from "lucide-react";
 
+// Reads auth state, so it is never really static. Declaring that up front keeps
+// the build from attempting a prerender that needs Supabase env vars present.
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Trust & Safety",
   description: "How Pravara keeps its community safe, verified, and trustworthy.",

@@ -6,6 +6,10 @@ import { PRE_LAUNCH_ENABLED } from "@/lib/env";
 import { CONTACT_EMAIL } from "@/lib/site";
 import { Sparkles, ShieldCheck, Heart, Users, ScrollText, Eye, Zap } from "lucide-react";
 
+// Reads auth state, so it is never really static. Declaring that up front keeps
+// the build from attempting a prerender that needs Supabase env vars present.
+export const dynamic = "force-dynamic";
+
 export default async function AboutPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

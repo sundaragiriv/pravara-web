@@ -2,6 +2,10 @@ import { createClient } from "@/utils/supabase/server";
 import MarketingNav from "@/components/navigation/MarketingNav";
 import { PRE_LAUNCH_ENABLED } from "@/lib/env";
 
+// Reads auth state, so it is never really static. Declaring that up front keeps
+// the build from attempting a prerender that needs Supabase env vars present.
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "FAQ",
   description: "Understand the mythology and meaning behind Pravara's AI systems — Sutradhar, Narada, Bhrugu Match, Varaahi Shield — and Vedic concepts like Gothra, Nakshatra, and Raasi.",
