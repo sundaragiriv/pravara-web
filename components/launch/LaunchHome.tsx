@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Gem, ScrollText, Users } from "lucide-react";
 
 import LaunchAtmosphere from "@/components/launch/LaunchAtmosphere";
 import LaunchCtaLink from "@/components/launch/LaunchCtaLink";
@@ -8,6 +8,32 @@ import LaunchPageView from "@/components/launch/LaunchPageView";
 
 const ctaClass =
   "btn-sheen btn-festive launch-cta-glow inline-flex items-center justify-center gap-2 rounded-full px-10 py-4 text-sm font-bold uppercase tracking-[0.14em] text-stone-950 transition-all hover:scale-[1.02] hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-haldi-300 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950";
+
+/** What separates Pravara — kept to three, stated plainly. */
+const PILLARS = [
+  {
+    icon: ScrollText,
+    title: "By invitation",
+    copy: "Curated founding circle, not open registration.",
+  },
+  {
+    icon: Users,
+    title: "Family-aware",
+    copy: "Built around gotra, community, and lineage from day one.",
+  },
+  {
+    icon: Gem,
+    title: "Depth over volume",
+    copy: "Fewer, more intentional matches — not swipe fatigue.",
+  },
+];
+
+// TODO: placeholder wording — replace with the family's own text before the
+// site is actively promoted. Signed copy is doing trust work here, so it should
+// be true to how the family actually talks about why Pravara exists.
+const FOUNDER_NOTE =
+  "Pravara is being built by a family who grew up inside these traditions and want them to survive the next generation intact.";
+const FOUNDER_SIGNATURE = "The Sundaragiri Family";
 
 /**
  * Pre-launch microsite home — the minimal "founding circle" invitation splash.
@@ -20,8 +46,10 @@ export default function LaunchHome({ isLoggedIn }: { isLoggedIn: boolean }) {
       <LaunchPageView path="/" event="launch_home_view" />
       <LaunchAtmosphere />
 
-      <main className="relative flex min-h-screen flex-col items-center justify-center gap-12 px-6 py-16 text-center">
-        <div className="mx-auto flex w-full max-w-3xl flex-col items-center">
+      <main className="relative flex flex-col items-center px-6 py-16 text-center">
+        {/* Hero — just under a full screen, so the trust layer below shows it
+            has somewhere to go rather than looking like the page ends here. */}
+        <section className="mx-auto flex min-h-[88vh] w-full max-w-3xl flex-col items-center justify-center">
           {/* Wordmark — login-style treatment: logo over a warm glow; the dark
               matte blends away via mix-blend-lighten. In normal flow → never overlaps. */}
           <div className="relative flex items-center justify-center">
@@ -72,7 +100,33 @@ export default function LaunchHome({ isLoggedIn }: { isLoggedIn: boolean }) {
 
             <p className="text-sm text-stone-400">Founding access is open for the first circle.</p>
           </div>
-        </div>
+        </section>
+
+        {/* Trust layer — the hero is an invitation; this is the reason to accept it. */}
+        <section className="mx-auto w-full max-w-4xl border-t border-stone-900 pb-20 pt-20">
+          <p className="mx-auto max-w-2xl text-balance text-base leading-relaxed text-stone-300 md:text-lg">
+            For families rooted in Vedic tradition — in India and across the diaspora.
+          </p>
+
+          <div className="mt-14 grid gap-10 text-left sm:grid-cols-3 sm:gap-8">
+            {PILLARS.map(({ icon: Icon, title, copy }) => (
+              <div key={title}>
+                <Icon className="h-5 w-5 text-haldi-400" aria-hidden="true" />
+                <h2 className="mt-4 text-sm font-semibold tracking-wide text-stone-100">{title}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-stone-400">{copy}</p>
+              </div>
+            ))}
+          </div>
+
+          <figure className="mx-auto mt-16 max-w-2xl border-t border-stone-900 pt-10">
+            <blockquote className="text-balance font-serif text-lg leading-relaxed text-stone-300 md:text-xl">
+              {FOUNDER_NOTE}
+            </blockquote>
+            <figcaption className="mt-5 text-xs uppercase tracking-[0.28em] text-haldi-300">
+              {FOUNDER_SIGNATURE}
+            </figcaption>
+          </figure>
+        </section>
 
         <div className="flex flex-wrap items-center justify-center gap-5 text-xs uppercase tracking-[0.2em] text-stone-400">
           <Link href="/legal/privacy" className="transition-colors hover:text-stone-200">
