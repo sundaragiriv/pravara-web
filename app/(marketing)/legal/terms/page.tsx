@@ -4,7 +4,7 @@ import { PRE_LAUNCH_ENABLED } from "@/lib/env";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata = {
-  title: "Terms of Service | Pravara",
+  title: "Terms of Service",
   description: "The terms governing your use of the Pravara platform.",
 };
 

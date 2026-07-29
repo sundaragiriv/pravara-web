@@ -14,7 +14,8 @@ import RegisterForm from "./RegisterForm";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Join the Founder Circle | Pravara",
+  // Root layout applies the `%s · Pravara` template — don't repeat the brand here.
+  title: "Join the Founder Circle",
   description:
     "Pravara is Vedic matrimony, by invitation. Join the first 1,000 founders and get 3 months of premium free when matching opens.",
 };

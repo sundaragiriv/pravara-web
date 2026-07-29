@@ -4,7 +4,7 @@ import { PRE_LAUNCH_ENABLED } from "@/lib/env";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata = {
-  title: "Privacy Policy | Pravara",
+  title: "Privacy Policy",
   description: "How Pravara collects, uses, and protects your personal data.",
 };
 

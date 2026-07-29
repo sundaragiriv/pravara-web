@@ -3,7 +3,7 @@ import MarketingNav from "@/components/navigation/MarketingNav";
 import { PRE_LAUNCH_ENABLED } from "@/lib/env";
 
 export const metadata = {
-  title: "FAQ | Pravara",
+  title: "FAQ",
   description: "Understand the mythology and meaning behind Pravara's AI systems — Sutradhar, Narada, Bhrugu Match, Varaahi Shield — and Vedic concepts like Gothra, Nakshatra, and Raasi.",
 };
 

@@ -5,7 +5,7 @@ import { CONTACT_EMAIL } from "@/lib/site";
 import { ShieldCheck, Eye, Users, AlertTriangle } from "lucide-react";
 
 export const metadata = {
-  title: "Trust & Safety | Pravara",
+  title: "Trust & Safety",
   description: "How Pravara keeps its community safe, verified, and trustworthy.",
 };
 
