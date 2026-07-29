@@ -59,8 +59,13 @@ export default function LaunchHome({ isLoggedIn }: { isLoggedIn: boolean }) {
                 <ArrowRight className="h-4 w-4" />
               </Link>
             ) : (
-              <LaunchCtaLink href="/register" source="hero-begin-journey" className={ctaClass}>
-                Begin the Journey
+              <LaunchCtaLink
+                href="/register"
+                // Unchanged across the copy change so the existing funnel series stays continuous.
+                source="hero-begin-journey"
+                className={ctaClass}
+              >
+                Reserve My Founding Seat
                 <ArrowRight className="h-4 w-4" />
               </LaunchCtaLink>
             )}

@@ -312,23 +312,29 @@ export default function RegisterForm({ founderProgress }: RegisterFormProps) {
           . We&apos;ll only use your details for launch and service communication.
         </p>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="btn-sheen btn-festive launch-cta-glow inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-4 text-sm font-bold uppercase tracking-[0.14em] text-stone-950 transition-all hover:scale-[1.01] hover:brightness-105 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-haldi-300 focus:ring-offset-2 focus:ring-offset-stone-950 disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Reserving your seat
-            </>
-          ) : (
-            <>
-              Join the Founder Circle
-              <ArrowRight className="h-4 w-4" />
-            </>
-          )}
-        </button>
+        <div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-sheen btn-festive launch-cta-glow inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-4 text-sm font-bold uppercase tracking-[0.14em] text-stone-950 transition-all hover:scale-[1.01] hover:brightness-105 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-haldi-300 focus:ring-offset-2 focus:ring-offset-stone-950 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Reserving your seat
+              </>
+            ) : (
+              <>
+                Join the Founder Circle
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
+          </button>
+
+          <p className="mt-3 text-center text-xs text-stone-500">
+            Takes under a minute. Confirmation by email.
+          </p>
+        </div>
       </form>
     </div>
   );
