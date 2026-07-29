@@ -46,10 +46,16 @@ export default function LaunchHome({ isLoggedIn }: { isLoggedIn: boolean }) {
       <LaunchPageView path="/" event="launch_home_view" />
       <LaunchAtmosphere />
 
-      <main className="relative flex flex-col items-center px-6 py-16 text-center">
-        {/* Hero — just under a full screen, so the trust layer below shows it
-            has somewhere to go rather than looking like the page ends here. */}
-        <section className="mx-auto flex min-h-[88vh] w-full max-w-3xl flex-col items-center justify-center">
+      {/* `short:` (see tailwind.config) compresses the hero's fixed spacing on
+          viewports under 800px tall — small phones and 768p laptops — so the CTA
+          clears the fold there. Type scale and everything above 700px are
+          untouched. */}
+      <main className="relative flex flex-col items-center px-6 py-16 text-center short:py-8">
+        {/* Hero height: svh, not vh — on mobile, vh is the URL-bar-hidden
+            viewport, which pushes the CTA below the real fold. Subtracting the
+            wrapper's py-16 (8rem) plus 3rem keeps the CTA comfortably in view
+            while still letting the trust layer peek and invite a scroll. */}
+        <section className="mx-auto flex min-h-[calc(100svh-11rem)] w-full max-w-3xl flex-col items-center justify-center">
           {/* Wordmark — login-style treatment: logo over a warm glow; the dark
               matte blends away via mix-blend-lighten. In normal flow → never overlaps. */}
           <div className="relative flex items-center justify-center">
@@ -63,24 +69,24 @@ export default function LaunchHome({ isLoggedIn }: { isLoggedIn: boolean }) {
               width={300}
               height={120}
               priority
-              className="relative h-auto w-[220px] object-contain [mix-blend-mode:lighten] md:w-[270px]"
+              className="relative h-auto w-[220px] object-contain [mix-blend-mode:lighten] short:w-[150px] md:w-[270px] md:short:w-[170px]"
             />
           </div>
 
-          <p className="mt-14 text-xs uppercase tracking-[0.3em] text-haldi-300">
+          <p className="mt-10 text-xs uppercase tracking-[0.3em] text-haldi-300 short:mt-4">
             Exclusive pre-launch invitation
           </p>
 
-          <h1 className="mt-6 text-balance font-serif text-4xl leading-[0.96] text-stone-50 sm:text-5xl md:text-6xl xl:text-7xl">
+          <h1 className="mt-6 text-balance font-serif text-4xl leading-[0.96] text-stone-50 short:mt-4 sm:text-5xl md:text-6xl xl:text-7xl">
             For the legacy you carry and the future you are building.
           </h1>
 
-          <p className="mt-7 max-w-xl text-base leading-relaxed text-stone-300 md:text-lg">
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-stone-300 short:mt-4 md:text-lg">
             Pravara is opening through a carefully formed founding circle — where trust, cultural
             depth, and family-aware intelligence arrive before noise.
           </p>
 
-          <div className="mt-10 flex flex-col items-center gap-4">
+          <div className="mt-8 flex flex-col items-center gap-4 short:mt-5 short:gap-3">
             {isLoggedIn ? (
               <Link href="/dashboard" className={ctaClass}>
                 Enter Dashboard

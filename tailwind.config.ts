@@ -10,6 +10,11 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // Height-based breakpoint: short screens (small phones, 768p laptops)
+      // where a full-height hero would push the CTA below the fold.
+      screens: {
+        short: { raw: "(max-height: 800px)" },
+      },
       colors: {
         // 1. Standard Colors (explicitly added)
         stone: colors.stone,
