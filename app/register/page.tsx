@@ -37,6 +37,16 @@ export const metadata: Metadata = {
   title: "Join the Founder Circle",
   description:
     "Pravara is Vedic matrimony, by invitation. Join the first 1,000 founders and get 3 months of premium free when matching opens.",
+  alternates: { canonical: "/register" },
+  // Without these the share card showed this page's own OG image next to the
+  // generic site title — the picture said "Join the Founder Circle" and the
+  // headline said "Modern Heritage Matrimony".
+  openGraph: {
+    title: "Join the Founder Circle",
+    description: "1,000 seats. Vedic matrimony, by invitation.",
+    url: "/register",
+    type: "website",
+  },
 };
 
 export default async function RegisterPage() {

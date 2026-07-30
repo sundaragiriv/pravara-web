@@ -21,15 +21,18 @@ export const metadata: Metadata = {
     template: "%s · Pravara",
   },
   description: "A modern matrimony platform rooted in heritage, compatibility, and intentional matchmaking.",
+  // Resolved against metadataBase; each page inherits its own path.
+  alternates: { canonical: "/" },
   icons: {
     icon: "/logo3.png",
     apple: "/logo3.png",
     shortcut: "/logo3.png",
   },
   openGraph: {
-    title: "Pravara - Modern Heritage Matrimony",
+    title: "Pravara — Vedic Matrimony, by invitation",
     description: "A modern matrimony platform rooted in heritage, compatibility, and intentional matchmaking.",
-    images: [{ url: "/logo3.png", width: 480, height: 200 }],
+    // No `images` here: the file-based opengraph-image conventions supply the
+    // right 1200x630 card per route. Hardcoding one would shadow them.
     type: "website",
   },
 };
