@@ -29,11 +29,8 @@ const PILLARS = [
   },
 ];
 
-// TODO: placeholder wording — replace with the family's own text before the
-// site is actively promoted. Signed copy is doing trust work here, so it should
-// be true to how the family actually talks about why Pravara exists.
 const FOUNDER_NOTE =
-  "Pravara is being built by a family who grew up inside these traditions and want them to survive the next generation intact.";
+  "Our grandparents did this with a notebook and a network of people who knew the family. That network thinned as we scattered. Pravara is our attempt to rebuild it — the same questions about gotra, lineage, and character, asked with the same care, across a distance they never had to cross.";
 const FOUNDER_SIGNATURE = "The Sundaragiri Family";
 
 /**
