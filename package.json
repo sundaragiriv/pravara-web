@@ -3,11 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "dev:prelaunch": "cross-env PRE_LAUNCH_ENABLED=true NODE_OPTIONS=--use-system-ca next dev",
-    "dev:golive": "cross-env PRE_LAUNCH_ENABLED=false NODE_OPTIONS=--use-system-ca next dev",
+    "dev": "next dev --webpack",
+    "dev:turbo": "next dev",
+    "dev:prelaunch": "cross-env PRE_LAUNCH_ENABLED=true NODE_OPTIONS=--use-system-ca next dev --webpack",
+    "dev:golive": "cross-env PRE_LAUNCH_ENABLED=false NODE_OPTIONS=--use-system-ca next dev --webpack",
     "build": "next build",
+    "build:local": "next build --webpack",
     "start": "next start",
+    "start:prelaunch": "cross-env PRE_LAUNCH_ENABLED=true next start",
     "lint": "eslint",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"

@@ -2,19 +2,68 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+### Which home page you get
+
+`/` renders one of two components depending on `PRE_LAUNCH_ENABLED`:
+
+| Flag | Component | Where |
+| --- | --- | --- |
+| `true` | `components/launch/LaunchHome` — the founding-circle microsite | production, preview, and local dev |
+| `false` | `components/marketing/MarketingHome` — the post-launch landing page | not currently deployed anywhere |
+
+`.env.development.local` sets it to `true` so local dev matches production. If
+you ever see "Serious marriage deserves a better beginning" instead of "For the
+legacy you carry", the flag is off and you're looking at the wrong page.
+
+### Turbopack is disabled locally on Windows
+
+`npm run dev` and `npm run build:local` both use **webpack**, not Turbopack.
+That is deliberate. On this Windows checkout Turbopack fails two ways:
+
+**Dev** panicked continuously with `Failed to write app endpoint /signup/page`,
+ending in `Next.js package not found`. Each panic crashed the compiler and
+forced a browser reload — roughly one per second, which made the dev server
+unusable and any performance measurement meaningless.
+
+**Build** died on symlink creation for the packages in `serverExternalPackages`:
+
+```
+Error: create symlink to ../../node_modules/@prisma/instrumentation
+Caused by: A required privilege is not held by the client. (os error 1314)
+```
+
+Both trace back to the environment, not the code:
+
+1. **The project path contains a space and a leading digit** —
+   `E:\7. matrimony\pravara`. Turbopack's module resolution is known to break on
+   Windows paths like this, which is what produces "Next.js package not found".
+   Moving the checkout to something like `E:\projects\pravara` is the real fix
+   and would likely restore Turbopack for both dev and build.
+2. **Developer Mode is off**, so the process lacks the symlink privilege.
+   Settings → System → For developers → Developer Mode → On.
+
+Once either is addressed, try `npm run dev:turbo`; if it runs clean, switch the
+`dev` script back to plain `next dev`.
+
+**Vercel is unaffected** — it builds on Linux, and `npm run build` (Turbopack) is
+still what production uses. Do not add `--webpack` to the `build` script.
+
+To serve a production build locally the way production serves it:
+
+```bash
+npm run build:local && npm run start:prelaunch
+```
+
+Plain `npm run start` runs in production mode, which does **not** read
+`.env.development.local` — so the pre-launch flag falls back to `false` in
+`.env.local` and you get the wrong home page. `start:prelaunch` sets it
+explicitly.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
