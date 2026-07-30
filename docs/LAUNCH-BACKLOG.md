@@ -54,6 +54,8 @@ US / Canada / India.
 
 ## P0 — Live and wrong, or cheap-now-expensive-later
 
+**Closed 2026-07-30.** All items deployed and verified in production.
+
 | ID | Item | Why now | Status |
 | --- | --- | --- | --- |
 | ~~TRUTH-01~~ | ~~Single source of truth (`lib/offer.ts`)~~ | Root cause of the three below | ~~deployed `143a8e3`~~ |
@@ -61,9 +63,9 @@ US / Canada / India.
 | ~~TRUTH-03~~ | ~~"One month premium at launch" → 3 months~~ | 7 other places promised 3 months | ~~deployed `143a8e3`~~ |
 | ~~TRUTH-04~~ | ~~Reconcile `/pricing` with `/membership`~~ | **Withdrawn — not a real finding.** `/pricing` is a 7-line redirect; the figures I reported were comment text. Verified 307 → `/membership` in production. | ~~n/a~~ |
 | ~~TRUTH-05~~ | ~~Apply the counter threshold to `MarketingHome` + `MarketingNav`~~ | Found while doing TRUTH-01: the Blocker 1 threshold only guarded `/register`. The go-live page rendered the raw count 3 ways, the nav a 4th, and "998 seats left" leaks it by subtraction. | ~~deployed `143a8e3`~~ |
-| DATA-01 | `country` field on registration | Code + migration done; applied to **pravara-dev only**. Insert degrades safely if the column is absent. | `deployed (dev)` — prod SQL pending |
+| ~~DATA-01~~ | ~~`country` field on registration~~ | ~~Migration applied to dev and production; drift check clean. Insert degrades safely if the column is ever absent.~~ | ~~deployed `5c14a1d`~~ |
 | ~~DATA-02~~ | ~~`region` column on profiles~~ | **No work needed** — `profiles.country` and `.state` already existed in dev and prod. I had listed this without checking. | ~~n/a~~ |
-| MOB-01 | International phone input | `lib/countries.ts` (81 countries), derived dial code, E.164 on submit, `inputMode`/`autoComplete` set. On branch, awaiting prod migration. | `merged` |
+| ~~MOB-01~~ | ~~International phone input~~ | ~~81 countries, derived dial code, E.164 on submit. Verified live on pravara.ai.~~ | ~~deployed `5c14a1d`~~ |
 
 ---
 
@@ -85,6 +87,7 @@ confirmation emails land in spam burns an introduction you only get once.
 | ~~OPS-03~~ | ~~`golive-preview` branch + branch-scoped flag~~ | Permanent URL for the go-live face of the site. Built ● Ready; needs a human to open it (Deployment Protection). | ~~done~~ |
 | ~~OPS-04~~ | ~~Go-live checklist~~ | `docs/GO-LIVE-CHECKLIST.md`. Found while writing it: the flag also releases the whole member app via `middleware.ts:80`, which is a bigger deal than the copy. | ~~done~~ |
 | OPS-02 | Performance budget in CI | This week's numbers will erode silently without one | `todo` |
+| ~~OPS-05~~ | ~~Schema drift detection between dev and production~~ | ~~`npm run db:drift`. Separate Supabase projects mean nothing propagates; drift was silent until it broke something.~~ | ~~done~~ |
 
 ---
 
@@ -194,3 +197,4 @@ Verified on `pravara.ai`. Newest first.
 | 2026-07-30 | Corrected DEBT-01: pravara-dev was paused, not deleted. Added `deployed (flagged)` status, OPS-03 and OPS-04. |
 | 2026-07-30 | OPS-01/03/04 done. Local + Preview moved off production onto pravara-dev. golive-preview branch live. Go-live checklist written. |
 | 2026-07-30 | P0 code complete. DATA-02 withdrawn (already existed). country column applied to dev by Raj; prod SQL still pending. pravara-dev seeded with 120 profiles + admin account. |
+| 2026-07-30 | **P0 closed.** country migration applied to production, drift check clean, country selector verified live. |
