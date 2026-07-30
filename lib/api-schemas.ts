@@ -44,7 +44,11 @@ export const launchRegistrationSchema = z.object({
   profession: z.string().trim().max(120).optional(),
   location: z.string().trim().max(160).optional(),
   email: z.email().trim().max(160),
+  // E.164, assembled client-side from the country dial code + national number.
   phone: z.string().trim().min(7).max(24),
+  // ISO 3166-1 alpha-2. Optional so a stale client cannot start failing, but the
+  // form always sends it.
+  country: z.string().trim().length(2).regex(/^[A-Z]{2}$/).optional(),
   source: z.string().trim().max(64).optional(),
 });
 

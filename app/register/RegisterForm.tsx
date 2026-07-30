@@ -7,6 +7,14 @@ import { ArrowRight, CheckCircle2, Loader2, Copy, Check, Crown, Mail, Sparkles }
 import { trackMetaEvent } from "@/components/analytics/MetaPixel";
 import PetalBurst from "@/components/launch/PetalBurst";
 import type { FounderProgress } from "@/lib/launch";
+import {
+  COUNTRIES,
+  DEFAULT_COUNTRY,
+  PRIORITY_COUNTRIES,
+  getCountry,
+  isPlausibleNationalNumber,
+  toE164,
+} from "@/lib/countries";
 import { COHORT_TARGET, FOUNDER_PREMIUM_MONTHS } from "@/lib/offer";
 
 type RegisterFormState = {
@@ -14,7 +22,10 @@ type RegisterFormState = {
   age: string;
   gender: "" | "Male" | "Female" | "Other";
   email: string;
+  /** National number only — the dial code comes from `country`. */
   phone: string;
+  /** ISO 3166-1 alpha-2. Drives the dial code and is stored on the registration. */
+  country: string;
 };
 
 const INITIAL_STATE: RegisterFormState = {
@@ -23,6 +34,7 @@ const INITIAL_STATE: RegisterFormState = {
   gender: "",
   email: "",
   phone: "",
+  country: DEFAULT_COUNTRY,
 };
 
 type RegisterFormProps = {
@@ -63,6 +75,12 @@ export default function RegisterForm({ founderProgress, aside }: RegisterFormPro
   // Remember what they submitted so we can carry it into account creation.
   const [lead, setLead] = useState<{ name: string; email: string } | null>(null);
 
+  const dialCode = getCountry(form.country)?.dial ?? "1";
+  // Only complain once they have typed enough to mean it.
+  const phoneInvalid = form.phone.trim().length > 3 && !isPlausibleNationalNumber(form.phone);
+  const phonePlaceholder =
+    form.country === "IN" ? "98765 43210" : form.country === "GB" ? "7700 900123" : "555 123 4567";
+
   function updateField<K extends keyof RegisterFormState>(field: K, value: RegisterFormState[K]) {
     setForm((current) => ({ ...current, [field]: value }));
   }
@@ -87,7 +105,14 @@ export default function RegisterForm({ founderProgress, aside }: RegisterFormPro
       const response = await fetch("/api/launch-register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, age: Number(form.age), source: "launch-register-page" }),
+        body: JSON.stringify({
+          ...form,
+          age: Number(form.age),
+          // The API and database store E.164; the split field is a UI concern.
+          phone: toE164(dialCode, form.phone),
+          country: form.country,
+          source: "launch-register-page",
+        }),
       });
 
       const payload = (await response.json().catch(() => null)) as
@@ -304,20 +329,69 @@ export default function RegisterForm({ founderProgress, aside }: RegisterFormPro
         </div>
 
         <div>
+          <label htmlFor="reg-country" className={labelClass}>
+            Country
+          </label>
+          <select
+            id="reg-country"
+            name="country"
+            autoComplete="country"
+            value={form.country}
+            onChange={(event) => updateField("country", event.target.value)}
+            required
+            className={fieldClass}
+          >
+            {/* Launch markets first — scrolling past 80 countries to reach India
+                is a real cost on a phone, and they will be most registrations. */}
+            <optgroup label="Most common">
+              {PRIORITY_COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="All countries">
+              {COUNTRIES.map((c) => (
+                <option key={`all-${c.code}`} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </optgroup>
+          </select>
+        </div>
+
+        <div>
           <label htmlFor="reg-phone" className={labelClass}>
             Phone
           </label>
-          <input
-            id="reg-phone"
-            name="phone"
-            type="tel"
-            autoComplete="tel"
-            value={form.phone}
-            onChange={(event) => updateField("phone", event.target.value)}
-            required
-            placeholder="+1 555 123 4567"
-            className={fieldClass}
-          />
+          <div className="flex gap-2">
+            {/* The dial code is derived, not typed — it cannot disagree with the
+                country, and there is nothing to get wrong. */}
+            <span
+              className="inline-flex shrink-0 items-center rounded-xl border border-stone-800 bg-stone-900/70 px-3 text-sm tabular-nums text-stone-300"
+              aria-hidden="true"
+            >
+              +{dialCode}
+            </span>
+            <input
+              id="reg-phone"
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel-national"
+              value={form.phone}
+              onChange={(event) => updateField("phone", event.target.value)}
+              required
+              aria-describedby="reg-phone-hint"
+              placeholder={phonePlaceholder}
+              className={fieldClass}
+            />
+          </div>
+          <p id="reg-phone-hint" className="mt-2 text-xs text-stone-500">
+            {phoneInvalid
+              ? "That doesn't look like a complete number — check the digits."
+              : `Without the country code. We'll store it as +${dialCode}…`}
+          </p>
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">

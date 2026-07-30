@@ -14,6 +14,8 @@ export type LaunchRegistrationInput = {
   location?: string;
   email: string;
   phone: string;
+  /** ISO 3166-1 alpha-2, captured at registration. */
+  country?: string;
   source?: string;
 };
 
@@ -92,19 +94,54 @@ export async function getFounderProgress(): Promise<FounderProgress> {
   };
 }
 
+/**
+ * A missing column surfaces two different ways depending on who notices first:
+ * PostgREST rejects it against its cached schema (PGRST204) before Postgres ever
+ * sees the statement, and Postgres raises undefined_column (42703) when it does.
+ * Checking only 42703 silently misses the common case — verified by hitting it.
+ */
+function isMissingColumnError(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  return (
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    /could not find the .* column/i.test(error.message ?? "")
+  );
+}
+
 export async function createLaunchRegistration(input: LaunchRegistrationInput) {
   const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("launch_registrations")
-    .insert({
-      ...input,
-      // profession/location are onboarding-stage; keep the NOT NULL columns satisfied.
-      profession: input.profession ?? "",
-      location: input.location ?? "",
-      source: input.source || "launch-homepage",
-    })
-    .select("id, full_name, email, created_at")
-    .single();
+
+  const row = {
+    ...input,
+    // profession/location are onboarding-stage; keep the NOT NULL columns satisfied.
+    profession: input.profession ?? "",
+    location: input.location ?? "",
+    source: input.source || "launch-homepage",
+  };
+
+  const insert = (payload: Record<string, unknown>) =>
+    supabase
+      .from("launch_registrations")
+      .insert(payload)
+      .select("id, full_name, email, created_at")
+      .single();
+
+  let { data, error } = await insert(row);
+
+  // The country column arrives in a migration (add_registration_country.sql).
+  // If the code reaches an environment before the SQL does, drop the field and
+  // save the registration rather than lose it — a deploy-ordering mistake must
+  // never cost a real signup. Remove this fallback once every environment has
+  // the column.
+  if (isMissingColumnError(error) && "country" in row) {
+    console.warn(
+      "launch_registrations.country missing — saving without it. Run supabase/migrations/add_registration_country.sql.",
+    );
+    const withoutCountry = { ...row };
+    delete (withoutCountry as { country?: string }).country;
+    ({ data, error } = await insert(withoutCountry));
+  }
 
   if (error) {
     throw error;
