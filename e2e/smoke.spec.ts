@@ -27,6 +27,12 @@ const BENIGN = [
   /net::ERR/i,
   /upstash|redis/i,
   /Download the React DevTools/i,
+  // @vercel/analytics and @vercel/speed-insights fetch their scripts from
+  // /_vercel/*, which only exists when served by Vercel. Locally that path
+  // returns the 404 HTML page, so the browser rejects it on MIME type. This
+  // fired on every route and made the whole smoke suite permanently red.
+  /_vercel\/(insights|speed-insights)/i,
+  /Refused to execute script/i,
 ];
 
 function watchErrors(page: Page): string[] {
