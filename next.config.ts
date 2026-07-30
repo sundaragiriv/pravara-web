@@ -107,6 +107,17 @@ export default withSentryConfig(nextConfig, {
   // if you want readable (un-minified) stack traces in Sentry.
   sourcemaps: { disable: true },
 
+  // The Sentry client chunk measured 420KB and ~2.1s of JS bootup on a
+  // throttled mobile profile — the single biggest script cost on the landing
+  // page. Session Replay isn't enabled in instrumentation-client.ts, but the
+  // SDK still ships its shims unless they're excluded at build time.
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeReplayIframe: true,
+    excludeReplayShadowDom: true,
+    excludeReplayWorker: true,
+  },
+
   // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
   // This can increase your server load as well as your hosting bill.
   // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
