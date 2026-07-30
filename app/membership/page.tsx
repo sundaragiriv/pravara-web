@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import { CONTACT_EMAIL } from "@/lib/site";
+import { getPlan } from "@/lib/offer";
 
 type Tier = "Basic" | "Gold" | "Concierge";
 type BillingMode = "monthly" | "annual";
@@ -40,7 +41,7 @@ type TierConfig = {
 const TIERS: TierConfig[] = [
   {
     id: "Basic",
-    name: "Basic",
+    name: getPlan("Basic").name,
     icon: Heart,
     monthlyPrice: 0,
     annualPrice: 0,
@@ -63,7 +64,7 @@ const TIERS: TierConfig[] = [
     id: "Gold",
     name: "Gold",
     icon: Star,
-    monthlyPrice: 29,
+    monthlyPrice: getPlan("Gold").monthlyPrice,
     annualPrice: 249,
     badge: "Most Popular",
     description: "Deeper matching tools and a richer guided experience for active members and families.",
@@ -80,7 +81,7 @@ const TIERS: TierConfig[] = [
     id: "Concierge",
     name: "Concierge",
     icon: Crown,
-    monthlyPrice: 79,
+    monthlyPrice: getPlan("Concierge").monthlyPrice,
     annualPrice: 699,
     badge: "White Glove",
     description: "A high-touch matchmaking layer for members who want a guided, hands-on experience.",

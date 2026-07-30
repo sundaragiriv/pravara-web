@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { COHORT_TARGET } from "@/lib/offer";
 
 // Share card for /register. Without this file the route falls back to the
 // root openGraph.images entry, which renders as a stretched 480x200 logo.
@@ -56,7 +57,7 @@ export default function RegisterOpengraphImage() {
             display: "flex",
           }}
         >
-          1,000 seats. Vedic matrimony, by invitation.
+          {COHORT_TARGET.toLocaleString()} seats. Vedic matrimony, by invitation.
         </div>
       </div>
     ),

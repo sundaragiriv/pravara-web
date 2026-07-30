@@ -6,6 +6,7 @@ import { ArrowRight, Briefcase, Clock, Edit3, Lock, MapPin, Sparkles, UserCheck 
 import FounderVouchCard from "@/components/launch/FounderVouchCard";
 import { computeProfileStrength, LAUNCH_READY_THRESHOLD } from "@/lib/profile-strength";
 import { createClient } from "@/utils/supabase/server";
+import { FOUNDER_PREMIUM_MONTHS } from "@/lib/offer";
 
 export const dynamic = "force-dynamic";
 
@@ -267,7 +268,7 @@ export default async function FoundingDashboardPage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 font-bold text-haldi-500">3.</span>
-              Founders enter first — with 3 months of premium, free, and your matches ready on day one.
+              Founders enter first — with {FOUNDER_PREMIUM_MONTHS} months of premium, free, and your matches ready on day one.
             </li>
           </ol>
         </section>

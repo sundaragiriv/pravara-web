@@ -3,6 +3,7 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { COHORT_TARGET } from "@/lib/offer";
 
 export type LaunchRegistrationInput = {
   full_name: string;
@@ -16,7 +17,8 @@ export type LaunchRegistrationInput = {
   source?: string;
 };
 
-export const FOUNDING_MEMBER_TARGET = 1000;
+/** @deprecated Read COHORT_TARGET from `@/lib/offer` directly. Kept as an alias. */
+export const FOUNDING_MEMBER_TARGET = COHORT_TARGET;
 
 /**
  * Below this many registrations the public counter is hidden entirely.

@@ -1,7 +1,7 @@
 import LaunchHome from "@/components/launch/LaunchHome";
 import MarketingHome from "@/components/marketing/MarketingHome";
 import { PRE_LAUNCH_ENABLED } from "@/lib/env";
-import { getLaunchRegistrationCount } from "@/lib/launch";
+import { getFounderProgress } from "@/lib/launch";
 import { createClient } from "@/utils/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +19,8 @@ export default async function Home() {
     return <LaunchHome isLoggedIn={!!user} />;
   }
 
-  const foundingCount = (await getLaunchRegistrationCount()) ?? 0;
-  return <MarketingHome foundingCount={foundingCount} isLoggedIn={!!user} />;
+  // Thresholded, not raw — a small real number is worse than none. See
+  // FOUNDER_COUNT_DISPLAY_THRESHOLD in lib/launch.ts.
+  const founderProgress = await getFounderProgress();
+  return <MarketingHome founderProgress={founderProgress} isLoggedIn={!!user} />;
 }

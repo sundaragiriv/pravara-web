@@ -7,6 +7,7 @@ import { ArrowLeft, Crown, KeyRound, Sparkles } from "lucide-react";
 import LaunchAtmosphere from "@/components/launch/LaunchAtmosphere";
 import LaunchPageView from "@/components/launch/LaunchPageView";
 import { getFounderProgress } from "@/lib/launch";
+import { COHORT_TARGET, FOUNDER_PREMIUM_MONTHS } from "@/lib/offer";
 import { createClient } from "@/utils/supabase/server";
 
 import RegisterForm from "./RegisterForm";
@@ -17,7 +18,7 @@ export const dynamic = "force-dynamic";
 const FOUNDER_BENEFITS = [
   {
     icon: Sparkles,
-    title: "3 months of premium, free",
+    title: `${FOUNDER_PREMIUM_MONTHS} months of premium, free`,
     copy: "Applied automatically when matching opens.",
   },
   {
@@ -27,7 +28,7 @@ const FOUNDER_BENEFITS = [
   },
   {
     icon: Crown,
-    title: "A seat in the first 1,000",
+    title: `A seat in the first ${COHORT_TARGET.toLocaleString()}`,
     copy: "The founding circle closes once it's full.",
   },
 ];
@@ -36,14 +37,14 @@ export const metadata: Metadata = {
   // Root layout applies the `%s · Pravara` template — don't repeat the brand here.
   title: "Join the Founder Circle",
   description:
-    "Pravara is Vedic matrimony, by invitation. Join the first 1,000 founders and get 3 months of premium free when matching opens.",
+    `Pravara is Vedic matrimony, by invitation. Join the first ${COHORT_TARGET.toLocaleString()} founders and get ${FOUNDER_PREMIUM_MONTHS} months of premium free when matching opens.`,
   alternates: { canonical: "/register" },
   // Without these the share card showed this page's own OG image next to the
   // generic site title — the picture said "Join the Founder Circle" and the
   // headline said "Modern Heritage Matrimony".
   openGraph: {
     title: "Join the Founder Circle",
-    description: "1,000 seats. Vedic matrimony, by invitation.",
+    description: `${COHORT_TARGET.toLocaleString()} seats. Vedic matrimony, by invitation.`,
     url: "/register",
     type: "website",
   },
@@ -109,9 +110,9 @@ export default async function RegisterPage() {
                   Join the Founder Circle.
                 </h1>
                 <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-stone-300 lg:mx-0">
-                  We&apos;re opening with a first circle of 1,000 founders. Register once now — when
+                  We&apos;re opening with a first circle of {COHORT_TARGET.toLocaleString()} founders. Register once now — when
                   matching opens in about three months, founders get{" "}
-                  <span className="font-semibold text-haldi-200">3 months of premium, free</span>.
+                  <span className="font-semibold text-haldi-200">{FOUNDER_PREMIUM_MONTHS} months of premium, free</span>.
                 </p>
 
                 {/* No toran here — the form card already carries one, and two on

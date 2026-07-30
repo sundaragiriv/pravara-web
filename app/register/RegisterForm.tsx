@@ -7,6 +7,7 @@ import { ArrowRight, CheckCircle2, Loader2, Copy, Check, Crown, Mail, Sparkles }
 import { trackMetaEvent } from "@/components/analytics/MetaPixel";
 import PetalBurst from "@/components/launch/PetalBurst";
 import type { FounderProgress } from "@/lib/launch";
+import { COHORT_TARGET, FOUNDER_PREMIUM_MONTHS } from "@/lib/offer";
 
 type RegisterFormState = {
   full_name: string;
@@ -44,8 +45,8 @@ const WHAT_HAPPENS_NEXT = [
   },
   {
     icon: Crown,
-    title: "Priority for the first 1,000",
-    copy: "Founding seats keep their benefits — including 3 months of premium, free.",
+    title: `Priority for the first ${COHORT_TARGET.toLocaleString()}`,
+    copy: `Founding seats keep their benefits — including ${FOUNDER_PREMIUM_MONTHS} months of premium, free.`,
   },
 ];
 
@@ -137,7 +138,7 @@ export default function RegisterForm({ founderProgress, aside }: RegisterFormPro
           Now make it count — build your founding profile so you&apos;re matched with the right people the
           moment we open. Founders with a complete profile get{" "}
           <span className="font-semibold text-haldi-200">first access</span> and{" "}
-          <span className="font-semibold text-haldi-200">3 months of premium, free</span>.
+          <span className="font-semibold text-haldi-200">{FOUNDER_PREMIUM_MONTHS} months of premium, free</span>.
         </p>
 
         {/* Primary next step — convert the lead into a real, matchable profile */}

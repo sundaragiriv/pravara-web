@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { FOUNDER_PREMIUM_MONTHS } from "@/lib/offer";
 
 // Branded social-share card (WhatsApp/Facebook/X) for pravara.ai. 1200×630.
 export const alt = "Pravara — Vedic matrimony, by invitation";
@@ -63,7 +64,7 @@ export default function OpengraphImage() {
             display: "flex",
           }}
         >
-          The founding circle is open — 3 months premium, free.
+          The founding circle is open — {FOUNDER_PREMIUM_MONTHS} months premium, free.
         </div>
       </div>
     ),

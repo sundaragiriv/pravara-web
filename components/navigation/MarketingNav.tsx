@@ -8,13 +8,14 @@ import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 
 import LaunchCtaLink from "@/components/launch/LaunchCtaLink";
 import { createClient } from "@/utils/supabase/client";
+import type { FounderProgress } from "@/lib/launch";
 
 interface MarketingNavProps {
   isLoggedIn: boolean;
   userAvatar?: string | null;
   userName?: string | null;
   launchMode?: boolean;
-  foundingCount?: number;
+  founderProgress?: FounderProgress;
 }
 
 export default function MarketingNav({
@@ -22,7 +23,7 @@ export default function MarketingNav({
   userAvatar,
   userName,
   launchMode = false,
-  foundingCount,
+  founderProgress,
 }: MarketingNavProps) {
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -141,8 +142,8 @@ export default function MarketingNav({
                       Founding cohort
                     </span>
                     <span className="text-stone-400">
-                      {typeof foundingCount === "number" && foundingCount > 0
-                        ? `${foundingCount} founding seats claimed`
+                      {founderProgress?.show
+                        ? `${founderProgress.joined.toLocaleString()} founding seats claimed`
                         : "Founding intake is open"}
                     </span>
                   </>

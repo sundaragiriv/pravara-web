@@ -12,7 +12,8 @@ import {
 
 import Footer from "@/components/Footer";
 import MarketingNav from "@/components/navigation/MarketingNav";
-import { FOUNDING_MEMBER_TARGET } from "@/lib/launch";
+import type { FounderProgress } from "@/lib/launch";
+import { COHORT_TARGET, FOUNDER_PREMIUM_MONTHS } from "@/lib/offer";
 
 /**
  * Richer marketing landing page — rendered when PRE_LAUNCH_ENABLED is OFF (go-live).
@@ -23,18 +24,23 @@ import { FOUNDING_MEMBER_TARGET } from "@/lib/launch";
  * is correct; the words are the remaining work.
  */
 export default function MarketingHome({
-  foundingCount,
+  founderProgress,
   isLoggedIn,
 }: {
-  foundingCount: number;
+  founderProgress: FounderProgress;
   isLoggedIn: boolean;
 }) {
-  const seatsRemaining = Math.max(FOUNDING_MEMBER_TARGET - foundingCount, 0);
-  const progress = Math.min((foundingCount / FOUNDING_MEMBER_TARGET) * 100, 100);
+  // Same rule as /register: below FOUNDER_COUNT_DISPLAY_THRESHOLD the server
+  // sends no number at all, so there is nothing here to leak. "998 seats left"
+  // gives the count away by subtraction just as surely as "2 registered" does,
+  // so the whole progress module goes rather than just the raw figure.
+  const seatsRemaining = founderProgress.show
+    ? Math.max(COHORT_TARGET - founderProgress.joined, 0)
+    : null;
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-50">
-      <MarketingNav isLoggedIn={isLoggedIn} foundingCount={foundingCount} />
+      <MarketingNav isLoggedIn={isLoggedIn} founderProgress={founderProgress} />
 
       <main>
         <section className="relative overflow-hidden px-6 pb-24 pt-28 lg:pb-32 lg:pt-40">
@@ -49,7 +55,7 @@ export default function MarketingHome({
               <div>
                 <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-haldi-500/25 bg-haldi-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-haldi-300">
                   <Sparkles className="h-4 w-4" />
-                  Founding 500 now open
+                  Founding {COHORT_TARGET.toLocaleString()} now open
                 </div>
 
                 <h1 className="max-w-4xl font-serif text-5xl leading-[1.02] text-stone-50 md:text-7xl">
@@ -57,8 +63,8 @@ export default function MarketingHome({
                 </h1>
 
                 <p className="mt-7 max-w-2xl text-lg leading-relaxed text-stone-300 md:text-xl">
-                  Pravara is opening carefully with a founding cohort of 500 members so every early match
-                  begins with real intent, cultural depth, and room for meaningful discovery.
+                  Pravara is opening carefully with a founding cohort of {COHORT_TARGET.toLocaleString()} members so every
+                  early match begins with real intent, cultural depth, and room for meaningful discovery.
                 </p>
 
                 <div className="mt-8 flex flex-col gap-4 sm:flex-row">
@@ -83,7 +89,7 @@ export default function MarketingHome({
                     },
                     {
                       icon: HeartHandshake,
-                      title: "One month premium at launch",
+                      title: `${FOUNDER_PREMIUM_MONTHS} months premium at launch`,
                       copy: "Founding registrations are eligible for early launch benefits when access opens.",
                     },
                     {
@@ -109,23 +115,27 @@ export default function MarketingHome({
                       Fill the room first. Turn on the light right after.
                     </h2>
                   </div>
-                  <div className="rounded-full border border-haldi-500/30 bg-haldi-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-haldi-300">
-                    {seatsRemaining} seats left
-                  </div>
+                  {seatsRemaining !== null ? (
+                    <div className="rounded-full border border-haldi-500/30 bg-haldi-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-haldi-300">
+                      {seatsRemaining.toLocaleString()} seats left
+                    </div>
+                  ) : null}
                 </div>
 
-                <div className="mt-8">
-                  <div className="mb-3 flex items-center justify-between text-sm text-stone-400">
-                    <span>{foundingCount} registered</span>
-                    <span>{FOUNDING_MEMBER_TARGET} target</span>
+                {founderProgress.show ? (
+                  <div className="mt-8">
+                    <div className="mb-3 flex items-center justify-between text-sm text-stone-400">
+                      <span>{founderProgress.joined.toLocaleString()} registered</span>
+                      <span>{COHORT_TARGET.toLocaleString()} target</span>
+                    </div>
+                    <div className="h-3 overflow-hidden rounded-full bg-stone-800">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-haldi-500 via-haldi-400 to-kumkum-500"
+                        style={{ width: `${founderProgress.pct}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-stone-800">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-haldi-500 via-haldi-400 to-kumkum-500"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </div>
+                ) : null}
 
                 <div className="mt-8 grid gap-4 sm:grid-cols-2">
                   {[
@@ -178,7 +188,7 @@ export default function MarketingHome({
                 {
                   icon: Stars,
                   title: "Experience first, scale second",
-                  copy: "The first 500 members shape the quality of the platform. That lets us polish trust, profile quality, and signal strength before opening wider.",
+                  copy: `The first ${COHORT_TARGET.toLocaleString()} members shape the quality of the platform. That lets us polish trust, profile quality, and signal strength before opening wider.`,
                 },
               ].map(({ icon: Icon, title, copy }) => (
                 <article key={title} className="rounded-[2rem] border border-stone-800 bg-stone-950/50 p-7">
@@ -237,8 +247,8 @@ export default function MarketingHome({
               Register free now. Be inside when the platform opens.
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-stone-300">
-              Join the first 500 members shaping the early Pravara experience. We will build the launch room,
-              turn the lights on when it is ready, and invite founding members first.
+              Join the first {COHORT_TARGET.toLocaleString()} members shaping the early Pravara experience. We will build the
+              launch room, turn the lights on when it is ready, and invite founding members first.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
@@ -249,7 +259,9 @@ export default function MarketingHome({
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <p className="text-sm text-stone-400">
-                {foundingCount} on the list | {seatsRemaining} seats remaining
+                {founderProgress.show
+                  ? `${founderProgress.joined.toLocaleString()} on the list · ${seatsRemaining?.toLocaleString()} seats remaining`
+                  : "Founding access is open for the first circle."}
               </p>
             </div>
           </div>
