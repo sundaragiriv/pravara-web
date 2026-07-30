@@ -246,7 +246,7 @@ export default function LoginPage() {
                 </button>
                 <h1 className="text-3xl font-serif text-stone-50 mb-2">Reset Password</h1>
                 <p className="text-stone-400 text-sm">
-                  Enter your email and we'll send you a reset link.
+                  Enter your email and we&apos;ll send you a reset link.
                 </p>
               </div>
 
@@ -390,7 +390,7 @@ export default function LoginPage() {
 
               <div className="text-center pt-4 border-t border-stone-900">
                 <p className="text-stone-500 text-sm">
-                  Don't have an account?{' '}
+                  Don&apos;t have an account?{' '}
                   <Link href="/signup" className="text-haldi-500 hover:text-haldi-400 font-medium">
                     Begin here
                   </Link>
