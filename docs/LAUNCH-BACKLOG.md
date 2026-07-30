@@ -55,10 +55,11 @@ US / Canada / India.
 
 | ID | Item | Why now | Status |
 | --- | --- | --- | --- |
-| TRUTH-01 | Single source of truth (`lib/offer.ts`) for cohort size, premium months, prices | Root cause of every item below it — numbers are typed as prose per component | `todo` |
-| TRUTH-02 | "Founding 500" → 1,000 (4 places in `MarketingHome.tsx`) | Contradicts the rest of the site and its own progress bar | `todo` |
-| TRUTH-03 | "One month premium at launch" → 3 months (`MarketingHome.tsx:86`) | 7 other places promise 3 months | `todo` |
-| TRUTH-04 | Reconcile `/pricing` ($49/$299) with `/membership` ($29/$79) | Two live pages, different prices, same product | `todo` |
+| ~~TRUTH-01~~ | ~~Single source of truth (`lib/offer.ts`)~~ | Root cause of the three below | ~~deployed `143a8e3`~~ |
+| ~~TRUTH-02~~ | ~~"Founding 500" → 1,000 (4 places)~~ | Contradicted the site and its own progress bar | ~~deployed `143a8e3`~~ |
+| ~~TRUTH-03~~ | ~~"One month premium at launch" → 3 months~~ | 7 other places promised 3 months | ~~deployed `143a8e3`~~ |
+| ~~TRUTH-04~~ | ~~Reconcile `/pricing` with `/membership`~~ | **Withdrawn — not a real finding.** `/pricing` is a 7-line redirect; the figures I reported were comment text. Verified 307 → `/membership` in production. | ~~n/a~~ |
+| ~~TRUTH-05~~ | ~~Apply the counter threshold to `MarketingHome` + `MarketingNav`~~ | Found while doing TRUTH-01: the Blocker 1 threshold only guarded `/register`. The go-live page rendered the raw count 3 ways, the nav a 4th, and "998 seats left" leaks it by subtraction. | ~~deployed `143a8e3`~~ |
 | DATA-01 | `country` field on registration | Cannot segment, price, or comply per-country without it | `todo` |
 | DATA-02 | `region` column on profiles | Required to make EU migration possible later without a backfill | `todo` |
 | MOB-01 | International phone input (country code + validation) | Bare `type="tel"` with a US placeholder corrupts the primary contact field outside North America | `todo` |
@@ -143,6 +144,7 @@ Found during this work. None are blockers; all will cost more later than now.
 | DEBT-05 | Pre-existing lint errors in `admin/page.tsx` and `(marketing)/about/page.tsx` | `npx eslint app` is red; masks new issues |
 | DEBT-06 | `launch_registrations` count uses the service-role client, bypassing RLS | Server-only and aggregate-only, but not strictly RLS-respecting. Fix: `SECURITY DEFINER` RPC. |
 | DEBT-07 | Founder note copy is written, not family-authored | Live now; replace whenever the family has its own words |
+| ~~DEBT-08~~ | ~~e2e suite flaked under 3 parallel workers on this machine~~ | ~~Workers 3 → 2, retries on. 29/29 in 14.6s, was 2.6m with 3 spurious failures. Deployed `143a8e3`~~ |
 
 ---
 
@@ -152,6 +154,8 @@ Verified on `pravara.ai`. Newest first.
 
 | Item | Commit |
 | --- | --- |
+| ~~P0 TRUTH — `lib/offer.ts` single source of truth; cohort and premium numbers corrected; counter threshold extended to the go-live page and nav~~ | `143a8e3` |
+| ~~Launch backlog created as the single source of status~~ | `919d5ca` |
 | ~~Stop Vercel analytics 404s failing every smoke test (suite now 29/29)~~ | `4b2d87c` |
 | ~~Load Sentry client SDK at idle — initial JS 1268KB → 973KB~~ | `72daab7` |
 | ~~Make local dev usable on Windows (webpack, env, README)~~ | `75a71d3` |
@@ -182,3 +186,4 @@ Verified on `pravara.ai`. Newest first.
 | Date | Change |
 | --- | --- |
 | 2026-07-30 | Created. Seeded from the go-live audit: 5 content inconsistencies, no payment provider, admin gaps, mobile gaps, 7 debt items. |
+| 2026-07-30 | P0 TRUTH cluster deployed. TRUTH-04 withdrawn as a false finding. TRUTH-05 added and fixed: the counter threshold never covered the go-live page. |
