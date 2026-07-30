@@ -424,6 +424,9 @@ export default function RegisterForm({ founderProgress, aside }: RegisterFormPro
               id="reg-age"
               name="age"
               type="number"
+              // type=number alone gives Android a full keyboard with a number
+              // row; inputMode=numeric gives the numeric keypad.
+              inputMode="numeric"
               min={18}
               max={80}
               value={form.age}

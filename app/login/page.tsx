@@ -255,6 +255,8 @@ export default function LoginPage() {
                   <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Email Address</label>
                   <input
                     type="email"
+                    autoComplete="email"
+                    inputMode="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -337,6 +339,8 @@ export default function LoginPage() {
                     <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Email Address</label>
                     <input
                       type="email"
+                      autoComplete="email"
+                      inputMode="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -351,13 +355,14 @@ export default function LoginPage() {
                       <button
                         type="button"
                         onClick={() => { setView("forgot"); setError(null); }}
-                        className="text-xs text-haldi-500 hover:text-haldi-400 transition-colors font-medium"
+                        className="-my-2 py-2 text-xs text-haldi-500 hover:text-haldi-400 transition-colors font-medium"
                       >
                         Forgot password?
                       </button>
                     </div>
                     <input
                       type="password"
+                      autoComplete="current-password"
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}

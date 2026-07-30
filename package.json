@@ -15,7 +15,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "db:drift": "node scripts/check-schema-drift.mjs",
-    "seed:dev": "node scripts/seed-dev-profiles.mjs 120 && node scripts/seed-dev-extras.mjs"
+    "seed:dev": "node scripts/seed-dev-profiles.mjs 120 && node scripts/seed-dev-extras.mjs",
+    "start:dev-data": "cross-env PRE_LAUNCH_ENABLED=true node scripts/start-with-dev-db.mjs"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.39.0",

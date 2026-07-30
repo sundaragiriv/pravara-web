@@ -23,11 +23,9 @@ export const metadata: Metadata = {
   description: "A modern matrimony platform rooted in heritage, compatibility, and intentional matchmaking.",
   // Resolved against metadataBase; each page inherits its own path.
   alternates: { canonical: "/" },
-  icons: {
-    icon: "/logo3.png",
-    apple: "/logo3.png",
-    shortcut: "/logo3.png",
-  },
+  // No `icons` block: app/icon.tsx and app/apple-icon.tsx supply them. These
+  // previously all pointed at /logo3.png — a 2.1MB raster being served as a
+  // favicon, and fetched by iOS on add-to-home-screen.
   openGraph: {
     title: "Pravara — Vedic Matrimony, by invitation",
     description: "A modern matrimony platform rooted in heritage, compatibility, and intentional matchmaking.",

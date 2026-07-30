@@ -21,6 +21,30 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 you ever see "Serious marriage deserves a better beginning" instead of "For the
 legacy you carry", the flag is off and you're looking at the wrong page.
 
+### `next start` locally uses the PRODUCTION database
+
+Next.js only reads `.env.development.local` in **development** mode. `next start`
+runs in production mode, so it falls through to `.env.local` — which holds the
+**production** Supabase credentials.
+
+Two consequences, both silent:
+
+- Your dev account does not exist there, so logging in fails with correct credentials.
+- Anything you submit — a registration, a profile edit — **writes to the live database.**
+
+For everyday work use `npm run dev` or `npm run dev:golive`, which are
+development mode and therefore hit `pravara-dev`.
+
+If you genuinely need to serve a production build locally, pass the dev
+credentials explicitly:
+
+```bash
+npm run build:local && npm run start:dev-data
+```
+
+`npm run start:prelaunch` does **not** do this — it only sets the launch flag, and
+still talks to production.
+
 ### Turbopack is disabled locally on Windows
 
 `npm run dev` and `npm run build:local` both use **webpack**, not Turbopack.

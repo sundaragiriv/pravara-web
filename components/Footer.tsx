@@ -5,7 +5,7 @@ import { CONTACT_EMAIL } from "@/lib/site";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-stone-900 bg-stone-950 px-6 py-12">
+    <footer className="border-t border-stone-900 bg-stone-950 px-6 py-12 [&_a]:inline-block [&_a]:py-1.5">
       <div className="container mx-auto grid gap-8 text-sm md:grid-cols-4">
         <div className="space-y-4">
           <Link href="/">
