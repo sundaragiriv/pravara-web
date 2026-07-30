@@ -14,8 +14,8 @@ const DEV_PROJECT_REF = "ikzifuotttucelvugjyy";
 function readEnv(file) {
   const out = {};
   for (const line of readFileSync(file, "utf8").split("\n")) {
-    const m = line.match(/^([A-Z_]+)=(.*)$/);
-    if (m) out[m[1]] = m[2].replace(/^["']|["']$/g, "");
+    const m = line.trim().match(/^([A-Z0-9_]+)=(.*)$/);
+    if (m) out[m[1]] = m[2].trim().replace(/^["']|["']$/g, "");
   }
   return out;
 }
