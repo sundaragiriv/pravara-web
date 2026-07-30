@@ -61,9 +61,9 @@ US / Canada / India.
 | ~~TRUTH-03~~ | ~~"One month premium at launch" → 3 months~~ | 7 other places promised 3 months | ~~deployed `143a8e3`~~ |
 | ~~TRUTH-04~~ | ~~Reconcile `/pricing` with `/membership`~~ | **Withdrawn — not a real finding.** `/pricing` is a 7-line redirect; the figures I reported were comment text. Verified 307 → `/membership` in production. | ~~n/a~~ |
 | ~~TRUTH-05~~ | ~~Apply the counter threshold to `MarketingHome` + `MarketingNav`~~ | Found while doing TRUTH-01: the Blocker 1 threshold only guarded `/register`. The go-live page rendered the raw count 3 ways, the nav a 4th, and "998 seats left" leaks it by subtraction. | ~~deployed `143a8e3`~~ |
-| DATA-01 | `country` field on registration | Cannot segment, price, or comply per-country without it | `todo` |
-| DATA-02 | `region` column on profiles | Required to make EU migration possible later without a backfill | `todo` |
-| MOB-01 | International phone input (country code + validation) | Bare `type="tel"` with a US placeholder corrupts the primary contact field outside North America | `todo` |
+| DATA-01 | `country` field on registration | Code + migration done; applied to **pravara-dev only**. Insert degrades safely if the column is absent. | `deployed (dev)` — prod SQL pending |
+| ~~DATA-02~~ | ~~`region` column on profiles~~ | **No work needed** — `profiles.country` and `.state` already existed in dev and prod. I had listed this without checking. | ~~n/a~~ |
+| MOB-01 | International phone input | `lib/countries.ts` (81 countries), derived dial code, E.164 on submit, `inputMode`/`autoComplete` set. On branch, awaiting prod migration. | `merged` |
 
 ---
 
@@ -147,6 +147,7 @@ Found during this work. None are blockers; all will cost more later than now.
 | DEBT-05 | Pre-existing lint errors in `admin/page.tsx` and `(marketing)/about/page.tsx` | `npx eslint app` is red; masks new issues |
 | DEBT-06 | `launch_registrations` count uses the service-role client, bypassing RLS | Server-only and aggregate-only, but not strictly RLS-respecting. Fix: `SECURITY DEFINER` RPC. |
 | DEBT-07 | Founder note copy is written, not family-authored | Live now; replace whenever the family has its own words |
+| ~~DEBT-09~~ | ~~pravara-dev had no test data~~ | ~~120 seeded profiles across US/India/Canada + a reusable, dev-only seed script. Admin account created for sundaragiriv@gmail.com.~~ |
 | ~~DEBT-08~~ | ~~e2e suite flaked under 3 parallel workers on this machine~~ | ~~Workers 3 → 2, retries on. 29/29 in 14.6s, was 2.6m with 3 spurious failures. Deployed `143a8e3`~~ |
 
 ---
@@ -192,3 +193,4 @@ Verified on `pravara.ai`. Newest first.
 | 2026-07-30 | P0 TRUTH cluster deployed. TRUTH-04 withdrawn as a false finding. TRUTH-05 added and fixed: the counter threshold never covered the go-live page. |
 | 2026-07-30 | Corrected DEBT-01: pravara-dev was paused, not deleted. Added `deployed (flagged)` status, OPS-03 and OPS-04. |
 | 2026-07-30 | OPS-01/03/04 done. Local + Preview moved off production onto pravara-dev. golive-preview branch live. Go-live checklist written. |
+| 2026-07-30 | P0 code complete. DATA-02 withdrawn (already existed). country column applied to dev by Raj; prod SQL still pending. pravara-dev seeded with 120 profiles + admin account. |
