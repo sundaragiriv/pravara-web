@@ -1,5 +1,8 @@
 # Pravara Pre-Launch Readiness Plan
 
+> **Superseded for tracking.** Live status is maintained in [`LAUNCH-BACKLOG.md`](LAUNCH-BACKLOG.md).
+> This document is kept as background on the original plan and reasoning.
+
 > Target: **pre-launch live at pravara.ai (~2026-06-15)**. Owner = You, Dev = Claude, Both = pairing.
 > Status legend: ☐ todo · ◐ in progress · ☑ done. Priority: **P0** = launch blocker · **P1** = needed for a stellar/safe launch · **P2** = post-launch ok.
 

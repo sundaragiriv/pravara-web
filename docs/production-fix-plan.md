@@ -1,5 +1,8 @@
 # Pravara Production Fix Plan
 
+> **Superseded for tracking.** Live status is maintained in [`LAUNCH-BACKLOG.md`](LAUNCH-BACKLOG.md).
+> This document is kept as background on the original plan and reasoning.
+
 This document is the working execution board for production cleanup and architecture stabilization.
 
 ## Current State
