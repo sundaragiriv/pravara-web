@@ -81,9 +81,9 @@ confirmation emails land in spam burns an introduction you only get once.
 | MOB-02 | PWA manifest + installability | Cheapest high-value item for India — home screen, no app store | `todo` |
 | MOB-03 | Onboarding audited on a real low-end Android | Longest form in the product; drop-off there is invisible and unmeasured | `todo` |
 | MOB-04 | Tap-target and `inputMode` audit across all forms | Numeric keypads, correct autocomplete, 44px targets | `todo` |
-| OPS-01 | Point local + Preview at `pravara-dev` | Project already exists and is restoring. Blocked on its service-role key — all three vars must be set together. | `todo` |
-| OPS-03 | `golive-preview` branch with branch-scoped `PRE_LAUNCH_ENABLED=false` | `MarketingHome` currently has no environment that renders it, so the go-live page cannot be QA'd anywhere | `todo` |
-| OPS-04 | Go-live checklist for flag-gated items | Deployed-but-invisible is its own risk class; see status legend | `todo` |
+| ~~OPS-01~~ | ~~Point local + Preview at `pravara-dev`~~ | Both repointed; all three vars set together. Local dev verified: 0 Supabase errors, `/api/launch-analytics` 200 (was 500). | ~~done~~ |
+| ~~OPS-03~~ | ~~`golive-preview` branch + branch-scoped flag~~ | Permanent URL for the go-live face of the site. Built ● Ready; needs a human to open it (Deployment Protection). | ~~done~~ |
+| ~~OPS-04~~ | ~~Go-live checklist~~ | `docs/GO-LIVE-CHECKLIST.md`. Found while writing it: the flag also releases the whole member app via `middleware.ts:80`, which is a bigger deal than the copy. | ~~done~~ |
 | OPS-02 | Performance budget in CI | This week's numbers will erode silently without one | `todo` |
 
 ---
@@ -140,7 +140,7 @@ Found during this work. None are blockers; all will cost more later than now.
 
 | ID | Item | Impact |
 | --- | --- | --- |
-| DEBT-01 | Local dev and Preview both write to the **production** Supabase | Test registrations land in the live table. `pravara-dev` (ikzifuotttucelvugjyy) exists and is restoring — it was **paused, not deleted**; an earlier note here said otherwise and was wrong. Needs its service-role key before it can be enabled, or the split-brain recurs. |
+| ~~DEBT-01~~ | ~~Local dev and Preview wrote to the **production** Supabase~~ | ~~Both now on `pravara-dev`. It was **paused, not deleted** — an earlier note here said otherwise and was wrong.~~ |
 | DEBT-02 | Turbopack unusable on Windows — checkout path `E:\7. matrimony\pravara` has a space and leading digit | `dev` and `build` forced onto webpack. Real fix: move the checkout. |
 | DEBT-03 | Playfair Display is not preloaded | It is the LCP element; preloading is the next real LCP lever |
 | DEBT-04 | Sentry client SDK still 420KB parsed | Deferred off the critical path, not reduced. Shrinking needs a monitoring decision. |
@@ -191,3 +191,4 @@ Verified on `pravara.ai`. Newest first.
 | 2026-07-30 | Created. Seeded from the go-live audit: 5 content inconsistencies, no payment provider, admin gaps, mobile gaps, 7 debt items. |
 | 2026-07-30 | P0 TRUTH cluster deployed. TRUTH-04 withdrawn as a false finding. TRUTH-05 added and fixed: the counter threshold never covered the go-live page. |
 | 2026-07-30 | Corrected DEBT-01: pravara-dev was paused, not deleted. Added `deployed (flagged)` status, OPS-03 and OPS-04. |
+| 2026-07-30 | OPS-01/03/04 done. Local + Preview moved off production onto pravara-dev. golive-preview branch live. Go-live checklist written. |
