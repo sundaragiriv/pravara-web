@@ -15,14 +15,20 @@ import { COHORT_TARGET, FOUNDER_PREMIUM_MONTHS } from "@/lib/offer";
  *  - Georgia for ceremony, Arial for anything that must stay legible at small
  *    sizes. No webfonts — they simply do not load in most clients.
  */
-const GOLD = "#a67c1a";
-const GOLD_LIGHT = "#c9a24a";
-const KUMKUM = "#8c2f24";
-const INK = "#1c1917";
-const MUTED = "#57534e";
-const CREAM = "#faf6ed";
-const CARD = "#fffdf8";
-const RULE = "#e7dcc4";
+// The site's own tokens, so the email and pravara.ai are recognisably the same
+// thing. haldi gold on stone-950; kumkum for the blessing.
+const GOLD = "#E8C56B";        // haldi-200, the site's brightest gold
+const GOLD_DEEP = "#C9A24A";   // gold.DEFAULT — rules and ornament
+const KUMKUM = "#D08C6A";      // lifted off kumkum-900 for contrast on dark
+const GROUND = "#0C0A09";      // stone-950, the site background
+const CARD = "#12100E";        // a shade above the ground, as the site's cards are
+const INK = "#F5F0E6";         // warm off-white, not pure #fff
+const MUTED = "#A8A29E";       // stone-400
+const RULE = "#2A231E";
+
+/** Email cannot resolve relative URLs, and the logo must come from the verified
+ *  sending domain or clients are likelier to block it. */
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.pravara.ai";
 
 /**
  * The toran: a garland strung above a doorway to mark an auspicious threshold.
@@ -34,9 +40,9 @@ function toran(): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
     <tr>
       <td style="width:56px;height:1px;background:${GOLD};opacity:.45;"></td>
-      ${diamond(5, GOLD_LIGHT)}
+      ${diamond(5, GOLD_DEEP)}
       ${diamond(8, GOLD)}
-      ${diamond(5, GOLD_LIGHT)}
+      ${diamond(5, GOLD_DEEP)}
       <td style="width:56px;height:1px;background:${GOLD};opacity:.45;"></td>
     </tr>
   </table>`;
@@ -49,25 +55,26 @@ function shell(opts: { preheader: string; body: string; contactEmail: string }):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="x-apple-disable-message-reformatting">
-<meta name="color-scheme" content="light">
-<meta name="supported-color-schemes" content="light">
+<meta name="color-scheme" content="dark">
+<meta name="supported-color-schemes" content="dark light">
 <title>Pravara</title>
 </head>
-<body style="margin:0;padding:0;background:${CREAM};">
+<body style="margin:0;padding:0;background:${GROUND};">
 <span style="display:none;visibility:hidden;opacity:0;color:transparent;height:0;width:0;overflow:hidden;">${opts.preheader}</span>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CREAM};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${GROUND}" style="background:${GROUND};">
   <tr><td align="center" style="padding:36px 16px;">
 
     <!-- Double rule: the outer keyline and inner card echo the border of a
          printed invitation, which is the whole reason for the extra table. -->
-    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:${CARD};border:2px solid ${GOLD};border-radius:4px;">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" bgcolor="${CARD}" style="max-width:600px;width:100%;background:${CARD};border:2px solid ${GOLD_DEEP};border-radius:4px;">
       <tr><td style="padding:5px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${RULE};border-radius:2px;">
 
-          <tr><td align="center" style="padding:36px 40px 0;">
-            ${toran()}
-            <div style="font-family:Georgia,'Times New Roman',serif;font-size:34px;letter-spacing:9px;color:${GOLD};font-weight:400;margin-top:22px;">PRAVARA</div>
-            <div style="font-family:Georgia,'Times New Roman',serif;font-size:12px;letter-spacing:4px;color:${MUTED};text-transform:uppercase;margin-top:10px;font-style:italic;">Vedic Matrimony, by invitation</div>
+          <tr><td align="center" bgcolor="${CARD}" style="padding:34px 40px 4px;">
+            <!-- Retina: served at 1120px, displayed at 280. The alt text is
+                 styled so a client with images off still shows the wordmark. -->
+            <img src="${SITE}/email-logo.png" width="280" height="75" alt="PRAVARA — Vedic Matrimony, by invitation"
+                 style="display:block;width:280px;max-width:80%;height:auto;border:0;outline:none;text-decoration:none;font-family:Georgia,serif;font-size:24px;letter-spacing:8px;color:${GOLD};">
           </td></tr>
 
           <tr><td style="padding:28px 44px 40px;font-family:Georgia,'Times New Roman',serif;color:${INK};">
@@ -78,7 +85,7 @@ function shell(opts: { preheader: string; body: string; contactEmail: string }):
             ${toran()}
           </td></tr>
 
-          <tr><td style="padding:20px 40px 26px;background:${CREAM};border-top:1px solid ${RULE};font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${MUTED};text-align:center;line-height:1.7;">
+          <tr><td style="padding:20px 40px 26px;background:${GROUND};border-top:1px solid ${RULE};font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${MUTED};text-align:center;line-height:1.7;">
             You are receiving this because you reserved a seat in the Pravara founding circle.<br>
             Reply to this message, or write to <a href="mailto:${opts.contactEmail}" style="color:${GOLD};text-decoration:none;">${opts.contactEmail}</a> — a person reads it.
           </td></tr>
@@ -96,14 +103,14 @@ function shell(opts: { preheader: string; body: string; contactEmail: string }):
 function button(href: string, label: string): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:30px auto 6px;">
     <tr><td align="center" bgcolor="${GOLD}" style="border-radius:999px;">
-      <a href="${href}" style="display:inline-block;padding:16px 38px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;color:#ffffff;text-decoration:none;border-radius:999px;">${label}</a>
+      <a href="${href}" style="display:inline-block;padding:16px 38px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;color:#0C0A09;text-decoration:none;border-radius:999px;">${label}</a>
     </td></tr></table>`;
 }
 
 /** A blessing, set the way it would be spoken — script, sound, then meaning. */
 function blessing(): string {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:30px 0 8px;">
-    <tr><td align="center" style="padding:22px 20px;background:${CREAM};border-left:2px solid ${GOLD_LIGHT};border-right:2px solid ${GOLD_LIGHT};">
+    <tr><td align="center" bgcolor="${GROUND}" style="padding:22px 20px;background:${GROUND};border-left:2px solid ${GOLD_DEEP};border-right:2px solid ${GOLD_DEEP};">
       <div style="font-family:Georgia,'Times New Roman',serif;font-size:19px;color:${KUMKUM};line-height:1.6;">&#x0965; &#x0936;&#x0941;&#x092D;&#x092E;&#x0938;&#x094D;&#x0924;&#x0941; &#x0965;</div>
       <div style="font-family:Georgia,'Times New Roman',serif;font-size:13px;font-style:italic;color:${GOLD};letter-spacing:1px;margin-top:8px;">shubham astu</div>
       <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${MUTED};margin-top:6px;">may it be auspicious</div>
