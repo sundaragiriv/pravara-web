@@ -65,3 +65,4 @@ next-env.d.ts
 # Secrets pasted to files (use Vercel env instead)
 resend.apikey
 *.apikey
+.preview
