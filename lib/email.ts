@@ -85,7 +85,11 @@ function buildLaunchInboxText(input: LaunchRegistrationRequest): string {
   ].join("\n");
 }
 
-export async function sendLaunchRegistrationEmails(input: LaunchRegistrationRequest) {
+export async function sendLaunchRegistrationEmails(
+  input: LaunchRegistrationRequest,
+  /** Position in the founding circle. Left out rather than guessed if unknown. */
+  seatNumber?: number,
+) {
   if (!resend || !emailFrom) {
     throw new Error("Email service is not configured");
   }
@@ -102,7 +106,12 @@ export async function sendLaunchRegistrationEmails(input: LaunchRegistrationRequ
   const ctaUrl =
     `${getSiteUrl()}/signup?email=${encodeURIComponent(input.email)}` +
     `&name=${encodeURIComponent(input.full_name)}`;
-  const welcome = founderWelcomeEmail({ firstName, ctaUrl, contactEmail: supportInbox });
+  const welcome = founderWelcomeEmail({
+    firstName,
+    ctaUrl,
+    contactEmail: supportInbox,
+    seatNumber,
+  });
 
   await resend.emails.send({
     from: emailFrom,

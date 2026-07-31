@@ -1,11 +1,46 @@
 import "server-only";
 
-// Email-safe HTML (tables + inline styles, ~600px, web-safe fonts). Warm ivory +
-// gold to match the Vedic-matrimony brand and keep deliverability high.
-const GOLD = "#b8860b";
+import { COHORT_TARGET, FOUNDER_PREMIUM_MONTHS } from "@/lib/offer";
+
+/**
+ * Transactional email, built to read as an invitation card rather than a
+ * product notification.
+ *
+ * Constraints that shape every decision here:
+ *  - Tables and inline styles only. Gmail strips <style>, <svg> and most
+ *    modern CSS, so ornament is built from borders and typography.
+ *  - Light ground, not the site's near-black. A dark email is a coin flip
+ *    across clients and inverts badly in Gmail's dark mode; cream is also the
+ *    truer reference for a printed wedding invitation.
+ *  - Georgia for ceremony, Arial for anything that must stay legible at small
+ *    sizes. No webfonts — they simply do not load in most clients.
+ */
+const GOLD = "#a67c1a";
+const GOLD_LIGHT = "#c9a24a";
+const KUMKUM = "#8c2f24";
 const INK = "#1c1917";
 const MUTED = "#57534e";
-const CREAM = "#faf7f2";
+const CREAM = "#faf6ed";
+const CARD = "#fffdf8";
+const RULE = "#e7dcc4";
+
+/**
+ * The toran: a garland strung above a doorway to mark an auspicious threshold.
+ * Rendered as rules and rotated squares because it has to survive Gmail.
+ */
+function toran(): string {
+  const diamond = (size: number, color: string) =>
+    `<td style="padding:0 5px;"><div style="width:${size}px;height:${size}px;background:${color};transform:rotate(45deg);margin:0 auto;"></div></td>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
+    <tr>
+      <td style="width:56px;height:1px;background:${GOLD};opacity:.45;"></td>
+      ${diamond(5, GOLD_LIGHT)}
+      ${diamond(8, GOLD)}
+      ${diamond(5, GOLD_LIGHT)}
+      <td style="width:56px;height:1px;background:${GOLD};opacity:.45;"></td>
+    </tr>
+  </table>`;
+}
 
 function shell(opts: { preheader: string; body: string; contactEmail: string }): string {
   return `<!doctype html>
@@ -14,26 +49,44 @@ function shell(opts: { preheader: string; body: string; contactEmail: string }):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
 <title>Pravara</title>
 </head>
 <body style="margin:0;padding:0;background:${CREAM};">
 <span style="display:none;visibility:hidden;opacity:0;color:transparent;height:0;width:0;overflow:hidden;">${opts.preheader}</span>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CREAM};">
-  <tr><td align="center" style="padding:32px 16px;">
-    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border:1px solid #efe7d8;border-radius:16px;overflow:hidden;">
-      <tr><td align="center" style="padding:36px 40px 8px;">
-        <div style="font-family:Georgia,'Times New Roman',serif;font-size:30px;letter-spacing:6px;color:${GOLD};font-weight:700;">PRAVARA</div>
-        <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:3px;color:${MUTED};text-transform:uppercase;margin-top:6px;">Vedic Matrimony, by invitation</div>
-        <div style="height:1px;width:64px;background:${GOLD};opacity:.5;margin:20px auto 0;"></div>
-      </td></tr>
-      <tr><td style="padding:16px 40px 40px;font-family:Arial,Helvetica,sans-serif;color:${INK};">
-        ${opts.body}
-      </td></tr>
-      <tr><td style="padding:20px 40px;background:${CREAM};border-top:1px solid #efe7d8;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${MUTED};text-align:center;line-height:1.6;">
-        You're receiving this because you joined the Pravara founding circle.<br>
-        Questions? <a href="mailto:${opts.contactEmail}" style="color:${GOLD};text-decoration:none;">${opts.contactEmail}</a>
+  <tr><td align="center" style="padding:36px 16px;">
+
+    <!-- Double rule: the outer keyline and inner card echo the border of a
+         printed invitation, which is the whole reason for the extra table. -->
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:${CARD};border:2px solid ${GOLD};border-radius:4px;">
+      <tr><td style="padding:5px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${RULE};border-radius:2px;">
+
+          <tr><td align="center" style="padding:36px 40px 0;">
+            ${toran()}
+            <div style="font-family:Georgia,'Times New Roman',serif;font-size:34px;letter-spacing:9px;color:${GOLD};font-weight:400;margin-top:22px;">PRAVARA</div>
+            <div style="font-family:Georgia,'Times New Roman',serif;font-size:12px;letter-spacing:4px;color:${MUTED};text-transform:uppercase;margin-top:10px;font-style:italic;">Vedic Matrimony, by invitation</div>
+          </td></tr>
+
+          <tr><td style="padding:28px 44px 40px;font-family:Georgia,'Times New Roman',serif;color:${INK};">
+            ${opts.body}
+          </td></tr>
+
+          <tr><td align="center" style="padding:0 44px 30px;">
+            ${toran()}
+          </td></tr>
+
+          <tr><td style="padding:20px 40px 26px;background:${CREAM};border-top:1px solid ${RULE};font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${MUTED};text-align:center;line-height:1.7;">
+            You are receiving this because you reserved a seat in the Pravara founding circle.<br>
+            Reply to this message, or write to <a href="mailto:${opts.contactEmail}" style="color:${GOLD};text-decoration:none;">${opts.contactEmail}</a> — a person reads it.
+          </td></tr>
+
+        </table>
       </td></tr>
     </table>
+
   </td></tr>
 </table>
 </body>
@@ -41,59 +94,188 @@ function shell(opts: { preheader: string; body: string; contactEmail: string }):
 }
 
 function button(href: string, label: string): string {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px auto;">
+  return `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:30px auto 6px;">
     <tr><td align="center" bgcolor="${GOLD}" style="border-radius:999px;">
-      <a href="${href}" style="display:inline-block;padding:15px 34px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;color:#1c1917;text-decoration:none;border-radius:999px;">${label} &rarr;</a>
+      <a href="${href}" style="display:inline-block;padding:16px 38px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;color:#ffffff;text-decoration:none;border-radius:999px;">${label}</a>
     </td></tr></table>`;
 }
 
-/** Sent right after a founder reserves their seat — drives them to build a profile. */
-export function founderWelcomeEmail(opts: { firstName: string; ctaUrl: string; contactEmail: string }) {
-  const name = opts.firstName?.trim() || "there";
+/** A blessing, set the way it would be spoken — script, sound, then meaning. */
+function blessing(): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:30px 0 8px;">
+    <tr><td align="center" style="padding:22px 20px;background:${CREAM};border-left:2px solid ${GOLD_LIGHT};border-right:2px solid ${GOLD_LIGHT};">
+      <div style="font-family:Georgia,'Times New Roman',serif;font-size:19px;color:${KUMKUM};line-height:1.6;">&#x0965; &#x0936;&#x0941;&#x092D;&#x092E;&#x0938;&#x094D;&#x0924;&#x0941; &#x0965;</div>
+      <div style="font-family:Georgia,'Times New Roman',serif;font-size:13px;font-style:italic;color:${GOLD};letter-spacing:1px;margin-top:8px;">shubham astu</div>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${MUTED};margin-top:6px;">may it be auspicious</div>
+    </td></tr>
+  </table>`;
+}
+
+/** "the 47th of 1,000" — real, specific, and quietly scarce. */
+function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return `${n}${s[(v - 20) % 10] || s[v] || s[0]}`;
+}
+
+export type FounderWelcomeOptions = {
+  firstName: string;
+  ctaUrl: string;
+  contactEmail: string;
+  /** Position in the founding circle. Omitted rather than guessed if unknown. */
+  seatNumber?: number;
+};
+
+/** Sent the moment a founder reserves their seat. */
+export function founderWelcomeEmail(opts: FounderWelcomeOptions) {
+  const name = opts.firstName?.trim() || "friend";
+
+  // Only claimed when we actually know it — an invented seat number would be
+  // the one detail in this email a reader could catch us inventing.
+  const seatLine = opts.seatNumber
+    ? `<p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:${MUTED};margin:0 0 22px;text-align:center;">
+         Yours is the <strong style="color:${GOLD};font-size:15px;">${ordinal(opts.seatNumber)}</strong> of ${COHORT_TARGET.toLocaleString()} seats.
+       </p>`
+    : "";
+
   const body = `
-    <h1 style="font-family:Georgia,serif;font-size:26px;line-height:1.25;color:${INK};margin:8px 0 0;">Welcome to the Founder Circle, ${name}.</h1>
-    <p style="font-size:15px;line-height:1.7;color:${MUTED};margin:16px 0;">Your founding seat is reserved. Now make it count — <strong style="color:${INK};">build your founding profile</strong> so you're matched with the right people the moment we open.</p>
-    <p style="font-size:15px;line-height:1.7;color:${MUTED};margin:16px 0;">Founders with a complete profile get <strong style="color:${GOLD};">first access</strong> and <strong style="color:${GOLD};">3 months of premium, free</strong>. It takes about three minutes — guided by Narada, our AI.</p>
-    ${button(opts.ctaUrl, "Build my founding profile")}
-    <p style="font-size:13px;line-height:1.7;color:${MUTED};margin:8px 0 0;text-align:center;">Or paste this link in your browser:<br><a href="${opts.ctaUrl}" style="color:${GOLD};word-break:break-all;">${opts.ctaUrl}</a></p>`;
+    <p style="font-family:Georgia,serif;font-size:17px;color:${MUTED};margin:0 0 6px;font-style:italic;">Namaste ${name},</p>
+
+    <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:29px;line-height:1.3;color:${INK};margin:14px 0 0;font-weight:400;">
+      Your seat in the founding circle is reserved.
+    </h1>
+
+    <div style="height:1px;width:48px;background:${GOLD};opacity:.6;margin:22px 0;"></div>
+
+    ${seatLine}
+
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.8;color:${MUTED};margin:0 0 18px;">
+      Our grandparents did this with a notebook and a network of people who knew the family.
+      That network thinned as we scattered. Pravara is our attempt to rebuild it — the same
+      questions about gotra, lineage and character, asked with the same care.
+    </p>
+
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.8;color:${MUTED};margin:0 0 18px;">
+      What would help most now is your profile. Not a form — a conversation with Narada, our
+      AI, which asks the things an elder would ask and writes it up for you. About three minutes.
+    </p>
+
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.8;color:${MUTED};margin:0;">
+      Founders who finish are matched <strong style="color:${INK};">before anyone else</strong> when we
+      open, and keep <strong style="color:${GOLD};">${FOUNDER_PREMIUM_MONTHS} months of premium, free</strong>.
+    </p>
+
+    ${button(opts.ctaUrl, "BUILD MY PROFILE")}
+
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;color:${MUTED};margin:6px 0 0;text-align:center;">
+      Or paste this into your browser:<br>
+      <a href="${opts.ctaUrl}" style="color:${GOLD};word-break:break-all;">${opts.ctaUrl}</a>
+    </p>
+
+    ${blessing()}
+
+    <p style="font-family:Georgia,serif;font-size:15px;line-height:1.8;color:${MUTED};margin:26px 0 0;">
+      With warmth,<br>
+      <span style="color:${GOLD};font-size:16px;">The Sundaragiri Family</span><br>
+      <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${MUTED};">Founding family, Pravara</span>
+    </p>`;
+
   const text = [
-    `Welcome to the Pravara Founder Circle, ${name}.`,
+    `Namaste ${name},`,
     ``,
-    `Your founding seat is reserved. Now make it count — build your founding profile so you're matched with the right people the moment we open.`,
+    `Your seat in the founding circle is reserved.`,
+    opts.seatNumber ? `Yours is the ${ordinal(opts.seatNumber)} of ${COHORT_TARGET.toLocaleString()} seats.` : ``,
     ``,
-    `Founders with a complete profile get first access and 3 months of premium, free. It takes about three minutes, guided by Narada (our AI).`,
+    `Our grandparents did this with a notebook and a network of people who knew the family.`,
+    `That network thinned as we scattered. Pravara is our attempt to rebuild it — the same`,
+    `questions about gotra, lineage and character, asked with the same care.`,
+    ``,
+    `What would help most now is your profile. Not a form — a conversation with Narada, our AI,`,
+    `which asks the things an elder would ask and writes it up for you. About three minutes.`,
+    ``,
+    `Founders who finish are matched before anyone else when we open, and keep`,
+    `${FOUNDER_PREMIUM_MONTHS} months of premium, free.`,
     ``,
     `Build your profile: ${opts.ctaUrl}`,
     ``,
-    `Pravara — Vedic matrimony, by invitation`,
-  ].join("\n");
+    `|| shubham astu ||  — may it be auspicious`,
+    ``,
+    `With warmth,`,
+    `The Sundaragiri Family`,
+    `Founding family, Pravara`,
+  ]
+    // Drop the seat line when we do not know the number, rather than
+    // leaving a blank line where a fact should be.
+    .filter((line, i) => !(i === 3 && line === ""))
+    .join("\n");
+
   return {
-    subject: "Welcome to the Founder Circle — finish your profile",
-    html: shell({ preheader: "Your founding seat is reserved. Build your profile to be matched first.", body, contactEmail: opts.contactEmail }),
+    subject: `${name}, your founding seat is reserved`,
+    html: shell({
+      // Shown next to the subject in most inboxes — the second thing read, so
+      // it carries the specific detail rather than repeating the subject.
+      preheader: opts.seatNumber
+        ? `The ${ordinal(opts.seatNumber)} of ${COHORT_TARGET.toLocaleString()} seats. Build your profile to be matched first.`
+        : `Build your profile to be matched first when we open.`,
+      body,
+      contactEmail: opts.contactEmail,
+    }),
     text,
   };
 }
 
-/** Reminder for founders who registered but haven't completed their profile. */
+/** Reminder for founders who registered but never finished a profile. */
 export function profileReminderEmail(opts: { firstName: string; ctaUrl: string; contactEmail: string }) {
-  const name = opts.firstName?.trim() || "there";
+  const name = opts.firstName?.trim() || "friend";
   const body = `
-    <h1 style="font-family:Georgia,serif;font-size:26px;line-height:1.25;color:${INK};margin:8px 0 0;">You're almost in, ${name}.</h1>
-    <p style="font-size:15px;line-height:1.7;color:${MUTED};margin:16px 0;">Your founding seat is held — but your profile isn't finished yet. Founders with complete profiles are <strong style="color:${INK};">matched first</strong> when we open, and yours is only a few minutes away.</p>
-    <p style="font-size:15px;line-height:1.7;color:${MUTED};margin:16px 0;">Finish it now and lock in your <strong style="color:${GOLD};">3 months of premium, free</strong>.</p>
-    ${button(opts.ctaUrl, "Finish my profile")}`;
+    <p style="font-family:Georgia,serif;font-size:17px;color:${MUTED};margin:0 0 6px;font-style:italic;">Namaste ${name},</p>
+
+    <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:29px;line-height:1.3;color:${INK};margin:14px 0 0;font-weight:400;">
+      Your seat is held. Your profile is not yet written.
+    </h1>
+
+    <div style="height:1px;width:48px;background:${GOLD};opacity:.6;margin:22px 0;"></div>
+
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.8;color:${MUTED};margin:0 0 18px;">
+      When matching opens, we start with the founders we can actually introduce — the ones whose
+      gotra, community and intentions are on the page. Yours is still blank.
+    </p>
+
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.8;color:${MUTED};margin:0;">
+      It is a short conversation, not a form. Finishing it keeps your
+      <strong style="color:${GOLD};">${FOUNDER_PREMIUM_MONTHS} months of premium, free</strong>.
+    </p>
+
+    ${button(opts.ctaUrl, "FINISH MY PROFILE")}
+
+    <p style="font-family:Georgia,serif;font-size:15px;line-height:1.8;color:${MUTED};margin:26px 0 0;">
+      With warmth,<br>
+      <span style="color:${GOLD};font-size:16px;">The Sundaragiri Family</span>
+    </p>`;
+
   const text = [
-    `You're almost in, ${name}.`,
+    `Namaste ${name},`,
     ``,
-    `Your founding seat is held, but your profile isn't finished. Founders with complete profiles are matched first when we open — and yours is a few minutes away.`,
+    `Your seat is held. Your profile is not yet written.`,
     ``,
-    `Finish it now and lock in your 3 months of premium, free: ${opts.ctaUrl}`,
+    `When matching opens, we start with the founders we can actually introduce — the ones whose`,
+    `gotra, community and intentions are on the page. Yours is still blank.`,
     ``,
-    `Pravara — Vedic matrimony, by invitation`,
+    `It is a short conversation, not a form. Finishing it keeps your ${FOUNDER_PREMIUM_MONTHS} months of premium, free.`,
+    ``,
+    `Finish your profile: ${opts.ctaUrl}`,
+    ``,
+    `With warmth,`,
+    `The Sundaragiri Family`,
   ].join("\n");
+
   return {
-    subject: "Finish your founding profile — you're matched first",
-    html: shell({ preheader: "Founders with complete profiles are matched first. Finish yours.", body, contactEmail: opts.contactEmail }),
+    subject: `${name}, your founding profile is still unwritten`,
+    html: shell({
+      preheader: "Founders with a finished profile are introduced first.",
+      body,
+      contactEmail: opts.contactEmail,
+    }),
     text,
   };
 }

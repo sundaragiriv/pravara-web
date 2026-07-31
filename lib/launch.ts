@@ -149,3 +149,34 @@ export async function createLaunchRegistration(input: LaunchRegistrationInput) {
 
   return data;
 }
+
+/**
+ * Which seat this registration took — used to tell a founder "yours is the 47th
+ * of 1,000". Counted at send time rather than stored, because the exact value
+ * only matters once, in one email.
+ *
+ * Returns null on any failure: a wrong seat number is worse than no seat
+ * number, since it is the one claim in that email a reader could disprove.
+ */
+export async function getSeatNumber(registrationId: string): Promise<number | null> {
+  try {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from("launch_registrations")
+      .select("created_at")
+      .eq("id", registrationId)
+      .single();
+
+    if (error || !data) return null;
+
+    const { count, error: countError } = await supabase
+      .from("launch_registrations")
+      .select("*", { count: "exact", head: true })
+      .lte("created_at", data.created_at);
+
+    if (countError || count === null) return null;
+    return count;
+  } catch {
+    return null;
+  }
+}

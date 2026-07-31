@@ -4,7 +4,7 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { launchRegistrationSchema } from "@/lib/api-schemas";
 import { isEmailConfigured, sendLaunchRegistrationEmails } from "@/lib/email";
 import { recordLaunchEvent } from "@/lib/launch-analytics";
-import { createLaunchRegistration } from "@/lib/launch";
+import { createLaunchRegistration, getSeatNumber } from "@/lib/launch";
 import { RATE_LIMITS, enforceRateLimit } from "@/lib/ratelimit";
 import { sanitizePlainText } from "@/lib/sanitize";
 
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       source: sanitizePlainText(payload.data.source || "launch-homepage"),
     };
 
-    await createLaunchRegistration(sanitizedInput);
+    const registration = await createLaunchRegistration(sanitizedInput);
     await recordLaunchEvent({
       event: "launch_registration_completed",
       path: "/register",
@@ -56,10 +56,19 @@ export async function POST(request: Request) {
 
     if (isEmailConfigured()) {
       try {
-        await sendLaunchRegistrationEmails(sanitizedInput);
+        // Null on failure — the welcome email drops the line rather than
+        // stating a seat number it is not sure of.
+        const seatNumber = registration?.id ? await getSeatNumber(registration.id) : null;
+        await sendLaunchRegistrationEmails(sanitizedInput, seatNumber ?? undefined);
       } catch (emailError) {
         console.error("Launch registration email error:", emailError);
       }
+    } else {
+      // Loud, because the form promises a confirmation email. This silently
+      // returned ok:true for every real registration until 2026-07-30.
+      console.error(
+        "REGISTRATION EMAIL NOT SENT — email is not configured. Set RESEND_API_KEY and EMAIL_FROM.",
+      );
     }
 
     return NextResponse.json(
