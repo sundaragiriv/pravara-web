@@ -76,13 +76,15 @@ confirmation emails land in spam burns an introduction you only get once.
 
 | ID | Item | Why | Status |
 | --- | --- | --- | --- |
-| GROWTH-01 | Verify Resend sending domain | Unverified sending → spam → the whole funnel silently fails | `todo` |
+| GROWTH-01 | Resend sending | Domain **is** verified (DKIM + SPF + return-path MX all live). `RESEND_API_KEY` and `EMAIL_FROM` now set; founder welcome **delivered** end to end. Remaining: `care@pravara.ai` has no mailbox (Google 550-5.1.1), so internal alerts and replies bounce. | `merged` — blocked on Google Workspace alias |
+| GROWTH-04 | Create `care@pravara.ai` in Google Workspace | Google rejects it with 550-5.1.1 "account does not exist". Registration alerts bounce, replies to the welcome email bounce, and the footer promises "a person reads it". | `todo` — **yours** |
+| GROWTH-05 | Add DMARC (`_dmarc` TXT, `p=none`) | Two senders now DKIM-sign for this domain (Google + Resend). Gmail and Yahoo require DMARC from bulk senders. | `todo` — **yours** |
 | GROWTH-02 | Google Search Console + submit sitemap | Indexing, and the only honest source of search data | `todo` |
 | GROWTH-03 | Bing Webmaster Tools | Non-trivial diaspora desktop share | `todo` |
 | LEGAL-01 | Privacy policy: CCPA, retention, erasure, third-party AI disclosure | Zero such language today; California already applies | `todo` |
-| MOB-02 | PWA manifest + installability | Cheapest high-value item for India — home screen, no app store | `todo` |
+| ~~MOB-02~~ | ~~PWA manifest + installability~~ | ~~Installable. Also replaced the 2.1MB logo3.png that was serving as favicon AND apple-touch-icon — now 4.7KB.~~ | ~~merged `07318c1`~~ |
 | MOB-03 | Onboarding audited on a real low-end Android | Longest form in the product; drop-off there is invisible and unmeasured | `todo` |
-| MOB-04 | Tap-target and `inputMode` audit across all forms | Numeric keypads, correct autocomplete, 44px targets | `todo` |
+| ~~MOB-04~~ | ~~Tap-target and `inputMode` audit~~ | ~~Audited 7 routes at 390px with touch emulation. Input issues 5→1: /login had no autocomplete at all, /register age had no numeric keypad.~~ | ~~merged `07318c1`~~ |
 | ~~OPS-01~~ | ~~Point local + Preview at `pravara-dev`~~ | Both repointed; all three vars set together. Local dev verified: 0 Supabase errors, `/api/launch-analytics` 200 (was 500). | ~~done~~ |
 | ~~OPS-03~~ | ~~`golive-preview` branch + branch-scoped flag~~ | Permanent URL for the go-live face of the site. Built ● Ready; needs a human to open it (Deployment Protection). | ~~done~~ |
 | ~~OPS-04~~ | ~~Go-live checklist~~ | `docs/GO-LIVE-CHECKLIST.md`. Found while writing it: the flag also releases the whole member app via `middleware.ts:80`, which is a bigger deal than the copy. | ~~done~~ |
@@ -198,3 +200,4 @@ Verified on `pravara.ai`. Newest first.
 | 2026-07-30 | OPS-01/03/04 done. Local + Preview moved off production onto pravara-dev. golive-preview branch live. Go-live checklist written. |
 | 2026-07-30 | P0 code complete. DATA-02 withdrawn (already existed). country column applied to dev by Raj; prod SQL still pending. pravara-dev seeded with 120 profiles + admin account. |
 | 2026-07-30 | **P0 closed.** country migration applied to production, drift check clean, country selector verified live. |
+| 2026-07-31 | Email pipeline live: domain verified, keys wired, founder welcome delivered. Rebranded to site palette with a hosted logo. Found care@pravara.ai has no mailbox and DMARC is missing. MOB-02/04 done. |
