@@ -32,18 +32,21 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.pravara.ai";
 
 /**
  * The toran: a garland strung above a doorway to mark an auspicious threshold.
- * Rendered as rules and rotated squares because it has to survive Gmail.
+ *
+ * Uses the ◆ glyph rather than CSS-rotated squares. Gmail strips `transform`,
+ * so rotate(45deg) diamonds rendered as plain rectangles — verified in a real
+ * Gmail message. A character survives everywhere a font does.
  */
 function toran(): string {
-  const diamond = (size: number, color: string) =>
-    `<td style="padding:0 5px;"><div style="width:${size}px;height:${size}px;background:${color};transform:rotate(45deg);margin:0 auto;"></div></td>`;
+  const gem = (size: number, color: string) =>
+    `<td style="padding:0 6px;font-family:Arial,Helvetica,sans-serif;font-size:${size}px;line-height:1;color:${color};">&#9670;</td>`;
   return `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
     <tr>
-      <td style="width:56px;height:1px;background:${GOLD};opacity:.45;"></td>
-      ${diamond(5, GOLD_DEEP)}
-      ${diamond(8, GOLD)}
-      ${diamond(5, GOLD_DEEP)}
-      <td style="width:56px;height:1px;background:${GOLD};opacity:.45;"></td>
+      <td style="width:56px;border-bottom:1px solid ${GOLD_DEEP};font-size:0;line-height:0;">&nbsp;</td>
+      ${gem(7, GOLD_DEEP)}
+      ${gem(11, GOLD)}
+      ${gem(7, GOLD_DEEP)}
+      <td style="width:56px;border-bottom:1px solid ${GOLD_DEEP};font-size:0;line-height:0;">&nbsp;</td>
     </tr>
   </table>`;
 }
