@@ -25,6 +25,8 @@ const CARD = "#12100E";        // a shade above the ground, as the site's cards 
 const INK = "#F5F0E6";         // warm off-white, not pure #fff
 const MUTED = "#A8A29E";       // stone-400
 const RULE = "#2A231E";
+/** The logo's own matte, so the header band shows no seam around the mark. */
+const MATTE = "#040609";
 
 /** Email cannot resolve relative URLs, and the logo must come from the verified
  *  sending domain or clients are likelier to block it. */
@@ -73,11 +75,11 @@ function shell(opts: { preheader: string; body: string; contactEmail: string }):
       <tr><td style="padding:5px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${RULE};border-radius:2px;">
 
-          <tr><td align="center" bgcolor="${CARD}" style="padding:34px 40px 4px;">
-            <!-- Retina: served at 1120px, displayed at 280. The alt text is
-                 styled so a client with images off still shows the wordmark. -->
-            <img src="${SITE}/email-logo.png" width="280" height="75" alt="PRAVARA — Vedic Matrimony, by invitation"
-                 style="display:block;width:280px;max-width:80%;height:auto;border:0;outline:none;text-decoration:none;font-family:Georgia,serif;font-size:24px;letter-spacing:8px;color:${GOLD};">
+          <!-- Full-bleed header band: the logo image spans the card width so
+               its dark matte meets the edges rather than floating in a box. -->
+          <tr><td align="center" bgcolor="${MATTE}" style="padding:0;font-size:0;line-height:0;background:${MATTE};">
+            <img src="${SITE}/email-logo.png" width="600" height="170" alt="PRAVARA — Modern Heritage Matrimony"
+                 style="display:block;width:100%;max-width:600px;height:auto;border:0;outline:none;text-decoration:none;font-family:Georgia,serif;font-size:22px;letter-spacing:7px;color:${GOLD};">
           </td></tr>
 
           <tr><td style="padding:28px 44px 40px;font-family:Georgia,'Times New Roman',serif;color:${INK};">
