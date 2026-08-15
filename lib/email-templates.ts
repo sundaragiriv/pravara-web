@@ -78,7 +78,7 @@ function shell(opts: { preheader: string; body: string; contactEmail: string }):
           <!-- Full-bleed header band: the logo image spans the card width so
                its dark matte meets the edges rather than floating in a box. -->
           <tr><td align="center" bgcolor="${MATTE}" style="padding:0;font-size:0;line-height:0;background:${MATTE};">
-            <img src="${SITE}/email-logo.png" width="600" height="170" alt="PRAVARA — Modern Heritage Matrimony"
+            <img src="${SITE}/email-logo.png" width="600" height="330" alt="PRAVARA — Modern Heritage Matrimony"
                  style="display:block;width:100%;max-width:600px;height:auto;border:0;outline:none;text-decoration:none;font-family:Georgia,serif;font-size:22px;letter-spacing:7px;color:${GOLD};">
           </td></tr>
 
@@ -145,7 +145,7 @@ export function founderWelcomeEmail(opts: FounderWelcomeOptions) {
   // Only claimed when we actually know it — an invented seat number would be
   // the one detail in this email a reader could catch us inventing.
   const seatLine = opts.seatNumber
-    ? `<p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:${MUTED};margin:0 0 22px;text-align:center;">
+    ? `<p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:${MUTED};margin:0 0 22px;">
          Yours is the <strong style="color:${GOLD};font-size:15px;">${ordinal(opts.seatNumber)}</strong> of ${COHORT_TARGET.toLocaleString()} seats.
        </p>`
     : "";

@@ -25,8 +25,16 @@ export const dynamic = "force-static";
 // Displayed at 600px (the full card width) so the logo's own dark matte meets
 // the card edges instead of floating as a visible rectangle — the site hides
 // that matte with mix-blend-mode, which no email client supports. 2x for retina.
-const WIDTH = 900;
-const HEIGHT = 260;
+// Rendered at 1x, not retina. ImageResponse can only emit PNG, and PNG cannot
+// compress a dark photographic mark cheaply — 2x cost 620-950KB, which is a lot
+// to push over mobile data in India for a header. 1x lands near 200KB and looks
+// right in every client that matters; only a retina phone sees any softness.
+//
+// cover crops surplus matte off top and bottom so the image sits edge to edge.
+// A contained logo left flat matte either side of the logo's own vignetted
+// matte, and that join kept showing as a rectangle.
+const WIDTH = 600;
+const HEIGHT = 330;
 
 /**
  * The logo's own matte, sampled from the top-left pixel of logo3.png. Matching
@@ -53,9 +61,10 @@ export function GET() {
       >
         <img
           src={logoSrc}
+          width={WIDTH}
           height={HEIGHT}
           alt=""
-          style={{ objectFit: "contain" }}
+          style={{ objectFit: "cover", objectPosition: "center" }}
         />
       </div>
     ),
