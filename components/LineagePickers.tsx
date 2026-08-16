@@ -211,6 +211,17 @@ export function CommunityPicker({
         </select>
       </Field>
 
+      {/* Several languages have no validated communities yet. Saying so is
+          better than an apparently broken dropdown — the family can still tell
+          us in their own words, and that free text is what will eventually
+          become the validated list. */}
+      {languageId && communities.length === 0 && (
+        <p className="text-[10px] leading-relaxed text-stone-500">
+          We have not finished validating communities for this language yet. Please type yours
+          below — we would rather record it in your words than guess.
+        </p>
+      )}
+
       {languageId && (
         <Field label="Community">
           <select

@@ -49,14 +49,39 @@ export interface Gothra {
 // LANGUAGES
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Languages spoken at home — the first step of the community picker.
+ *
+ * Eight were added after the taxonomy research: a Malayalam, Bengali, Gujarati,
+ * Odia, Punjabi, Konkani, Tulu or Assamese family previously could not get past
+ * step one, because their language was not on the list at all.
+ *
+ * Several have no communities listed under them yet, and that is deliberate.
+ * Naming a language is not a claim about anyone's caste, so it is safe to add;
+ * naming a community is, and those wait for family validation. Until then the
+ * picker offers "Other — let me type it" at step two, which is the honest
+ * answer and better than a family being unable to say where they are from.
+ *
+ * `Other` stays last: it is the escape hatch, not an option among options.
+ * Ids are stable because profiles reference them.
+ */
 export const LANGUAGES: Language[] = [
-  { id: 1, name: 'Telugu',   altNames: ['telugu', 'andhra'] },
-  { id: 2, name: 'Tamil',    altNames: ['tamil', 'tamizh'] },
-  { id: 3, name: 'Kannada',  altNames: ['kannada', 'kannadiga'] },
-  { id: 4, name: 'Hindi',    altNames: ['hindi', 'north indian', 'hindustani'] },
-  { id: 5, name: 'Marathi',  altNames: ['marathi', 'maharashtrian'] },
-  { id: 6, name: 'Sanskrit', altNames: ['sanskrit'] },   // for pandit families
-  { id: 7, name: 'Other',    altNames: ['other'] },
+  { id: 1,  name: 'Telugu',    altNames: ['telugu', 'andhra'] },
+  { id: 2,  name: 'Tamil',     altNames: ['tamil', 'tamizh'] },
+  { id: 3,  name: 'Kannada',   altNames: ['kannada', 'kannadiga'] },
+  { id: 4,  name: 'Hindi',     altNames: ['hindi', 'north indian', 'hindustani'] },
+  { id: 5,  name: 'Marathi',   altNames: ['marathi', 'maharashtrian'] },
+  { id: 8,  name: 'Malayalam', altNames: ['malayalam', 'malayali', 'keralite'] },
+  { id: 9,  name: 'Bengali',   altNames: ['bengali', 'bangla'] },
+  { id: 10, name: 'Gujarati',  altNames: ['gujarati', 'gujerati'] },
+  { id: 11, name: 'Odia',      altNames: ['odia', 'oriya'] },
+  { id: 12, name: 'Punjabi',   altNames: ['punjabi', 'panjabi'] },
+  { id: 13, name: 'Konkani',   altNames: ['konkani'] },
+  { id: 14, name: 'Tulu',      altNames: ['tulu'] },
+  { id: 15, name: 'Assamese',  altNames: ['assamese', 'asomiya', 'axomiya'] },
+  { id: 16, name: 'Kashmiri',  altNames: ['kashmiri', 'koshur'] },
+  { id: 6,  name: 'Sanskrit',  altNames: ['sanskrit'] },   // for pandit families
+  { id: 7,  name: 'Other',     altNames: ['other'] },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

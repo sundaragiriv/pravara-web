@@ -334,7 +334,10 @@ the actionable list.
 
 - [ ] **WIRE-01** Notifications table behind the existing bell — Narada is
       email-only today.
-- [ ] **WIRE-02** Supabase Realtime for chat; it polls today.
+- [x] **WIRE-02** ~~Supabase Realtime for chat; it polls today.~~ **Already done
+      — I was wrong.** Chat uses a `postgres_changes` subscription with
+      optimistic local updates, and `messages` is in the `supabase_realtime`
+      publication. Nothing to build.
 - [ ] **WIRE-03** Geo-gate to US/CA/IN via the Vercel geo header, with a
       courteous message and an email capture for everyone else.
 - [ ] **WIRE-04** City autocomplete. No city table exists. Skip pincodes.
@@ -397,3 +400,21 @@ the actionable list.
 - **Baseline migration** — `profiles`, `connections`, `notifications` and
   `photo_access` are still created by no migration. Needs a real `pg_dump`,
   which needs database credentials I do not have.
+
+### Second overnight pass
+
+- [x] **TRUST-03 Guardian mode.** Three bugs found by exercising it: a *pending*
+      invite silently switched the invitee's dashboard to managing someone
+      else's profile; `maybeSingle()` meant a parent helping two children saw
+      neither; and the computed `roleLabel` was never rendered, so an interest
+      sent by a guardian went out in the member's name with nothing on screen
+      to say so. Banner, profile switcher, and an invite email that is actually
+      sent — the old flow said "Invite sent!" and sent nothing.
+- [ ] **SAFE-02** SQL written (`fix_messages_select_policies.sql`), needs running.
+- [ ] **Payments / trial / coupons.** Deliberately not started. FOUNDER and
+      AGRAHARAM2026 grant free months, which without a membership lifecycle to
+      grant them *into* is just writing a tier string onto a profile. Doing it
+      properly means the subscription model, and that arrives with payments —
+      which need Stripe keys, PayPal, and an Indian entity for Razorpay.
+      Building half of it now would be the same mistake as the ID upload:
+      machinery with nothing on the other end.
