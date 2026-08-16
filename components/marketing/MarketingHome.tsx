@@ -67,16 +67,24 @@ export default function MarketingHome({
                   early match begins with real intent, cultural depth, and room for meaningful discovery.
                 </p>
 
+                {/* A member who is already signed in was being asked to
+                    register, twice, with a seat counter beside it. LaunchHome
+                    has swapped to "Enter Dashboard" for logged-in visitors
+                    since it was written; this page never got the same
+                    treatment, so joining the platform made the front page
+                    start ignoring you. */}
                 <div className="mt-8 flex flex-col gap-4 sm:flex-row">
                   <Link
-                    href="/register"
+                    href={isLoggedIn ? "/dashboard" : "/register"}
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-haldi-500 px-7 py-4 text-sm font-bold text-stone-950 transition-all hover:scale-[1.02] hover:bg-haldi-400"
                   >
-                    Register Free
+                    {isLoggedIn ? "Enter Dashboard" : "Register Free"}
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                   <span className="inline-flex items-center justify-center rounded-full border border-stone-800 bg-stone-900/40 px-7 py-4 text-sm text-stone-400">
-                    Founding members get launch access first
+                    {isLoggedIn
+                      ? "Your matches are waiting"
+                      : "Founding members get launch access first"}
                   </span>
                 </div>
 
@@ -242,27 +250,36 @@ export default function MarketingHome({
 
         <section className="px-6 pb-24">
           <div className="mx-auto max-w-5xl rounded-[2.5rem] border border-haldi-500/20 bg-gradient-to-br from-haldi-500/10 via-stone-900 to-stone-950 px-8 py-12 text-center shadow-2xl shadow-black/30">
-            <p className="text-xs uppercase tracking-[0.24em] text-haldi-300">Founding member call</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-haldi-300">
+              {isLoggedIn ? "Your search" : "Founding member call"}
+            </p>
             <h2 className="mt-4 font-serif text-4xl text-stone-100 md:text-5xl">
-              Register free now. Be inside when the platform opens.
+              {isLoggedIn
+                ? "You are already inside. Pick up where you left off."
+                : "Register free now. Be inside when the platform opens."}
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-stone-300">
-              Join the first {COHORT_TARGET.toLocaleString()} members shaping the early Pravara experience. We will build the
-              launch room, turn the lights on when it is ready, and invite founding members first.
+              {isLoggedIn
+                ? "Your matches are ranked by Gothra, Pravara and the full Bhrugu calculation — not by who paid to be seen."
+                : `Join the first ${COHORT_TARGET.toLocaleString()} members shaping the early Pravara experience. We will build the launch room, turn the lights on when it is ready, and invite founding members first.`}
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
-                href="/register"
+                href={isLoggedIn ? "/dashboard" : "/register"}
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-haldi-500 px-7 py-4 text-sm font-bold text-stone-950 transition-all hover:scale-[1.02] hover:bg-haldi-400"
               >
-                Register Free
+                {isLoggedIn ? "Enter Dashboard" : "Register Free"}
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <p className="text-sm text-stone-400">
-                {founderProgress.show
-                  ? `${founderProgress.joined.toLocaleString()} on the list · ${seatsRemaining?.toLocaleString()} seats remaining`
-                  : "Founding access is open for the first circle."}
-              </p>
+              {/* The seat counter is acquisition copy. Shown to a member it
+                  reads as though they still have to get in. */}
+              {!isLoggedIn && (
+                <p className="text-sm text-stone-400">
+                  {founderProgress.show
+                    ? `${founderProgress.joined.toLocaleString()} on the list · ${seatsRemaining?.toLocaleString()} seats remaining`
+                    : "Founding access is open for the first circle."}
+                </p>
+              )}
             </div>
           </div>
         </section>
