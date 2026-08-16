@@ -69,6 +69,30 @@ US / Canada / India.
 
 ---
 
+## P0b — Exogamy correctness (found 2026-08-16)
+
+The gotra block is described in our own FAQ as "a core, non-negotiable feature".
+It is currently wrong in four ways, all verified against the code. A wrong
+marriage recommendation is the most serious error this product can make, so these
+sit above everything except things already live and wrong.
+
+| ID | Item | Evidence | Status |
+| --- | --- | --- | --- |
+| EXO-01 | Exogamy check ignores pravara entirely | `isSagothra()` (`utils/matchEngine.ts:352`) compares `gothra_id` only. Traditional practice blocks on rishi-set overlap. Our own data proves the gap: `bharadwaja` pravara is *Angirasa-Barhaspatya-Bharadwaja*; `gargya` is *Angirasa-Barhaspatya-Bharadwaja-Sainya-Gargya*. Bharadwaja's entire pravara sits inside Gargya's — traditionally prohibited, and we recommend the match. Same for Kashyapa vs Sandilya (2 of 3 rishis shared). | `todo` |
+| EXO-02 | Fail-open when gotra is missing | `isSagothra` returns `false` — i.e. *not sagotra*, i.e. approved — when either side has no gotra. A check billed as non-negotiable must fail closed or surface as unknown. | `todo` |
+| EXO-03 | `koushika` alt-name collision swaps lineages | `'koushika'` appears in `altNames` of **both** Kaundinya (id 9) and Kaushika (id 16) in `utils/community-data.ts`. `findGothra` uses `.find()`, so it always resolves to Kaundinya. Different primary lineages, different pravaras — a Kaushika user is silently stored as Kaundinya. | `todo` |
+| EXO-04 | Pravara lookup fails for 21 of 30 gotras | Two divergent sources: `lib/vedicData.ts` holds 15 gotras, `utils/community-data.ts` holds 30, keyed differently. `Vasishtha`→`vashishta`, `Parasara`→`parashara`, `Garga`→`gargya`, `Harita`→`harithasa`, `Kaushika`→`kausika`, `Upamanya`→`upamanyu` all miss. `isPravaraValidForGothra` returns `false` on a miss, so it **rejects valid input** for 70% of the list. | `todo` |
+| EXO-05 | The 30-gotra list mixes three different tiers | `Naidhruva` (id 30) is listed as a peer gotra but is a *pravara rishi of Kashyapa* — per our own `vedicData.ts`. `Angirasa` (id 18) is a primary lineage, not a sibling of Bharadwaja. Marichi, Pulaha, Pulastya, Kratu are Prajapati-level. Two people can be flagged "different gotra" when one entry is literally the other's ancestor. | `todo` |
+| EXO-06 | **Decision:** should the block be overridable? | Sagotra marriage is legal — validated by the Hindu Marriage Disabilities Removal Act 1946, carried into s.29(1) of the Hindu Marriage Act 1955. Our block is a cultural preference enforced on families' behalf, not a legal requirement. Argues for a clearly-labelled, overridable setting rather than a silent hard filter. | `todo` — **yours** |
+
+Sizing: the practical gotra list runs to **~400+** (a Kanchi Kamakoti–approved
+compilation lists 421). A survey of 3,507 Tamil Iyer matrimonial advertisements
+found 51 distinct gotras in actual use, with Bharadwaja at 19.5%. So ~50 covers
+the bulk and the tail is hundreds long — our 30 guarantees silent misses.
+Recommended: searchable autocomplete over the full list, plus a "not listed"
+free-text fallback that marks the profile *gotra unverified* and excludes it from
+the auto-block guarantee rather than silently passing it.
+
 ## P1 — Gates the marketing push
 
 Do not drive traffic until these are done. Sending people to a funnel whose
@@ -201,3 +225,4 @@ Verified on `pravara.ai`. Newest first.
 | 2026-07-30 | P0 code complete. DATA-02 withdrawn (already existed). country column applied to dev by Raj; prod SQL still pending. pravara-dev seeded with 120 profiles + admin account. |
 | 2026-07-30 | **P0 closed.** country migration applied to production, drift check clean, country selector verified live. |
 | 2026-07-31 | Email pipeline live: domain verified, keys wired, founder welcome delivered. Rebranded to site palette with a hosted logo. Found care@pravara.ai has no mailbox and DMARC is missing. MOB-02/04 done. |
+| 2026-08-16 | Gotra research returned four verified correctness bugs in the exogamy check, not just missing data. Added as P0b. |
