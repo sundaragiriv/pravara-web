@@ -13,6 +13,7 @@ import {
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import AvatarUpload from '@/components/AvatarUpload';
+import { GothraPicker, CommunityPicker, NakshatraPicker } from "@/components/LineagePickers";
 
 // ── Nakshatra → Raasi auto-fill map ──────────────────────────────────────────
 const NAKSHATRA_RAASI: Record<string, string> = {
@@ -606,14 +607,28 @@ export default function EditProfilePage() {
                                     <InputGroup label="Place of Birth" name="birth_place" value={formData.birth_place} onChange={handleChange} placeholder="City, State" />
                                 </div>
 
+                                {/* Gothra, community and Nakshatra were free-text
+                                inputs. All three feed the compatibility engine
+                                — Gothra decides whether a match is permitted at
+                                all — and free text meant a dozen spellings of
+                                one lineage, none of which compare equal. */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-                                    <InputGroup label="Gothra" name="gothra" value={formData.gothra} onChange={handleChange} placeholder="e.g. Kashyap" />
-                                    <InputGroup label="Sub Community" name="sub_community" value={formData.sub_community} onChange={handleChange} placeholder="e.g. Iyer / Smartha" />
-                                    <InputGroup label="Pravara (Optional)" name="pravara" value={formData.pravara} onChange={handleChange} placeholder="e.g. Trayarshreya" />
+                                    <GothraPicker
+                                        value={formData.gothra}
+                                        onChange={(next) => setFormData((prev: any) => ({ ...prev, gothra: next }))}
+                                    />
+                                    <CommunityPicker
+                                        value={formData.sub_community}
+                                        onChange={(next) => setFormData((prev: any) => ({ ...prev, sub_community: next }))}
+                                    />
+                                    <InputGroup label="Pravara (Optional)" name="pravara" value={formData.pravara} onChange={handleChange} placeholder="e.g. Angirasa - Barhaspatya - Bharadwaja" />
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-                                    <InputGroup label="Nakshatra" name="nakshatra" value={formData.nakshatra} onChange={handleChange} placeholder="e.g. Rohini" />
+                                    <NakshatraPicker
+                                        value={formData.nakshatra}
+                                        onChange={(next) => handleChange({ target: { name: "nakshatra", value: next } } as any)}
+                                    />
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] uppercase font-bold text-stone-500 tracking-wider">
                                             Raasi (Moon Sign)
