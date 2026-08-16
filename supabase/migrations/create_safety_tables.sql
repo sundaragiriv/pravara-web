@@ -14,6 +14,10 @@
 --              queue; the reporter is not told what action was taken,
 --              only that it was received.
 --
+-- Foreign keys point at public.profiles(id), matching every sibling table
+-- in this schema (messages.sender_id, endorsements.profile_id,
+-- profile_photos.profile_id). You block a member, not an auth record.
+--
 -- Run in Supabase: Dashboard -> SQL Editor -> New Query -> Run
 -- ============================================================
 
@@ -21,8 +25,8 @@
 
 CREATE TABLE IF NOT EXISTS public.blocks (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  blocker_id  UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  blocked_id  UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  blocker_id  UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  blocked_id  UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT blocks_not_self CHECK (blocker_id <> blocked_id),
   CONSTRAINT blocks_unique_pair UNIQUE (blocker_id, blocked_id)
@@ -61,8 +65,8 @@ CREATE POLICY "blocks_delete"
 
 CREATE TABLE IF NOT EXISTS public.reports (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  reporter_id   UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  reported_id   UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  reporter_id   UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  reported_id   UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   reason        TEXT NOT NULL CHECK (reason IN (
                   'fake_profile',
                   'harassment',
@@ -77,7 +81,7 @@ CREATE TABLE IF NOT EXISTS public.reports (
                   'open', 'reviewing', 'actioned', 'dismissed'
                 )),
   admin_notes   TEXT,
-  reviewed_by   UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  reviewed_by   UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   reviewed_at   TIMESTAMPTZ,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT reports_not_self CHECK (reporter_id <> reported_id)
