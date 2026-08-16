@@ -314,6 +314,43 @@ try {
         );
       }
 
+      // Marking read must actually work. It silently did nothing for a long
+      // time — RLS filtered the UPDATE to zero rows and reported success, so
+      // unread badges never cleared and nothing anywhere said why.
+      {
+        const [sent] = await (
+          await fetch(`${URL}/rest/v1/messages?select=id&connection_id=eq.${connection.id}&limit=1`, {
+            headers: svc,
+          })
+        ).json();
+
+        if (sent) {
+          await fetch(`${URL}/rest/v1/messages?id=eq.${sent.id}`, {
+            method: "PATCH",
+            headers: asUser(asha.jwt),
+            body: JSON.stringify({ is_read: true }),
+          });
+          const [after] = await (
+            await fetch(`${URL}/rest/v1/messages?select=is_read&id=eq.${sent.id}`, { headers: svc })
+          ).json();
+          assert(after?.is_read === true, "the recipient can mark a message read");
+
+          // ...and the sender cannot reach back into what they already sent.
+          await fetch(`${URL}/rest/v1/messages?id=eq.${sent.id}`, {
+            method: "PATCH",
+            headers: asUser(ravi.jwt),
+            body: JSON.stringify({ content: "edited after the fact" }),
+          });
+          const [tampered] = await (
+            await fetch(`${URL}/rest/v1/messages?select=content&id=eq.${sent.id}`, { headers: svc })
+          ).json();
+          assert(
+            tampered?.content !== "edited after the fact",
+            "the sender cannot edit a message after sending it",
+          );
+        }
+      }
+
       await fetch(`${URL}/rest/v1/messages?connection_id=eq.${connection.id}`, { method: "DELETE", headers: svc });
       await fetch(`${URL}/rest/v1/connections?id=eq.${connection.id}`, { method: "DELETE", headers: svc });
     }
