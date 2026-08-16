@@ -23,8 +23,20 @@
 -- hash, recovery tokens and confirmation tokens to any signed-in user.
 --
 -- The fix is to read the email from the caller's own JWT instead. It is
--- already in the token, it needs no table access, and it cannot be spoofed
+-- already in the token, needs no table access, and cannot be spoofed
 -- because the token is signed.
+--
+-- NOTE ON THE COLUMN NAMES. A first version of this file referenced
+-- `shortlists.shortlisted_by`, copied from fix_shortlist_schema.sql. That
+-- column does not exist and never did — the whole script failed on it, so
+-- nothing was applied. The live table is:
+--
+--   shortlists     id, user_id, profile_id, added_by_email, note, created_at
+--   collaborators  id, user_id, collaborator_email, role, status, created_at
+--
+-- Everything below is written against those, verified in both databases.
+-- It is a reminder that the migrations in this repo do not describe the
+-- schema that exists.
 --
 -- Verify afterwards with: npm run walk
 --
@@ -34,8 +46,8 @@
 
 -- ── COLLABORATORS ───────────────────────────────────────────────────────────
 
-DROP POLICY IF EXISTS "collaborators_can_view_own_invites"                ON public.collaborators;
-DROP POLICY IF EXISTS "collaborators_update_own_status"                   ON public.collaborators;
+DROP POLICY IF EXISTS "collaborators_can_view_own_invites"                   ON public.collaborators;
+DROP POLICY IF EXISTS "collaborators_update_own_status"                      ON public.collaborators;
 DROP POLICY IF EXISTS "Collaborators can update their own invitation status" ON public.collaborators;
 
 CREATE POLICY "collaborators_can_view_own_invites"
@@ -53,14 +65,14 @@ CREATE POLICY "collaborators_update_own_status"
   WITH CHECK (collaborator_email = (auth.jwt() ->> 'email'));
 
 -- ── SHORTLISTS ──────────────────────────────────────────────────────────────
--- Same substitution. The `status = 'accepted'` guard is kept: rls_hardening.sql
--- restored it deliberately, because a merely invited collaborator should not be
--- able to shortlist on someone's behalf.
+-- Same substitution, real columns only. The `status = 'accepted'` guard is
+-- kept: rls_hardening.sql restored it deliberately, because a merely invited
+-- collaborator should not be able to shortlist on someone's behalf.
 
-DROP POLICY IF EXISTS "Users can add to shortlists"     ON public.shortlists;
-DROP POLICY IF EXISTS "shortlists_insert"               ON public.shortlists;
+DROP POLICY IF EXISTS "Users can add to shortlists"       ON public.shortlists;
+DROP POLICY IF EXISTS "shortlists_insert"                 ON public.shortlists;
 DROP POLICY IF EXISTS "Users can delete their shortlists" ON public.shortlists;
-DROP POLICY IF EXISTS "shortlists_delete"               ON public.shortlists;
+DROP POLICY IF EXISTS "shortlists_delete"                 ON public.shortlists;
 
 CREATE POLICY "shortlists_insert"
   ON public.shortlists FOR INSERT
@@ -80,7 +92,6 @@ CREATE POLICY "shortlists_delete"
   TO authenticated
   USING (
     user_id = auth.uid()
-    OR shortlisted_by = auth.uid()
     OR added_by_email = (auth.jwt() ->> 'email')
   );
 
