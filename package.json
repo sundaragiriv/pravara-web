@@ -18,6 +18,7 @@
     "db:drift": "node scripts/check-schema-drift.mjs",
     "db:snapshot": "node scripts/dump-schema.mjs",
     "db:baseline": "node scripts/build-baseline-migration.mjs",
+    "seed:photos": "node scripts/seed-dev-photos.mjs",
     "seed:accounts": "node scripts/seed-test-accounts.mjs",
     "seed:dev": "node scripts/seed-dev-profiles.mjs 120 && node scripts/seed-dev-extras.mjs",
     "build:dev-data": "node scripts/build-with-dev-db.mjs",
@@ -25,6 +26,7 @@
     "email:preview": "node scripts/preview-emails.mjs",
     "email:test": "node scripts/send-test-email.mjs",
     "ai:golden": "node scripts/check-sutradhar-answers.mjs",
+    "audit:matching": "node scripts/audit-match-logic.mjs",
     "check:data": "node scripts/check-reference-data.mjs",
     "check:safety": "node scripts/check-safety.mjs",
     "walk": "node scripts/walk-member-app.mjs"

@@ -56,6 +56,10 @@ const nextConfig: NextConfig = {
   // by side on different ports instead of being flipped back and forth.
   //
   // Unset everywhere else, so production and CI are untouched.
+  //
+  // Note: the second instance appends its own types path to tsconfig.json.
+  // Remove it if it reappears — the files rotate, and tsc then fails on
+  // paths that no longer exist.
   ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
 
   reactCompiler: true,
@@ -79,9 +83,17 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       // 1. Your Supabase Project (For real user photos)
+      //
+      // Derived from the environment rather than hardcoded. It named the
+      // production project outright, so a photo uploaded while developing
+      // against pravara-dev came from a different hostname and next/image
+      // refused to render it — the layout looked broken for reasons nothing
+      // on the page explained.
       {
         protocol: "https",
-        hostname: "ybwltjpsxpimwdttwken.supabase.co",
+        hostname: new URL(
+          process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://ybwltjpsxpimwdttwken.supabase.co",
+        ).hostname,
         port: "",
         pathname: "/storage/v1/object/public/**",
       },
