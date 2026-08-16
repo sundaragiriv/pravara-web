@@ -56,6 +56,14 @@ export default function Footer() {
                 Terms of Service
               </Link>
             </li>
+            {/* CPRA requires this exact link text, and requires it to be
+                reachable from every page — hence the footer rather than a
+                settings screen. */}
+            <li>
+              <Link href="/legal/do-not-sell" className="transition-colors hover:text-haldi-500">
+                Do Not Sell or Share My Personal Information
+              </Link>
+            </li>
             <li>
               <Link href="/legal/trust" className="transition-colors hover:text-haldi-500">
                 Trust & Safety

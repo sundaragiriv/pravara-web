@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 import { isAllowlistedAdminEmail, MAINTENANCE_MODE, PRE_LAUNCH_ENABLED } from "@/lib/env";
+import { isServed } from "@/lib/geo";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -47,6 +48,41 @@ export async function middleware(request: NextRequest) {
     !request.nextUrl.pathname.startsWith("/api")
   ) {
     return NextResponse.rewrite(new URL("/maintenance", request.url));
+  }
+
+  // GEO: we serve the US, Canada and India. Everyone else gets a courteous
+  // "not yet" rather than a form for a service that cannot reach them.
+  //
+  // Deliberately narrow. It never touches /api (cron, auth callbacks, webhooks),
+  // never touches a signed-in member — someone who registered while we did serve
+  // them must not be locked out by a trip abroad — and an unknown country is
+  // treated as served, because a missing geo header is common and turning away a
+  // real visitor is the worse error.
+  //
+  // ?geo=allow sets a cookie that opts back in, so the page is an explanation
+  // rather than a wall. Anyone determined enough to click it is someone we want.
+  const geoExempt =
+    request.nextUrl.pathname.startsWith("/api") ||
+    request.nextUrl.pathname.startsWith("/not-yet-available") ||
+    request.nextUrl.pathname.startsWith("/legal") ||
+    request.nextUrl.pathname.startsWith("/login");
+
+  if (!user && !geoExempt) {
+    if (request.nextUrl.searchParams.get("geo") === "allow") {
+      const url = new URL(request.url);
+      url.searchParams.delete("geo");
+      const pass = NextResponse.redirect(url);
+      pass.cookies.set("pravara_geo_ok", "1", { path: "/", maxAge: 60 * 60 * 24 * 180 });
+      return pass;
+    }
+
+    const country =
+      request.headers.get("x-vercel-ip-country") ??
+      request.headers.get("cf-ipcountry");
+
+    if (!isServed(country) && request.cookies.get("pravara_geo_ok")?.value !== "1") {
+      return NextResponse.rewrite(new URL("/not-yet-available", request.url));
+    }
   }
 
   // PROTECTED ROUTES: If user is NOT logged in, kick them to Login.
