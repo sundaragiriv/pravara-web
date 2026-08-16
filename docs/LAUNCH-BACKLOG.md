@@ -260,3 +260,80 @@ Verified on `pravara.ai`. Newest first.
 - [ ] **EXO-12** Free-text "Other / not listed" escape hatch on every community
       field, plus "prefer not to say". A fixed list will miss real
       self-identifications, and many users genuinely do not know their subcaste.
+
+## Post-P0b: the four topics (16 Aug 2026)
+
+Full audit published as an artifact; findings summarised here so the repo carries
+the actionable list.
+
+### Blocking the member app opening
+
+- [ ] **SAFE-01** No block, report, mute or abuse queue exists anywhere. Table
+      stakes for a platform where strangers message each other about marriage.
+      Ship before the flag comes off.
+- [ ] **TRUST-01** ID upload writes `govt_id_url` and sets `varaahi_status` to
+      `pending_verification`, and nothing ever reads it. The admin `is_verified`
+      toggle is a separate, unconnected concept. Members hand over government ID
+      and wait for a process that does not exist. Build the queue or hide the
+      upload — holding documents unread is the worst of both.
+- [ ] **QA-01** Eleven member-app surfaces compile and typecheck but have never
+      been used by a member. Turn `PRE_LAUNCH_ENABLED` off in dev and walk them.
+
+### Correctness
+
+- [ ] **OPS-03** `/api/cron/check-expiry` exists but is not in `vercel.json`, so
+      subscription expiry never runs. Harmless until payments land, then a
+      billing bug. One line, and it belongs in before payments.
+- [ ] **DATA-06** `varaahi_status` and `govt_id_url` are live in dev and prod but
+      created by no migration. Drift checker passes because both agree; a fresh
+      environment built from `supabase/migrations` would lack them and the ID
+      upload would fail unexplainably. Backfill the migration.
+
+### Varaahi Shield
+
+- [ ] **TRUST-02** Four independent signals, shown as separate badges, never as a
+      single score — a number invites "why is theirs higher", which is the
+      ranking problem in another costume. Identity (human-reviewed ID) ·
+      Vouches (already collected, never surfaced; show the relationship) ·
+      Family participation (guardian mode doing double duty) · Completeness
+      (computed, not claimed).
+- [ ] **TRUST-03** Guardian mode, built out from the `collaborators` table. The
+      most culturally correct feature on the list — in these marriages parents
+      are participants, and the software currently assumes a solo user.
+
+### ID verification
+
+- [ ] **TRUST-04** Admin review queue; decision writes through to `is_verified`.
+- [ ] **TRUST-05** Delete the document on decision. Keep the verdict and date,
+      not the passport scan — the privacy policy already commits us to
+      minimisation.
+- [ ] **TRUST-06** Audit the storage bucket policy before it holds a real ID.
+- [ ] **TRUST-07** Tell the member the outcome either way. Silence after handing
+      over an ID is the worst possible experience.
+
+### Tradition, structurally
+
+- [ ] **CULT-01** Panchangam strip — today's tithi, nakshatra, vara.
+- [ ] **CULT-02** Transliteration plus a one-line meaning on first use of every
+      Sanskrit term in the member app. The FAQ does this well; the app does not.
+- [ ] **CULT-03** Muhurta note on introductions. Suggestion, never a block.
+- [ ] **CULT-04** Seasonal treatment for Akshaya Tritiya, Vasant Panchami — when
+      families actually start looking.
+- **Standing constraint:** "more tradition" and "never rank a community" are the
+  same project. No ordering, no purity language, no "higher" or "purer" in copy
+  or data; block list stays enforced; the platform never tells anyone what their
+  community is. `npm run check:data` fails if a blocked term becomes resolvable.
+
+### Wiring still to do
+
+- [ ] **WIRE-01** Notifications table behind the existing bell — Narada is
+      email-only today.
+- [ ] **WIRE-02** Supabase Realtime for chat; it polls today.
+- [ ] **WIRE-03** Geo-gate to US/CA/IN via the Vercel geo header, with a
+      courteous message and an email capture for everyone else.
+- [ ] **WIRE-04** City autocomplete. No city table exists. Skip pincodes.
+- [ ] **WIRE-05** `ref_languages` is missing Malayalam, Bengali, Gujarati, Odia,
+      Punjabi, Konkani, Tulu, Assamese — which caps what the picker can offer.
+- [ ] **WIRE-06** Trial and coupons (FOUNDER, AGRAHARAM2026) before payments;
+      they are already promised in email. Then Stripe + PayPal (US), Razorpay
+      once the Indian entity exists.
