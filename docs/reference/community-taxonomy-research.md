@@ -176,9 +176,81 @@ assignment of any modern caste to one of the ten must never be auto-derived.
 Note MP straddles the Vindhya line: Narmada-valley communities self-classify as
 Pancha-**Dravida** despite being in MP.
 
+## Himachal / Punjab hills — and the safety problem
+
+**Safe-ish:** Saraswat Brahmin (the dominant branch; ~25% of Punjab Brahmins were
+in what is now HP) · Kangra Brahmin (regional descriptor) · Gaddi Brahmin
+(Brahmins within the Gaddi ethnic grouping — Kangra, Chamba, Una) · Dogra Brahmin
+(real, but primarily J&K)
+
+**Needs validation, single medium-quality source each:** Nagarkoti · Bhateru ·
+Bhojki/Bhojak. None appears in any government list or tier-1 reference work — the
+Wikipedia list of Brahmin communities has **no Himachal entry at all**.
+
+### Officially NOT Brahmin — must never appear in a Brahmin dropdown
+
+| Name | Actual classification |
+| --- | --- |
+| **Batwal** | **Scheduled Caste**, HP SC list #10 |
+| **Hali** | **Scheduled Caste**, HP SC list #28 |
+| **Ghirth / Ghirath / Chaudhary** | **OBC**, HP central list #19 |
+| **Halbi** | A Central Indian tribal language/community. No Himachal connection whatsoever. |
+
+### ⚠ The collision that could do real harm
+
+**`Hali` is a Scheduled Caste. `Halbaha` is a Brahmin group.** Both derive from
+ploughing, and they are one character apart. Any fuzzy match, autocomplete or
+"did you mean" that bridges those two strings would assign someone the wrong caste
+status — which in India touches reservation entitlement, not just etiquette.
+
+**Rule: no fuzzy matching across community names. Exact match or explicit
+selection only.**
+
+Same shape of problem with **Bhardwaj** and **Kaundal**: both are Brahmin gotra
+names *and* documented **Ghirth clan** names in Himachal. A Himachali "Bhardwaj"
+is not reliably Brahmin.
+
+### Bhat / Bhatt — litigated, do not adjudicate
+
+"Bhat" is simultaneously a Brahmin title (Sanskrit *bhaṭṭa*, "scholar") **and**
+entry #10 of the HP Central OBC list. The status has been through the HP High
+Court (*Bhat Brahman Kalyan Samiti v. State of H.P.*), where the state's own
+notification covered "Bhat or Bhata (whether with or without the appendage of
+Brahman)". A Himachali typing "Bhatt" is most likely entering a **surname**.
+**Keep Bhat/Bhatt out of the community field entirely; handle it as a surname.**
+
+### Rank terms are not identity terms
+
+Nagarkoti / Bhateru / Halbaha describe a **hypergamous ranking** within Kangra —
+Nagarkotia took brides from the others and did not give daughters back. Halbaha
+("plough-driver") is the bottom of that ladder.
+
+**Putting that ladder in a dropdown asks users to publicly self-rank.** We should
+not do that. Offer "Kangra Brahmin" or "Saraswat Brahmin" and let any sub-group be
+free text.
+
+---
+
+## The pattern across all four regions
+
+Every region researched turned up the same two failure modes:
+
+1. **Communities widely assumed to be Brahmin that officially are not** — Ambalavasi
+   (Kerala, OBC), Ghirth (HP, OBC), Bhat (HP, OBC), Ahiwasi (MP, disputed),
+   Gauda/Gowda (Odisha and Karnataka, not Brahmin).
+2. **Names that collide across caste boundaries** — Hali/Halbaha, Gaur/Gowda,
+   Nambiar (Ambalavasi vs Nair), Bhardwaj (gotra vs Ghirth clan), Hebbar (Iyengar
+   vs surname), koushika (Kaundinya vs Kaushika, already a live bug — see P0b).
+
+**Design conclusion: the platform must never assert or infer caste status.** Let
+people self-identify from a validated list, with free-text fallback, exact-match
+only, and no status label attached to any entry. Anything else risks telling a
+family they are something they are not — in a domain where that carries legal and
+social weight we cannot see from here.
+
 ## Still missing
 
-- UP/Bihar core, Bengal, Odisha, Punjab, Kashmir, Assam — research in progress
+- UP/Bihar core, Bengal, Odisha, Assam — research in progress
 - ~~Gotra list and the pravara question~~ — **done**, and it found four code bugs. See P0b in LAUNCH-BACKLOG.md
 - Telugu and Tamil — not yet commissioned; our existing 4 and 3 entries are thin
 - `ref_languages` lacks Malayalam, Bengali, Gujarati, Odia, Punjabi, Konkani, Tulu, Assamese
@@ -198,3 +270,4 @@ error this product can make. Awaiting the research.
 | --- | --- |
 | 2026-08-16 | Kerala and Karnataka/Tulu research completed. North India and gotra research still running. Nothing yet validated or loaded. |
 | 2026-08-16 | MP / Maratha-migrant region added. Flagged that our existing bare `Gaur` entry is ambiguous across five referents, two of them not Brahmin. |
+| 2026-08-16 | Himachal added. Found SC/OBC communities commonly mistaken for Brahmin, and a one-character collision (Hali/Halbaha) between a Scheduled Caste and a Brahmin group. Concluded: no fuzzy matching on community names, ever. |
