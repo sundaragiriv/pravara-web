@@ -77,6 +77,11 @@ export const launchRegistrationSchema = z.object({
   source: z.string().trim().max(64).optional(),
 });
 
+export const collaboratorInviteSchema = z.object({
+  email: z.email().trim().max(160),
+  role: z.enum(["Parent", "Sibling", "Relative", "Friend"]),
+});
+
 export const blockRequestSchema = z.object({
   profile_id: z.uuid(),
 });

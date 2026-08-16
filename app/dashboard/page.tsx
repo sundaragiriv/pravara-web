@@ -28,6 +28,7 @@ import { calculateGunaScore } from "@/utils/matchEngine";
 import { notifyInterestSent } from "@/utils/notifications";
 import { useShortlist } from "@/contexts/ShortlistContext";
 import { getCollaboratorPermissions } from "@/utils/collaborator-permissions";
+import GuardianBanner, { type Collaboration } from "@/components/GuardianBanner";
 import { toast } from "sonner";
 
 export default function Dashboard() {
@@ -62,8 +63,7 @@ export default function Dashboard() {
   // --- GUARDIAN STATE ---
   const [isCollaborator, setIsCollaborator] = useState(false);
   const [viewingAs, setViewingAs] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [roleLabel, setRoleLabel] = useState("");
+  const [collaborations, setCollaborations] = useState<Collaboration[]>([]);
   const [collaboratorPerms, setCollaboratorPerms] = useState(getCollaboratorPermissions("Parent"));
   
   // --- GLOBAL UNREAD MESSAGES COUNT ---
@@ -76,6 +76,21 @@ export default function Dashboard() {
   const filterDebounceRef = useRef<NodeJS.Timeout | null>(null);
   // Cancels a match request that a newer one has superseded.
   const matchesAbortRef = useRef<AbortController | null>(null);
+
+  /**
+   * Switch between your own profile and anyone you are a guardian for.
+   * Changing `viewingAs` re-runs the match fetch through its dependency, so
+   * nothing else needs to be reset by hand.
+   */
+  const handleSwitchProfile = useCallback(async (userId: string) => {
+    const collaboration = collaborations.find((c) => c.userId === userId);
+    setIsCollaborator(Boolean(collaboration));
+    setCollaboratorPerms(getCollaboratorPermissions(collaboration?.role ?? 'Parent'));
+    setViewingAs(userId);
+
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    if (profile) setUserProfile(profile);
+  }, [collaborations, supabase]);
 
   // --- FILTER HELPER FUNCTIONS ---
   const updateFilter = (key: string, value: string | number | string[]) => {
@@ -283,18 +298,40 @@ export default function Dashboard() {
       let targetUserId = user.id;
 
       // 1. IDENTITY CHECK (Guardian Logic)
-      const { data: collaboration } = await supabase
+      // Accepted only. Without the status filter a PENDING invite silently
+      // switched the invitee's dashboard to managing someone else's profile
+      // before they had agreed to anything.
+      //
+      // And all of them, not maybeSingle(): a parent helping two children on
+      // the platform matches more than one row, which maybeSingle treats as an
+      // error and discards — so the second child was invisible.
+      const { data: collabRows } = await supabase
           .from('collaborators')
-          .select('user_id, role')
+          .select('user_id, role, profiles!collaborators_user_id_fkey(full_name)')
           .eq('collaborator_email', user.email)
-          .maybeSingle();
+          .eq('status', 'accepted');
 
-      if (collaboration) {
+      const rows = (collabRows ?? []) as Array<{
+          user_id: string;
+          role: string;
+          profiles?: { full_name?: string | null } | null;
+      }>;
+
+      const found: Collaboration[] = rows.map((r) => ({
+          userId: r.user_id,
+          name: r.profiles?.full_name || 'A member',
+          role: r.role,
+      }));
+      setCollaborations(found);
+
+      // Default to the first collaboration, but the banner can switch back to
+      // their own profile — being a guardian used to replace your own dashboard
+      // permanently, with no way home.
+      if (found.length > 0) {
           setIsCollaborator(true);
-          setViewingAs(collaboration.user_id);
-          targetUserId = collaboration.user_id;
-          setRoleLabel(`Guardian Mode (${collaboration.role})`);
-          setCollaboratorPerms(getCollaboratorPermissions(collaboration.role));
+          setViewingAs(found[0].userId);
+          targetUserId = found[0].userId;
+          setCollaboratorPerms(getCollaboratorPermissions(found[0].role));
       } else {
           setViewingAs(user.id);
       }
@@ -423,6 +460,17 @@ export default function Dashboard() {
         {/* --- MAIN CONTENT --- */}
         <div className="flex-1 overflow-y-auto min-w-0">
           
+            {/* Whose profile this is. Rendered above every tab, because an
+                interest sent from here goes out in their name, not yours. */}
+            <GuardianBanner
+              collaborations={collaborations}
+              viewingAs={viewingAs}
+              ownId={currentUser?.id ?? ''}
+              ownName={currentUser?.email?.split('@')[0] ?? 'My profile'}
+              permissions={collaboratorPerms}
+              onSwitch={handleSwitchProfile}
+            />
+
             {/* 1. EXPLORER TAB (Using Smart Matches Section) */}
             {activeTab === 'explorer' && (
               <MatchesSection

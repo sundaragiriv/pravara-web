@@ -331,13 +331,22 @@ export default function EditProfilePage() {
             return;
         }
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-            const { error } = await supabase.from('collaborators').insert({
-                user_id: user.id, collaborator_email: inviteEmail, role: inviteRole, status: 'pending'
+            // Goes through the API so an email is actually sent. Inserting from
+            // here told the member "Invite sent!" while sending nothing, and the
+            // invitation sat unseen unless they happened to open Kutumba.
+            const response = await fetch('/api/collaborators/invite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
             });
-            if (error) throw error;
-            toast.success(`Invite sent to ${inviteEmail}!`);
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Could not send that invitation.');
+
+            toast.success(
+                result.emailed === false
+                    ? `Invitation created for ${inviteEmail}. We could not email them — ask them to open Kutumba.`
+                    : `Invitation emailed to ${inviteEmail}.`
+            );
             setCollaborators(prev => [{ collaborator_email: inviteEmail, role: inviteRole, status: 'pending', id: crypto.randomUUID() }, ...prev]);
             setIsInviting(false);
             setInviteEmail("");
