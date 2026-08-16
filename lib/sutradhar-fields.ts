@@ -16,7 +16,7 @@
  */
 
 import { NAKSHATRAS } from "@/utils/vedic-data";
-import { findCommunity, findGothra } from "@/utils/community-data";
+import { resolveCommunity, resolveGothra } from "@/utils/community-data";
 
 export const EDITABLE_FIELDS = [
   "bio",
@@ -61,6 +61,17 @@ export type FieldCheck =
   | { ok: true; value: string }
   | { ok: false; reason: string };
 
+/** For naming which tradition a colliding community name came from. */
+const LANGUAGE_LABEL: Record<number, string> = {
+  1: "Telugu",
+  2: "Tamil",
+  3: "Kannada",
+  4: "North Indian",
+  5: "Marathi",
+  6: "Sanskrit",
+  7: "Other",
+};
+
 /**
  * Nakshatra resolved by exact name or exact alt-name — never fuzzily.
  *
@@ -92,8 +103,23 @@ export function checkFieldValue(field: EditableField, raw: string): FieldCheck {
   }
 
   if (field === "gothra") {
-    const hit = findGothra(value);
-    if (!hit) {
+    const result = resolveGothra(value);
+
+    // An ambiguous spelling is the case worth handling well. Picking one would
+    // be a coin flip on the field that decides which marriages are permitted,
+    // so name both and let the member say which is theirs.
+    if (result.status === "ambiguous") {
+      const names = result.candidates.map((c) => c.name);
+      return {
+        ok: false,
+        reason:
+          `"${value}" could mean ${names.slice(0, -1).join(", ")} or ${names[names.length - 1]}. ` +
+          `These are different Gothras, so I will not choose for you — please tell me which one, ` +
+          `or set it in your profile editor.`,
+      };
+    }
+
+    if (result.status === "unknown") {
       return {
         ok: false,
         reason:
@@ -102,7 +128,8 @@ export function checkFieldValue(field: EditableField, raw: string): FieldCheck {
           `profile editor, where you can pick from the list.`,
       };
     }
-    return { ok: true, value: hit.name };
+
+    return { ok: true, value: result.match.name };
   }
 
   if (field === "nakshatra") {
@@ -120,8 +147,22 @@ export function checkFieldValue(field: EditableField, raw: string): FieldCheck {
   }
 
   if (field === "sub_community") {
-    const hit = findCommunity(value);
-    if (!hit) {
+    // No languageId here — the assistant does not know which language tree the
+    // member sits in. Ambiguity therefore surfaces rather than being guessed at,
+    // and the profile editor (which does know) can resolve it cleanly.
+    const result = resolveCommunity(value);
+
+    if (result.status === "ambiguous") {
+      const langs = result.candidates.map((c) => `${c.name} (${LANGUAGE_LABEL[c.languageId] ?? "another tradition"})`);
+      return {
+        ok: false,
+        reason:
+          `"${value}" exists in more than one tradition — ${langs.join(" and ")}. ` +
+          `Please set it in your profile editor, where you can pick the right one.`,
+      };
+    }
+
+    if (result.status === "unknown") {
       return {
         ok: false,
         reason:
@@ -130,7 +171,8 @@ export function checkFieldValue(field: EditableField, raw: string): FieldCheck {
           `there is an option there for communities we do not yet list.`,
       };
     }
-    return { ok: true, value: hit.name };
+
+    return { ok: true, value: result.match.name };
   }
 
   // Free-text fields. Length is the only constraint; the caller sanitises.

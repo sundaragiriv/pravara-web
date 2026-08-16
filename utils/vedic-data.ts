@@ -26,7 +26,7 @@ export type PlanetRelation = 'Friend' | 'Neutral' | 'Enemy';
 export interface Nakshatra {
   id: number;           // 1–27
   name: string;         // canonical spelling
-  altNames: string[];   // alternate spellings for fuzzy lookup
+  altNames: string[];   // accepted spellings, matched exactly — never fuzzily
   raasi: string;        // primary Raasi
   raasi2?: string;      // some Nakshatras span two Raasis
   pada: 4;              // always 4 padas

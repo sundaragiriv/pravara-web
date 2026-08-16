@@ -334,6 +334,19 @@ export default function ProfileDetailsPanel({
                   </p>
                 )}
 
+                {/* Exogamy not confirmed. Shown deliberately rather than left
+                    implicit: a score with no Gothra behind it used to look
+                    exactly like a score that had passed the lineage check, and
+                    a family could act on the difference. */}
+                {gr?.exogamy?.status === 'unverified' && (
+                  <div className="flex items-start gap-1.5 px-2 py-1.5 rounded bg-amber-900/20 border border-amber-600/40">
+                    <AlertTriangle size={10} className="text-amber-400 mt-0.5 flex-shrink-0" />
+                    <p className="text-[10px] leading-relaxed text-amber-200">
+                      {gr.exogamy.message}
+                    </p>
+                  </div>
+                )}
+
                 {/* Dosha warnings */}
                 {gr && (gr.nadiDosha || gr.bhakootDosha || gr.ganaDosha) && (
                   <div className="flex flex-wrap gap-1 pt-0.5">

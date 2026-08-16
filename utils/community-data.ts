@@ -3,10 +3,14 @@
  * Pravara — Community Hierarchy & Gothra Reference Data
  *
  * Language → Community → SubCommunity (controlled vocabulary)
- * Gothra list with alternate spellings for fuzzy resolution.
+ * Gothra list with alternate spellings for EXACT resolution.
  *
  * Used by onboarding dropdowns and match engine community scoring.
  * Never accept free text for these fields — always resolve to an ID.
+ *
+ * The header used to say "fuzzy resolution". It never was fuzzy, and it must
+ * never become fuzzy: see the note on matchAll() below for why a near-miss on
+ * one of these names is not a typo to be helpfully corrected.
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -242,7 +246,12 @@ export const GOTHRAS: Gothra[] = [
   { id: 6,  name: 'Jamadagni',     altNames: ['jamadagni', 'jamadagnasa'],                          vedaShakha: 'Rigveda' },
   { id: 7,  name: 'Vasishtha',     altNames: ['vasistha', 'vashishtha', 'vashishth', 'vasishtha'],  vedaShakha: 'Rigveda' },
   { id: 8,  name: 'Agastya',       altNames: ['agasthya', 'agastya', 'agasthyasa'],                 vedaShakha: 'Rigveda' },
-  { id: 9,  name: 'Kaundinya',     altNames: ['kaundinya', 'kowdilya', 'kondilya', 'koushika'],     vedaShakha: 'Yajurveda' },
+  // 'koushika' was listed here as well as under Kaushika (#16). Because the
+  // lookup returned the first match, every Kaushika who typed that spelling was
+  // stored as Kaundinya — a different gotra, and therefore a different answer to
+  // the one question this data exists to answer. Kaundinya's genuine variants
+  // are the three below.
+  { id: 9,  name: 'Kaundinya',     altNames: ['kowdilya', 'kondilya'],                              vedaShakha: 'Yajurveda' },
   { id: 10, name: 'Sandilya',      altNames: ['sandilya', 'shandilya', 'shandilya'],                vedaShakha: 'Rigveda' },
   { id: 11, name: 'Parasara',      altNames: ['parashara', 'parasara', 'parashar'],                 vedaShakha: 'Rigveda' },
   { id: 12, name: 'Vatsa',         altNames: ['vatsa', 'vatsasa'],                                  vedaShakha: 'Yajurveda' },
@@ -270,20 +279,83 @@ export const GOTHRAS: Gothra[] = [
 // LOOKUP HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function findGothra(name: string): Gothra | undefined {
+/**
+ * What a lookup can honestly conclude.
+ *
+ * The old helpers returned `T | undefined` and used `.find()`, which cannot
+ * express "this string belongs to two different things". So when it did — and
+ * it did, for `koushika` — the caller silently got whichever entry happened to
+ * be declared first. An ambiguous name has to be a distinct outcome, because
+ * the only correct response to it is to ask rather than to pick.
+ */
+export type Resolution<T> =
+  | { status: 'resolved'; match: T }
+  | { status: 'ambiguous'; candidates: T[] }
+  | { status: 'unknown' };
+
+/**
+ * EXACT match on the canonical name or one of the listed alt-names. Case and
+ * surrounding whitespace are ignored; nothing else is.
+ *
+ * Deliberately not fuzzy, and this must stay that way. Community and lineage
+ * names that differ by one character routinely belong to entirely separate
+ * groups — in Himachal `Hali` is a Scheduled Caste while `Halbaha` is a Brahmin
+ * group, and bridging them would assign someone a caste status they do not
+ * hold, which in India touches reservation entitlement. A "did you mean…?" is
+ * precisely the wrong kindness here.
+ */
+function matchAll<T extends { name: string; altNames: string[] }>(
+  rows: T[],
+  name: string,
+): T[] {
   const q = name.toLowerCase().trim();
-  return GOTHRAS.find(g =>
-    g.name.toLowerCase() === q ||
-    g.altNames.some(a => a.toLowerCase() === q)
+  if (!q) return [];
+  return rows.filter(
+    row => row.name.toLowerCase() === q || row.altNames.some(a => a.toLowerCase() === q),
   );
 }
 
-export function findLanguage(name: string): Language | undefined {
-  const q = name.toLowerCase().trim();
-  return LANGUAGES.find(l =>
-    l.name.toLowerCase() === q ||
-    l.altNames.some(a => a.toLowerCase() === q)
-  );
+function toResolution<T>(hits: T[]): Resolution<T> {
+  if (hits.length === 1) return { status: 'resolved', match: hits[0] };
+  if (hits.length > 1) return { status: 'ambiguous', candidates: hits };
+  return { status: 'unknown' };
+}
+
+export function resolveGothra(name: string): Resolution<Gothra> {
+  return toResolution(matchAll(GOTHRAS, name));
+}
+
+/**
+ * Scope by language wherever it is known. Both community-level collisions in
+ * the current data (`smartha` across Tamil Iyer and Kannada Smartha, `saraswat`
+ * across the Hindi and Marathi entries) disappear once the language is applied,
+ * which is why the picker asks for language first.
+ */
+export function resolveCommunity(
+  name: string,
+  options: { languageId?: number } = {},
+): Resolution<Community> {
+  const scope =
+    options.languageId === undefined
+      ? COMMUNITIES
+      : COMMUNITIES.filter(c => c.languageId === options.languageId);
+  return toResolution(matchAll(scope, name));
+}
+
+/** Same idea one level down — `mulakanadu` exists under both Vaidiki and Iyer. */
+export function resolveSubCommunity(
+  name: string,
+  options: { communityId?: number } = {},
+): Resolution<SubCommunity> {
+  const scope =
+    options.communityId === undefined
+      ? SUB_COMMUNITIES
+      : SUB_COMMUNITIES.filter(s => s.communityId === options.communityId);
+  return toResolution(matchAll(scope, name));
+}
+
+export function resolveLanguage(name: string): Resolution<Language> {
+  return toResolution(matchAll(LANGUAGES, name));
 }
 
 export function getCommunitiesForLanguage(languageId: number): Community[] {
@@ -294,10 +366,22 @@ export function getSubCommunitiesForCommunity(communityId: number): SubCommunity
   return SUB_COMMUNITIES.filter(s => s.communityId === communityId);
 }
 
+/**
+ * Older callers. These now return undefined when a name is ambiguous rather
+ * than guessing — refusing to answer is the safe failure for this data, and a
+ * caller that wants to offer the choice should use the resolver instead.
+ */
+export function findGothra(name: string): Gothra | undefined {
+  const result = resolveGothra(name);
+  return result.status === 'resolved' ? result.match : undefined;
+}
+
+export function findLanguage(name: string): Language | undefined {
+  const result = resolveLanguage(name);
+  return result.status === 'resolved' ? result.match : undefined;
+}
+
 export function findCommunity(name: string): Community | undefined {
-  const q = name.toLowerCase().trim();
-  return COMMUNITIES.find(c =>
-    c.name.toLowerCase() === q ||
-    c.altNames.some(a => a.toLowerCase() === q)
-  );
+  const result = resolveCommunity(name);
+  return result.status === 'resolved' ? result.match : undefined;
 }

@@ -3,6 +3,8 @@
 // All 8 Kuta scores computed from Nakshatra/Raasi lookup tables.
 // No external DB calls — all reference data is embedded as lookup maps.
 
+import { checkExogamy, type ExogamyVerdict } from '@/utils/exogamy';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -12,6 +14,8 @@ export interface AshtakootProfile {
   gender?: 'Male' | 'Female' | 'Other' | null;
   gothra?: string | null;
   gothra_id?: number | null;
+  /** The member's stated Pravara line, when given. Feeds the exogamy check. */
+  pravara?: string | null;
   nakshatra?: string | null;
   nakshatra_id?: number | null;
   raasi?: string | null;
@@ -41,6 +45,12 @@ export interface GunaResult {
   total:            number;   // /36
   breakdown:        KutaBreakdown;
   sagothra:         boolean;
+  /**
+   * The full exogamy ruling. `sagothra` above stays for existing callers, but
+   * it cannot express "we could not check", which is a distinct and important
+   * outcome — read this instead where the difference matters.
+   */
+  exogamy:          ExogamyVerdict;
   nadiDosha:        boolean;
   bhakootDosha:     boolean;
   ganaDosha:        boolean;
@@ -348,12 +358,21 @@ function calcNadi(groomNk: NakshatraRow | null, brideNk: NakshatraRow | null): {
 // GOTHRA CHECK
 // ─────────────────────────────────────────────────────────────────────────────
 
-function isSagothra(a: AshtakootProfile, b: AshtakootProfile): boolean {
-  if (a.gothra_id && b.gothra_id) return a.gothra_id === b.gothra_id;
-  if (a.gothra && b.gothra) {
-    return normalise(a.gothra) === normalise(b.gothra);
-  }
-  return false;
+/**
+ * Delegates to utils/exogamy.ts, which resolves both gothras to canonical form
+ * before comparing and also consults Pravara.
+ *
+ * The version that lived here compared lightly-normalised strings, so
+ * "Bharadwaja" and "Bhardwaj" — one gothra, two ordinary spellings — came back
+ * as different lineages and the pair was cleared to proceed. It also returned
+ * false when a gothra was simply absent, which the caller could not tell apart
+ * from a genuine pass.
+ */
+function exogamyVerdict(a: AshtakootProfile, b: AshtakootProfile): ExogamyVerdict {
+  return checkExogamy(
+    { gothra: a.gothra, gothra_id: a.gothra_id, pravara: a.pravara },
+    { gothra: b.gothra, gothra_id: b.gothra_id, pravara: b.pravara },
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -420,9 +439,10 @@ export function calculateGunaScore(a: AshtakootProfile, b: AshtakootProfile): Gu
   const groomRaasi = resolveRaasi(groom);
   const brideRaasi  = resolveRaasi(bride);
 
-  // Sagothra check — immediate disqualification
-  const sagothra = isSagothra(a, b);
-  if (sagothra) {
+  // Exogamy first — a shared lineage disqualifies regardless of any score.
+  const exogamy = exogamyVerdict(a, b);
+
+  if (exogamy.status === 'blocked') {
     const breakdown: KutaBreakdown = {
       varna:   { score: 0, max: 2 },
       vashya:  { score: 0, max: 2 },
@@ -434,10 +454,15 @@ export function calculateGunaScore(a: AshtakootProfile, b: AshtakootProfile): Gu
       nadi:    { score: 0, max: 8 },
     };
     return {
-      total: 0, breakdown, sagothra: true,
+      total: 0, breakdown, exogamy,
+      // Kept true for both blocking rules: existing callers treat this as
+      // "lineage bars this match", which is exactly what a shared Pravara does.
+      sagothra: true,
       nadiDosha: false, bhakootDosha: false, ganaDosha: false,
-      label: 'Sagothra',
-      summaryLine: 'Same Gothra — not permitted by Vedic tradition.',
+      label: exogamy.rule === 'sagothra' ? 'Sagothra' : 'Sapravara',
+      summaryLine: exogamy.detail
+        ? `${exogamy.message} ${exogamy.detail}`
+        : exogamy.message,
       legacyScore: 0,
     };
   }
@@ -471,12 +496,24 @@ export function calculateGunaScore(a: AshtakootProfile, b: AshtakootProfile): Gu
   else if (total >= 18) label = 'Madhyama';
   else label = 'Alpa';
 
-  const summaryLine = buildSummaryLine(total, breakdown, nadiDosha, bhakootDosha, ganaDosha, false);
+  const baseSummary = buildSummaryLine(total, breakdown, nadiDosha, bhakootDosha, ganaDosha, false);
+
+  // An unverified exogamy check must say so on the face of the result. The old
+  // engine folded "no Gothra on file" into the same silence as a genuine pass,
+  // so a member could read a confident score that had never been checked at all.
+  const summaryLine =
+    exogamy.status === 'unverified'
+      ? `Gothra not yet confirmed for both families — please verify before proceeding. ${baseSummary}`
+      : baseSummary;
 
   // Legacy score: scale /36 → /99 for existing UI that shows a number
-  const legacyScore = nadiDosha || sagothra ? 0 : Math.round((total / 36) * 99);
+  const legacyScore = nadiDosha ? 0 : Math.round((total / 36) * 99);
 
-  return { total, breakdown, sagothra, nadiDosha, bhakootDosha, ganaDosha, label, summaryLine, legacyScore };
+  return {
+    total, breakdown, exogamy,
+    sagothra: false,
+    nadiDosha, bhakootDosha, ganaDosha, label, summaryLine, legacyScore,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
