@@ -116,10 +116,70 @@ spelling (seven variants found, no two sources agree).
 
 ---
 
+## Madhya Pradesh & Maratha-migrant communities
+
+**Safe to list:** Jijhotia Brahmin (Bundelkhand — Chhatarpur, Sagar) · Sanadhya
+Brahmin (western UP, Rajasthan, Delhi, MP) · Narmadiya / Naramdev Brahmin
+(Narmada valley — Harda, Khandwa, Barwani, Dhar, Khargone) · Deshastha /
+Chitpavan / Karhade (Maratha-era migration into Gwalior, Indore, Ujjain,
+Bundelkhand — documented in Roberts, *The Historical Journal* 14(2), 1971) ·
+Kanyakubja
+
+**Gujarat, not MP:** Nagar Brahmin (sub-divisions Visnagara, Sathodara, Krasnora,
+Chitroda, Prashnora — one of the best-sourced entries found) · Audichya Brahmin
+(sub-divisions Sahasra / Tolakia). Neither has documented modern MP presence
+despite being commonly assumed to.
+
+**Hold — needs validation:** Malwi (probably a territorial qualifier on Gaur, not
+a caste; also a language name) · Golapurab / Galav (one 19th-century source) ·
+Ahiwasi (real, MP presence real, but Brahmin status disputed — mixed-origin
+tradition recorded in MP)
+
+**Reject:** "Chhattisgarhi Brahmin" is not a documented distinct community.
+Chhattisgarh Brahmins select Kanyakubja, Sarayuparin or Utkala.
+
+**Do not nest Jijhotia or Sanadhya under Kanyakubja.** Sources point both ways —
+Sanadhya is linked to Gaur by one Wikipedia article and to Kanyakubja by another,
+and many Jijhotia self-identify as a distinct endogamous caste.
+
+---
+
+## ⚠️ "Gaur" — the highest-risk entry, and we already have it
+
+We currently list a bare **`Gaur`** under Hindi. That single string has at least
+five referents, two of which are **not Brahmin**:
+
+| Referent | What it is |
+| --- | --- |
+| **Gaur Brahmin** | The North Indian caste — Haryana, Rajasthan, western UP, MP, Delhi |
+| **Gauda** | The Pancha-Gauda *category* label covering five communities — not a caste |
+| **Gauḍa** | The historical region/kingdom of **Bengal**. A Bengali user typing "Gaur" means something else entirely |
+| **Gauda (Odisha)** | A **pastoralist** caste. **Not Brahmin.** |
+| **Gowda (Karnataka)** | A **landholding** community. **Not Brahmin.** |
+
+Separately, **Gaud Saraswat Brahmin** (Konkan/Goa) is a different community again.
+
+**Action: relabel our entry "Gaur Brahmin (North India)" and never autocomplete
+"Gaud" to a single value.** As it stands a Karnataka Gowda or an Odia Gauda could
+select it and be silently classed as a North Indian Brahmin.
+
+---
+
+## Pancha Gauda / Pancha Dravida
+
+Real medieval scheme (Kalhana's *Rajatarangini*, c. 12th c.) but **the sources
+disagree on membership** — the *Sahyadri-khanda*, Hemadri's 13th-c. fragment and
+the Maratha-era *kaifiyats* each give different lists, and Gurjara moves between
+the two halves depending on source. Usable as a top-level grouping label; the
+assignment of any modern caste to one of the ten must never be auto-derived.
+
+Note MP straddles the Vindhya line: Narmada-valley communities self-classify as
+Pancha-**Dravida** despite being in MP.
+
 ## Still missing
 
-- North India, Bengal, Odisha, Gujarat, Punjab, Kashmir, Assam — research in progress
-- Gotra list and the pravara question — research in progress
+- UP/Bihar core, Bengal, Odisha, Punjab, Kashmir, Assam — research in progress
+- ~~Gotra list and the pravara question~~ — **done**, and it found four code bugs. See P0b in LAUNCH-BACKLOG.md
 - Telugu and Tamil — not yet commissioned; our existing 4 and 3 entries are thin
 - `ref_languages` lacks Malayalam, Bengali, Gujarati, Odia, Punjabi, Konkani, Tulu, Assamese
 
@@ -137,3 +197,4 @@ error this product can make. Awaiting the research.
 | Date | Event |
 | --- | --- |
 | 2026-08-16 | Kerala and Karnataka/Tulu research completed. North India and gotra research still running. Nothing yet validated or loaded. |
+| 2026-08-16 | MP / Maratha-migrant region added. Flagged that our existing bare `Gaur` entry is ambiguous across five referents, two of them not Brahmin. |
