@@ -130,7 +130,10 @@ export const COMMUNITIES: Community[] = [
     id: 401, languageId: 4,
     name: 'Gaur',
     altNames: ['gaur', 'gaur brahmin', 'gaud brahmin'],
-    description: 'From Gaud (Bengal/UP) region — highly respected lineage',
+    // The Bengal derivation is a contested medieval folk etymology, not
+    // settled history, and "highly respected lineage" ranks a community in
+    // copy the user reads. Documented origin is the Kurukshetra region.
+    description: 'North Indian, traditionally of the Kurukshetra region',
   },
   {
     id: 402, languageId: 4,
@@ -173,7 +176,10 @@ export const COMMUNITIES: Community[] = [
   {
     id: 502, languageId: 5,
     name: 'Chitpavan',
-    altNames: ['chitpavan', 'konkanastha', 'chitragupta'],
+    // 'chitragupta' was listed here and is wrong: Chitragupta is the divine
+    // progenitor of the Kayastha caste, not a Chitpavan alias. It resolved a
+    // Kayastha typing their own tradition into a Brahmin community.
+    altNames: ['chitpavan', 'konkanastha'],
     description: 'Konkan coast Brahmins — historically prominent',
   },
   {

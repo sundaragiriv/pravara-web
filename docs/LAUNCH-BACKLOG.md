@@ -226,3 +226,37 @@ Verified on `pravara.ai`. Newest first.
 | 2026-07-30 | **P0 closed.** country migration applied to production, drift check clean, country selector verified live. |
 | 2026-07-31 | Email pipeline live: domain verified, keys wired, founder welcome delivered. Rebranded to site palette with a hosted logo. Found care@pravara.ai has no mailbox and DMARC is missing. MOB-02/04 done. |
 | 2026-08-16 | Gotra research returned four verified correctness bugs in the exogamy check, not just missing data. Added as P0b. |
+
+### P0b additions from the taxonomy research (2026-08-16)
+
+- [x] **DATA-03** `utils/community-data.ts` listed `'chitragupta'` as a Chitpavan
+      alias. Chitragupta is the **Kayastha** divine progenitor. Removed.
+- [x] **DATA-04** Gaur described as "From Gaud (Bengal/UP) region - highly
+      respected lineage". Bengal derivation is disputed folk etymology; the
+      praise ranks a community in user-facing copy. Rewritten.
+- [x] **DATA-05** `VEDIC_HIERARCHY_GUIDE.md` listed Pancha Gauda as six
+      divisions, dropped Utkala, added Saryupareen (a sub-caste of Kanyakubja)
+      and Kashmiri Pandit (who are Saraswat). Corrected.
+- [ ] **EXO-07** Ten colliding `altNames` across communities: `vaidiki`,
+      `vaidika`, `smartha`, `havyaka`, `hoysala karnataka`, `saraswat`,
+      `mulakanadu`, `koushika`, `shandilya`, `shaunaka`. `findCommunity` uses
+      `.find()`, so each silently resolves to whichever entry was declared
+      first. Same defect class as the `koushika` gotra bug. Resolve within the
+      selected language; make a genuinely ambiguous string ask, not guess.
+- [ ] **EXO-08** No fuzzy matching on community names, anywhere. `Hali` is a
+      Scheduled Caste in Himachal and a slur in Kumaon; `Halbaha` is a Brahmin
+      group one character away. Bridging them would assign a wrong caste status,
+      which touches reservation entitlement. Exact match or explicit selection.
+- [ ] **EXO-09** Block-list of derisive terms, never stored and never suggested:
+      Khasa, Khasiya, Khasia, Khas Brahmin, Pitali, Hali, Nan-dhoti, Agradani,
+      Mahabrahmin, Kattaha, Ghatiya, Jugi. Accept silently in free text if a
+      user types one; never offer.
+- [ ] **EXO-10** Bengal needs two fields, not one: territorial division (Rarhi,
+      Varendra, Vaidik...) and Kulin rank (Kulin/Shrotriya/Vangaja; Kap for
+      Varendra). They are orthogonal. Rank optional, never required.
+- [ ] **EXO-11** Four communities need neutral top-level entries rather than
+      nesting under Brahmin: Bhumihar, Tyagi, Rajpurohit, Anavil. Each has a
+      live dispute; nesting or omitting both take a side.
+- [ ] **EXO-12** Free-text "Other / not listed" escape hatch on every community
+      field, plus "prefer not to say". A fixed list will miss real
+      self-identifications, and many users genuinely do not know their subcaste.

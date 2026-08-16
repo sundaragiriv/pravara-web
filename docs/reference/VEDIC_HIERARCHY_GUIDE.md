@@ -9,7 +9,12 @@
   - **North**: Ramanandi, Pushtimarg, Gaudiya, Shakta (Sampradaya-based)
   - **Modern**: Iskon, Isha, Art of Living (Pan-Indian)
 - **Pancha Dravida (South)**: Iyer, Iyengar, Niyogi, Vaidiki, Madhva, Havyaka, Nambudiri
-- **Pancha Gauda (North)**: Kanyakubja, Saryuparin, Gaur, Maithil, Kashmiri Pandit, Saraswat
+- **Pancha Gauda (North)**: Saraswat, Kanyakubja, Gauda, Utkala, Maithila — the
+  five per Kalhana's *Rajatarangini*. (This line previously listed six, dropped
+  Utkala, and added Saryupareen and Kashmiri Pandit. Saryupareen is a sub-caste
+  *of* Kanyakubja and Kashmiri Pandits are Saraswat, so neither is a sixth
+  division. Note the classical "Gauda" means the Bengal region — whether the
+  Haryana/Rajasthan **Gaur Brahmins** are the same people is disputed.)
 - **Helper functions** for validation, fuzzy matching, and North/South region detection
 
 ### 2. **Database Schema** ([supabase/migrations/add_vedic_hierarchy_columns.sql](supabase/migrations/add_vedic_hierarchy_columns.sql))
