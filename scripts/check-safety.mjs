@@ -197,6 +197,32 @@ try {
     assert(!res.ok || text.trim() === "[]", "anonymous cannot read blocks", text.slice(0, 90));
   }
 
+  // The publishable key ships in the browser bundle, so "what can an
+  // anonymous caller read" is the same question as "what is on the open
+  // internet". Three tables were granting SELECT to the anon role, and 150 of
+  // 151 dev profiles came back with names, emails and dates of birth.
+  //
+  // Asserted per table rather than in one loop so a regression names which.
+  for (const [label, path] of [
+    ["profiles", "/rest/v1/profiles?select=full_name&limit=1"],
+    ["profile photos", "/rest/v1/profile_photos?select=image_url&limit=1"],
+    ["endorsements", "/rest/v1/endorsements?select=endorser_name&limit=1"],
+    ["connections", "/rest/v1/connections?select=id&limit=1"],
+    ["notifications", "/rest/v1/notifications?select=id&limit=1"],
+  ]) {
+    const res = await fetch(`${URL}${path}`, { headers: anon });
+    const text = (await res.text()).trim();
+    assert(!res.ok || text === "[]", `anonymous cannot read ${label}`, text.slice(0, 90));
+  }
+
+  // ...while the reference dictionaries must stay open, because the
+  // registration form needs them before anyone can sign in.
+  {
+    const res = await fetch(`${URL}/rest/v1/ref_languages?select=id&limit=1`, { headers: anon });
+    const rows = await res.json();
+    assert(Array.isArray(rows) && rows.length > 0, "anonymous CAN still read the reference tables");
+  }
+
   // Constraints.
   {
     const self = await fetch(`${URL}/rest/v1/blocks`, {
