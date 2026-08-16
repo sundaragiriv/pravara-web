@@ -16,10 +16,11 @@ import AvatarUpload from '@/components/AvatarUpload';
 import { GothraPicker, CommunityPicker, NakshatraPicker } from "@/components/LineagePickers";
 
 /**
- * Whether the admin ID-review queue exists yet (backlog TRUST-04). Until it
- * does, we do not ask anyone for a government document.
+ * The admin review queue now exists at /admin/verification, so it is honest to
+ * ask for a document again: a person looks at it, a decision is recorded, and
+ * the scan is deleted at that moment rather than kept.
  */
-const VERIFICATION_QUEUE_LIVE = false;
+const VERIFICATION_QUEUE_LIVE = true;
 
 // ── Nakshatra → Raasi auto-fill map ──────────────────────────────────────────
 const NAKSHATRA_RAASI: Record<string, string> = {

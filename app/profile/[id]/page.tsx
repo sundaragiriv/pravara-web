@@ -16,6 +16,8 @@ import BhruguLoader from '@/components/BhruguLoader';
 import DashboardSubNav from '@/components/navigation/DashboardSubNav';
 import { useShortlist } from '@/contexts/ShortlistContext';
 import SafetyMenu from "@/components/SafetyMenu";
+import VaraahiShield from "@/components/VaraahiShield";
+import { computeVaraahi, type VaraahiSignal } from "@/lib/varaahi";
 
 export default function ProfileDetailsPage() {
     const params = useParams();
@@ -32,6 +34,7 @@ export default function ProfileDetailsPage() {
     const [matchScore, setMatchScore] = useState(0);
     const [guna, setGuna] = useState<GunaResult | null>(null);
     const [blocked, setBlocked] = useState(false);
+    const [varaahi, setVaraahi] = useState<VaraahiSignal[] | null>(null);
     const [isPremium, setIsPremium] = useState(false);
     const [galleryPhotos, setGalleryPhotos] = useState<string[]>([]);
 
@@ -82,6 +85,22 @@ export default function ProfileDetailsPage() {
                 else if (c.sender_id === user?.id) setConnectionStatus('sent');
                 else setConnectionStatus('received');
             }
+
+            // The Varaahi signals. Counted here rather than stored, because a
+            // stale trust badge is worse than a slightly slower page.
+            const [vouchRes, collabRes] = await Promise.all([
+                supabase.from('endorsements').select('id', { count: 'exact', head: true }).eq('profile_id', id),
+                supabase.from('collaborators').select('id', { count: 'exact', head: true })
+                    .eq('user_id', id).eq('status', 'accepted'),
+            ]);
+            setVaraahi(computeVaraahi({
+                profile: targetRes.data,
+                vouchCount: vouchRes.count ?? 0,
+                // A 403 here means the collaborators policy has not been fixed
+                // in this environment; treat it as "no family joined" rather
+                // than letting it take the page down.
+                acceptedCollaborators: collabRes.count ?? 0,
+            }));
 
             // Merge gallery_images (profile row array) + profile_photos table, deduplicate
             const inlinePhotos: string[] = targetRes.data.gallery_images || [];
@@ -221,6 +240,12 @@ export default function ProfileDetailsPage() {
                                     {/* Kept quiet and low in the hierarchy. Anyone
                                         looking for it will find it; nobody browsing
                                         happily is prompted to think about abuse. */}
+                                    {varaahi && (
+                                        <div className="mt-4 max-w-xs">
+                                            <VaraahiShield signals={varaahi} />
+                                        </div>
+                                    )}
+
                                     <SafetyMenu
                                         profileId={profile.id}
                                         profileName={displayName}
