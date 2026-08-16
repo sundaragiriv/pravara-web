@@ -1,7 +1,7 @@
 /**
  * Turns the CSV from scripts/sql/dump-baseline-ddl.sql into a real migration.
  *
- *   npm run db:baseline -- path/to/downloaded.csv
+ *   npm run db:baseline -- 1.csv 2.csv 3.csv 4.csv 5.csv 6.csv
  *
  * The repository cannot currently rebuild the database. `profiles` — the
  * central table of the product — is created by no migration, nor are
@@ -71,39 +71,53 @@ function parseCsv(text) {
   return rows;
 }
 
-const file = process.argv[2];
-if (!file) {
-  console.error("Usage: npm run db:baseline -- path/to/downloaded.csv");
+const files = process.argv.slice(2);
+if (files.length === 0) {
+  console.error("Usage: npm run db:baseline -- 1.csv 2.csv 3.csv 4.csv 5.csv 6.csv");
+  console.error("Order does not matter — the `part` column decides replay order.");
   process.exit(1);
 }
 
-const rows = parseCsv(readFileSync(file, "utf8"));
-if (rows.length < 2) {
-  console.error("That file has no rows.");
-  process.exit(1);
+// The dump is six separate queries, so this takes however many CSVs exist and
+// merges them. `part` carries the replay order, so the files can arrive in any
+// order and a missing one is visible in the summary rather than silent.
+const statements = [];
+
+for (const file of files) {
+  const rows = parseCsv(readFileSync(file, "utf8"));
+  if (rows.length < 2) {
+    console.error(`${file}: no rows — skipping.`);
+    continue;
+  }
+
+  const header = rows[0].map((h) => h.trim().toLowerCase());
+  const iPart = header.indexOf("part");
+  const iKind = header.indexOf("kind");
+  const iName = header.indexOf("name");
+  const iDdl = header.indexOf("ddl");
+
+  if (iDdl === -1) {
+    console.error(`${file}: no "ddl" column. Found: ${header.join(", ")}`);
+    process.exit(1);
+  }
+
+  for (const r of rows.slice(1)) {
+    if (!r[iDdl]?.trim()) continue;
+    statements.push({
+      part: Number(r[iPart] ?? 0),
+      kind: r[iKind] ?? "",
+      name: r[iName] ?? "",
+      ddl: r[iDdl].trim(),
+    });
+  }
 }
 
-const header = rows[0].map((h) => h.trim().toLowerCase());
-const iPart = header.indexOf("part");
-const iKind = header.indexOf("kind");
-const iName = header.indexOf("name");
-const iDdl = header.indexOf("ddl");
+statements.sort((a, b) => a.part - b.part || a.name.localeCompare(b.name));
 
-if (iDdl === -1) {
-  console.error(`No "ddl" column. Found: ${header.join(", ")}`);
+if (statements.length === 0) {
+  console.error("Nothing to write — no statements found in any file.");
   process.exit(1);
 }
-
-const statements = rows
-  .slice(1)
-  .filter((r) => r[iDdl]?.trim())
-  .map((r) => ({
-    part: Number(r[iPart] ?? 0),
-    kind: r[iKind] ?? "",
-    name: r[iName] ?? "",
-    ddl: r[iDdl].trim(),
-  }))
-  .sort((a, b) => a.part - b.part || a.name.localeCompare(b.name));
 
 const GROUP_TITLES = {
   1: "Extensions",
@@ -162,6 +176,20 @@ for (const [kind, n] of Object.entries(counts).sort()) {
   console.log(`  ${String(n).padStart(4)}  ${kind}`);
 }
 console.log(`\n  ${statements.length} statements total`);
-console.log("\nCheck that `profiles`, `connections`, `notifications` and");
-console.log("`photo_access` are among the tables — those are the ones no");
-console.log("migration ever created.");
+
+// The four tables no migration ever created. If any is absent, a CSV is
+// missing — and a baseline without them would be worse than useless, because
+// it would look complete.
+const tables = new Set(statements.filter((s) => s.kind === "table").map((s) => s.name));
+const absent = ["profiles", "connections", "notifications", "photo_access"].filter(
+  (t) => !tables.has(t),
+);
+
+if (absent.length > 0) {
+  console.log(`\n  MISSING: ${absent.join(", ")}`);
+  console.log("  These are the tables no migration ever created, so a baseline");
+  console.log("  without them defeats the point. Check every CSV was passed.");
+  process.exit(1);
+}
+
+console.log("\n  profiles, connections, notifications and photo_access all present.");
