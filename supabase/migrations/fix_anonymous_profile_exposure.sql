@@ -53,16 +53,20 @@ BEGIN
 END $$;
 
 -- Same reach as before among members: a visible profile, or your own.
--- Admins are added explicitly because the console reads through the
--- member's own client, so it could not previously see a profile whose
--- owner had switched visibility off.
+--
+-- The admin clause calls public.is_admin(), a SECURITY DEFINER function.
+-- An inline `EXISTS (SELECT 1 FROM profiles ...)` here recurses — a policy
+-- ON profiles cannot itself query profiles — and shipping that took every
+-- profile read to a 42P17 until fix_profiles_policy_recursion.sql undid it.
+-- The same inline pattern is safe on other tables, which is exactly why it
+-- did not look wrong.
 CREATE POLICY "profiles_select"
   ON public.profiles FOR SELECT
   TO authenticated
   USING (
     is_visible = true
     OR id = auth.uid()
-    OR EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.is_admin = true)
+    OR public.is_admin()
   );
 
 -- ── PROFILE PHOTOS ──────────────────────────────────────────────────────────
