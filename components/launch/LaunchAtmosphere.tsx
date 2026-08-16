@@ -74,8 +74,24 @@ export default function LaunchAtmosphere({ className = "" }: LaunchAtmospherePro
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.035),transparent_24%),linear-gradient(180deg,#090807_0%,#0d0a09_46%,#070605_100%)]" />
       <div className="absolute inset-0 launch-poster-texture opacity-50" />
 
-      {/* One soft thread of gold near the top */}
-      <div className="absolute inset-x-0 top-[20%] h-px bg-gradient-to-r from-transparent via-haldi-500/20 to-transparent" />
+      {/* A band of warmth high in the frame.
+
+          This was a 1px rule running edge to edge, and it was the only hard
+          edge in a scene made entirely of blurred light — so it read as a seam
+          rather than as atmosphere. Worse, the cards above it are translucent
+          with a backdrop blur, so the line carried straight through them and
+          looked like a crack across the card.
+
+          Same intent, expressed as light: an ellipse that is soft at every
+          edge and falls off well before the sides, so there is nothing for the
+          eye to read as a divider. */}
+      <div
+        className="absolute left-1/2 top-[19%] h-40 w-[min(1100px,86%)] -translate-x-1/2 -translate-y-1/2 blur-[64px]"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, rgba(251,191,36,0.13) 0%, rgba(245,158,11,0.06) 42%, transparent 70%)",
+        }}
+      />
 
       {reduce ? (
         orbs.map((orb) => (
