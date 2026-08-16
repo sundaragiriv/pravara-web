@@ -1,0 +1,139 @@
+# Brahmin community reference data — research findings
+
+Research commissioned 2026-08-16 to expand `ref_communities` (20 rows, South-heavy)
+and `ref_gothras` (30 rows). Kerala and Karnataka/Tulu completed; North India and
+gotra research were still running when this was written.
+
+> **None of this is validated.** Every entry below needs review by someone from
+> the community before it goes in a dropdown. The researchers found several cases
+> where widely-repeated classifications are wrong, contested, or offensive — see
+> "Traps" below. Getting one of these wrong in front of a Brahmin family is a
+> credibility failure we would not recover from quickly.
+
+---
+
+## The finding that changes our design
+
+Both researchers, independently, concluded that **a caste tree is the wrong data model** —
+and that the major Indian matrimonial sites get this wrong today.
+
+**1. Communities genuinely span traditions.** Badaganadu, Shivalli, Ulucha Kamme and
+Deshastha all contain both Smarta and Madhwa families, and Badaganadu families
+intermarry across that line. Nesting sub-community beneath Smarta/Madhwa
+misclassifies real families.
+
+**2. Existing "subcaste" dropdowns mix four different kinds of thing.** On
+BrahminMatrimony, the same list contains Shivalli (a community), Sri Uttaradi (a
+*matha*), Rigvedi (a *Veda/shakha*), and Sri Rayaru (a reverential name for
+Raghavendra Swami — a duplicate of another option in the same list).
+
+**3. Regional parent categories contradict the sources.** Kota, Koteshwara,
+Havyaka and even Shivalli are filed under Kannada by some sources and Tulu by
+others. Any exclusive tree tells some families they picked the wrong branch.
+
+### Recommended model
+
+| Field | Type | Note |
+| --- | --- | --- |
+| Community | searchable autocomplete + "not listed" free text | flat list; region and language as descriptive metadata, not parent nodes |
+| Tradition | optional select | Smarta / Madhwa / Sri Vaishnava |
+| Matha | optional select | Uttaradi, Vyasaraja, Raghavendra, Sode Vadiraja, Udupi Ashta Mathas, Sringeri, Ramachandrapura, Swarnavalli |
+| Veda / shakha | optional select | Rigveda, Yajurveda (Taittiriya/Shukla), Samaveda, Kanva |
+
+This is a change from what we have: `ref_communities` is currently keyed by
+`language_id`, which is exactly the exclusive tree both researchers warn against.
+
+---
+
+## Traps — do not put these in a dropdown
+
+| Item | Why |
+| --- | --- |
+| **"Nambiar"** unqualified | Two unrelated communities share the name: the small Ambalavasi Nambiar (Mizhavu players) and the large Nair Nambiar of North Malabar, who are neither Brahmin nor Ambalavasi. Must be disambiguated or omitted. |
+| **"Pattar"** as primary label | Encyclopedic sources treat it neutrally, but Kerala community writing repeatedly describes it as derisive. Use "Kerala Iyer (Palakkad Iyer)" and keep Pattar only as a search alias. |
+| **"Golaka"** | A colonial-era slur alleging illegitimate descent, applied to Sthanikas by Thurston (1909). Never surface anywhere. |
+| **Ambalavasi communities under a "Brahmin" heading** | Pushpaka, Nambeesan, Unni, Adikal, Nambidi, Theeyattunni, Chakyar, Pisharody, Warrier, Marar. Status disputed between sources, denied by mainstream scholarship (Fuller, *The Nayars Today*, 1976), and Kerala classes them OBC while Namboothiris are forward caste. Offer under a separate "Ambalavasi (temple-service communities)" heading with no Brahmin label asserted. |
+| **"Namboodiripad", "Bhattathiripad"** | Titles/ranks within Namboothiri, not communities. Belong in a surname field. |
+| **Bhat, Jois, Rao, Acharya, Udupa, Adiga, Cukkemane** | Surnames and honorifics, not sub-communities. |
+| **"Magane", "Buddhivanta"** | An administrative subdivision term and a historical epithet respectively. Neither is a current self-identification. |
+| **"Madhava"** | A name of Vishnu, not the sect. The sect is Madhwa (display) / Madhva (scholarly). Accept as a search alias, never display. |
+| **"Aivathoklu"** | A village in Sulya taluk. Looks like a sibling of Aruvathokkalu; is not a community. |
+| **"64 Kula"** for Aruvathokkalu | Miscount in one source. *Aruvattu* and *shashti* both mean **sixty**. |
+
+---
+
+## Sensitive: Sthanika Brahmin
+
+Thurston (1909) recorded that Sthanikas "claim to be Brāhmans, though other
+Brāhmans do not admit the claim", and repeated a derivation that is effectively a
+slur. Modern sources and the community's own account describe them instead as
+Smarta Tuluva Brahmins who held temple administration and chief-priesthood and
+were dispossessed during 18th-century Shaiva–Vaishnava rivalry — with epigraphic
+support (1288 CE Mallayyanahalli inscription, 120 Sthanikas administering a temple).
+
+**Decision: list "Sthanika Brahmin" as a first-class option with no caveat or
+footnote.** The contestation is colonial-era and belongs in these notes, not in
+front of a family filling in a profile.
+
+---
+
+## Kerala / Malayalam — safe to list
+
+Namboothiri (Namboodiri / Nambudiri) · Potti (Potty) · Embranthiri (Embrandiri) ·
+Kerala Iyer (Palakkad Iyer) · Gowda Saraswat Brahmin (Konkani, Kochi) ·
+Elayathu (boundary case — Thurston: "lowest of Brahmins")
+
+Namboothiri sub-options people specify: Adhyan / Asyan / Othillathavar.
+Kerala Iyer sub-sects: Vadama, Brahacharanam.
+
+**Ambiguous:** "Moosad" covers two different things — the temple-service Muttatu,
+and the Ashtavaidyan physician lineages who are Namboothiri. Needs validation.
+
+---
+
+## Karnataka / Tulu — safe to list
+
+**Smarta cluster:** Hoysala Karnataka · Halenadu Karnataka (Mugooru) · Babbur Kamme ·
+Ulucha Kamme · Badaganadu · Mulukanadu · Sankethi (sub: Kaushika, Bettadapura) ·
+Deshastha (Rigvedi / Yajurvedi) · Karhade (Karada) · Kota · Kandavara · Panchagrama ·
+Havyaka (Havika)
+
+**Madhwa cluster:** Deshastha Madhwa · Shivalli · Koteshwara · Aruvathokkalu ·
+Badaganadu Madhwa
+
+**Sri Vaishnava:** Hebbar Iyengar · Mandyam Iyengar (both with Vadakalai / Thenkalai)
+
+**Tulu:** Shivalli · Sthanika (sub: Subramanya, Kumbla) · Kota · Koteshwara · Kandavara
+
+Notes: **Koteshwara (Madhwa) and Kota (Smarta) are different communities** despite
+being paired in dropdowns. **Kandavara is Smarta, not Madhwa** — the only
+encyclopedic source contradicts the common assumption. **Shivalli is not
+exclusively Madhwa**; Shivalli Smartas exist and are a listed category elsewhere.
+**"Hebbar" alone is ambiguous** — it is also a common surname; label it "Hebbar Iyengar".
+
+**Thin evidence, needs validation:** Sirinadu (Sirnadu), Saklapuri, Aruvathokkalu
+spelling (seven variants found, no two sources agree).
+
+---
+
+## Still missing
+
+- North India, Bengal, Odisha, Gujarat, Punjab, Kashmir, Assam — research in progress
+- Gotra list and the pravara question — research in progress
+- Telugu and Tamil — not yet commissioned; our existing 4 and 3 entries are thin
+- `ref_languages` lacks Malayalam, Bengali, Gujarati, Odia, Punjabi, Konkani, Tulu, Assamese
+
+## Open question for the exogamy rule
+
+Traditional practice governs marriage eligibility via **gotra and pravara**. We
+store both but the automatic check uses gotra only. If pravara is also governing,
+our exogamy enforcement is incomplete — which would be the most serious class of
+error this product can make. Awaiting the research.
+
+---
+
+## Log
+
+| Date | Event |
+| --- | --- |
+| 2026-08-16 | Kerala and Karnataka/Tulu research completed. North India and gotra research still running. Nothing yet validated or loaded. |
