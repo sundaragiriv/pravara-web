@@ -19,13 +19,23 @@ export default function NotificationBell() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data } = await supabase
+        // `profile_photo_url` does not exist on profiles — the column is
+        // `image_url`. Combined with actor_id pointing at auth.users rather
+        // than profiles, this query returned 400 on every load, so the bell
+        // has been silently empty. Nothing surfaced it because the error was
+        // discarded along with `data`.
+        const { data, error } = await supabase
             .from('notifications')
-            .select('*, actor:profiles!actor_id(full_name, profile_photo_url)')
+            .select('*, actor:profiles!actor_id(full_name, image_url)')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
             .limit(10);
-        
+
+        if (error) {
+            console.error('Notifications unavailable:', error.message, `[${error.code ?? '?'}]`);
+            return;
+        }
+
         setNotifications(data || []);
         setUnreadCount((data || []).filter((n: any) => !n.is_read).length);
     };
