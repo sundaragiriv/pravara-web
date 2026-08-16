@@ -13,15 +13,26 @@ import {
 import Footer from "@/components/Footer";
 import MarketingNav from "@/components/navigation/MarketingNav";
 import type { FounderProgress } from "@/lib/launch";
-import { COHORT_TARGET, FOUNDER_PREMIUM_MONTHS } from "@/lib/offer";
+import { COHORT_TARGET } from "@/lib/offer";
 
 /**
- * Richer marketing landing page — rendered when PRE_LAUNCH_ENABLED is OFF (go-live).
+ * The landing page once the platform is open — rendered when PRE_LAUNCH_ENABLED
+ * is OFF.
  *
- * NOTE: this content is still written in founding-cohort framing (carried over from
- * the original landing page). Before true public launch, the copy here should be
- * revised to post-launch messaging (live matching, sign-in, etc.). The flag wiring
- * is correct; the words are the remaining work.
+ * It used to carry the founding-cohort copy wholesale: "Founding 1,000 now
+ * open", a seat counter, "fill the room first, turn on the light right after".
+ * All of that describes the period BEFORE launch, and this page only ever
+ * renders after it. A visitor arriving the day matching opens was being told
+ * the room was still being filled.
+ *
+ * Rewritten around what the platform actually does. The claims here are the
+ * ones nothing else makes: Gothra and Pravara enforced rather than offered as
+ * a filter, the full Ashtakoot computed rather than a compatibility percentage
+ * invented, and the family included by design rather than tolerated.
+ *
+ * `founderProgress` is still accepted and still passed to the nav — the founding
+ * circle is a real thing that happened, and the count remains meaningful there —
+ * but the page body no longer sells seats in it.
  */
 export default function MarketingHome({
   founderProgress,
@@ -55,7 +66,7 @@ export default function MarketingHome({
               <div>
                 <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-haldi-500/25 bg-haldi-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-haldi-300">
                   <Sparkles className="h-4 w-4" />
-                  Founding {COHORT_TARGET.toLocaleString()} now open
+                  Vedic matrimony, now open
                 </div>
 
                 <h1 className="max-w-4xl font-serif text-5xl leading-[1.02] text-stone-50 md:text-7xl">
@@ -63,8 +74,9 @@ export default function MarketingHome({
                 </h1>
 
                 <p className="mt-7 max-w-2xl text-lg leading-relaxed text-stone-300 md:text-xl">
-                  Pravara is opening carefully with a founding cohort of {COHORT_TARGET.toLocaleString()} members so every
-                  early match begins with real intent, cultural depth, and room for meaningful discovery.
+                  For families who still know their gotra — wherever they now call home. The lineage
+                  rules your family would check by hand are checked here before a match is ever shown
+                  to you.
                 </p>
 
                 {/* A member who is already signed in was being asked to
@@ -84,7 +96,7 @@ export default function MarketingHome({
                   <span className="inline-flex items-center justify-center rounded-full border border-stone-800 bg-stone-900/40 px-7 py-4 text-sm text-stone-400">
                     {isLoggedIn
                       ? "Your matches are waiting"
-                      : "Founding members get launch access first"}
+                      : "Free to join · nothing about you is public"}
                   </span>
                 </div>
 
@@ -92,18 +104,18 @@ export default function MarketingHome({
                   {[
                     {
                       icon: BadgeCheck,
-                      title: "Founding-only rollout",
-                      copy: "We are admitting the first members in a controlled cohort instead of opening a noisy empty marketplace.",
+                      title: "Gothra, enforced",
+                      copy: "Not a filter you have to remember to set. Same-gotra matches are never shown, and shared Pravara lineages are caught even where the gotras differ.",
                     },
                     {
                       icon: HeartHandshake,
-                      title: `${FOUNDER_PREMIUM_MONTHS} months premium at launch`,
-                      copy: "Founding registrations are eligible for early launch benefits when access opens.",
+                      title: "Your family, included",
+                      copy: "A parent or sibling can join your search properly — see the same matches, help shortlist — without reading your messages.",
                     },
                     {
                       icon: Lock,
-                      title: "Trust first",
-                      copy: "We are building for serious intent, not mass traffic, fake profiles, or low-quality matching noise.",
+                      title: "Nothing public",
+                      copy: "Your profile is not searchable outside Pravara. Your contact details are never shown to another member.",
                     },
                   ].map(({ icon: Icon, title, copy }) => (
                     <div key={title} className="rounded-3xl border border-stone-800 bg-stone-900/45 p-5">
@@ -116,41 +128,19 @@ export default function MarketingHome({
               </div>
 
               <div className="rounded-[2rem] border border-stone-800 bg-stone-900/60 p-7 shadow-2xl shadow-black/35 backdrop-blur">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.24em] text-stone-500">Founding cohort</p>
-                    <h2 className="mt-3 font-serif text-3xl text-stone-100">
-                      Fill the room first. Turn on the light right after.
-                    </h2>
-                  </div>
-                  {seatsRemaining !== null ? (
-                    <div className="rounded-full border border-haldi-500/30 bg-haldi-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-haldi-300">
-                      {seatsRemaining.toLocaleString()} seats left
-                    </div>
-                  ) : null}
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-stone-500">How a match is judged</p>
+                  <h2 className="mt-3 font-serif text-3xl text-stone-100">
+                    The way your family would judge it.
+                  </h2>
                 </div>
-
-                {founderProgress.show ? (
-                  <div className="mt-8">
-                    <div className="mb-3 flex items-center justify-between text-sm text-stone-400">
-                      <span>{founderProgress.joined.toLocaleString()} registered</span>
-                      <span>{COHORT_TARGET.toLocaleString()} target</span>
-                    </div>
-                    <div className="h-3 overflow-hidden rounded-full bg-stone-800">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-haldi-500 via-haldi-400 to-kumkum-500"
-                        style={{ width: `${founderProgress.pct}%` }}
-                      />
-                    </div>
-                  </div>
-                ) : null}
 
                 <div className="mt-8 grid gap-4 sm:grid-cols-2">
                   {[
-                    ["Profile depth", "We start collecting the right data before matching goes live."],
-                    ["Signal quality", "Early members give the first real inventory its shape and seriousness."],
-                    ["Trust layer", "Identity, family context, and cultural signals can be reviewed before launch."],
-                    ["Launch readiness", "When the board is full enough, the matching lights turn on with actual momentum."],
+                    ["Gothra & Pravara", "Sapinda exogamy applied before anything is shown. Shared rishi lineages are caught even when the gotras differ."],
+                    ["Bhrugu Match", "The full 36-point Ashtakoot, computed from Nakshatra and Raasi. Nadi and Bhakoot doshas named, not buried."],
+                    ["Varaahi Shield", "Identity checked by a person, vouches from people who know the family, and whether family is taking part."],
+                    ["Sutradhar", "An assistant that answers from what Pravara actually says, and tells you when it does not know."],
                   ].map(([title, copy]) => (
                     <div key={title} className="rounded-2xl border border-stone-800 bg-stone-950/60 p-4">
                       <p className="text-sm font-semibold text-stone-100">{title}</p>
@@ -160,11 +150,11 @@ export default function MarketingHome({
                 </div>
 
                 <div className="mt-8 rounded-3xl border border-haldi-500/15 bg-gradient-to-br from-haldi-500/10 to-transparent p-5">
-                  <p className="text-xs uppercase tracking-[0.22em] text-haldi-300">What we are not doing</p>
+                  <p className="text-xs uppercase tracking-[0.22em] text-haldi-300">What we will not do</p>
                   <ul className="mt-4 space-y-3 text-sm leading-relaxed text-stone-300">
-                    <li>We are not opening an empty app and hoping traffic fixes the product.</li>
-                    <li>We are not pushing members into poor-quality matches before there is meaningful density.</li>
-                    <li>We are not pretending the launch is complete before the inventory is worth trusting.</li>
+                    <li>We will never rank one community above another, or tell you what yours is.</li>
+                    <li>We will never sell your data, or show your contact details to another member.</li>
+                    <li>We will never put a profile in front of you that the lineage rules exclude.</li>
                   </ul>
                 </div>
               </div>
@@ -175,28 +165,28 @@ export default function MarketingHome({
         <section className="border-y border-stone-900 bg-stone-900/30 px-6 py-20">
           <div className="mx-auto max-w-7xl">
             <div className="mb-12 max-w-3xl">
-              <p className="text-xs uppercase tracking-[0.24em] text-haldi-300">Launch strategy</p>
+              <p className="text-xs uppercase tracking-[0.24em] text-haldi-300">Why Pravara</p>
               <h2 className="mt-4 font-serif text-4xl text-stone-100">
-                Why we are opening with a founding cohort instead of a public free-for-all
+                Built for the questions a matrimony site usually leaves to you
               </h2>
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">
               {[
                 {
-                  icon: Users,
-                  title: "Real density before real matching",
-                  copy: "A marriage platform without enough serious people creates false hope, dead ends, and weak first impressions. We want the first wave to land into a room with substance.",
+                  icon: Landmark,
+                  title: "The lineage rules are the engine",
+                  copy: "Elsewhere gotra is a dropdown you filter on and hope the other family did too. Here sapinda exogamy is applied before a profile reaches you, and Pravara lineages are checked as well — the overlaps that different gotras can still hide.",
                 },
                 {
-                  icon: Landmark,
-                  title: "Cultural detail needs context",
-                  copy: "Gothra, family involvement, and Vedic depth mean more when there are enough comparable profiles to make matching meaningful.",
+                  icon: Users,
+                  title: "A marriage is between families",
+                  copy: "Guardian mode lets a parent or sibling take part properly, with their own view and their own limits. Private conversations stay private. The software stops pretending you are searching alone.",
                 },
                 {
                   icon: Stars,
-                  title: "Experience first, scale second",
-                  copy: `The first ${COHORT_TARGET.toLocaleString()} members shape the quality of the platform. That lets us polish trust, profile quality, and signal strength before opening wider.`,
+                  title: "Compatibility you can check",
+                  copy: "The Bhrugu Match is the real 36-point Ashtakoot, shown kuta by kuta with the doshas named. No invented percentage, and no number where the birth details to compute one are missing.",
                 },
               ].map(({ icon: Icon, title, copy }) => (
                 <article key={title} className="rounded-[2rem] border border-stone-800 bg-stone-950/50 p-7">
@@ -212,26 +202,26 @@ export default function MarketingHome({
         <section className="px-6 py-24">
           <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.85fr_1.15fr]">
             <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-haldi-300">What happens when you register</p>
-              <h2 className="mt-4 font-serif text-4xl text-stone-100">We build the right pool before we open matching.</h2>
+              <p className="text-xs uppercase tracking-[0.24em] text-haldi-300">How it works</p>
+              <h2 className="mt-4 font-serif text-4xl text-stone-100">Three steps, and none of them are a form.</h2>
             </div>
 
             <div className="grid gap-5">
               {[
                 {
                   step: "01",
-                  title: "You join the founding list",
-                  copy: "You register with the essentials so we know who is serious, where they are, and what kind of early cohort we are building.",
+                  title: "Tell Sutradhar your story",
+                  copy: "A conversation, not a form. It asks what a family would ask — where you are from, what your household keeps, what you are looking for — and writes the profile from your answers.",
                 },
                 {
                   step: "02",
-                  title: "We shape the first trusted base",
-                  copy: "We use the founding registrations to calibrate launch quality, profile mix, and the first meaningful matching density.",
+                  title: "We rule out what tradition rules out",
+                  copy: "Gothra and Pravara are applied before you see anyone. What remains is scored on the full Ashtakoot, so the first profile you meet has already passed the checks your family would run.",
                 },
                 {
                   step: "03",
-                  title: "We turn matching on when the room is ready",
-                  copy: "Once the early base is strong enough, founding members get first access, launch communication, and opening benefits.",
+                  title: "Bring your family in",
+                  copy: "Invite a parent or sibling to take part properly. They see what you see and can help you shortlist. What you say in a conversation stays between the two of you.",
                 },
               ].map(({ step, title, copy }) => (
                 <div key={step} className="grid gap-4 rounded-[2rem] border border-stone-800 bg-stone-900/45 p-6 md:grid-cols-[auto_1fr]">
@@ -251,17 +241,17 @@ export default function MarketingHome({
         <section className="px-6 pb-24">
           <div className="mx-auto max-w-5xl rounded-[2.5rem] border border-haldi-500/20 bg-gradient-to-br from-haldi-500/10 via-stone-900 to-stone-950 px-8 py-12 text-center shadow-2xl shadow-black/30">
             <p className="text-xs uppercase tracking-[0.24em] text-haldi-300">
-              {isLoggedIn ? "Your search" : "Founding member call"}
+              {isLoggedIn ? "Your search" : "Begin"}
             </p>
             <h2 className="mt-4 font-serif text-4xl text-stone-100 md:text-5xl">
               {isLoggedIn
                 ? "You are already inside. Pick up where you left off."
-                : "Register free now. Be inside when the platform opens."}
+                : "For the legacy you carry and the future you are building."}
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-stone-300">
               {isLoggedIn
                 ? "Your matches are ranked by Gothra, Pravara and the full Bhrugu calculation — not by who paid to be seen."
-                : `Join the first ${COHORT_TARGET.toLocaleString()} members shaping the early Pravara experience. We will build the launch room, turn the lights on when it is ready, and invite founding members first.`}
+                : "Creating a profile is free, and takes about three minutes. You will not be asked for a card, and nothing about you is public."}
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
