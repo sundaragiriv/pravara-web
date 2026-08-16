@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { RATE_LIMITS, enforceRateLimit } from "@/lib/ratelimit";
 import { sanitizePlainText } from "@/lib/sanitize";
+import { getHiddenUserIds } from "@/lib/safety";
 import { createClient } from "@/utils/supabase/server";
 
 function toInt(value: string | null, fallback: number): number {
@@ -66,7 +67,16 @@ export async function GET(request: NextRequest) {
     const excludeUserId = sanitizePlainText(String(searchParams.get("excludeUser") || user.id));
     const limit = Math.min(100, Math.max(1, toInt(searchParams.get("limit"), 50)));
 
+    // Anyone either party has blocked comes out before the query runs. Filtering
+    // afterwards would still have leaked them into the count and, on a paged
+    // list, into gaps the member could notice.
+    const hidden = await getHiddenUserIds(supabase, user.id);
+
     let query = supabase.from("profiles").select("*").neq("id", excludeUserId);
+
+    if (hidden.size > 0) {
+      query = query.not("id", "in", `(${[...hidden].join(",")})`);
+    }
 
     if (oppositeGender) {
       query = query.eq("gender", oppositeGender);

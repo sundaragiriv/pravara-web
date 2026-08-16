@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import BhruguLoader from '@/components/BhruguLoader';
 import DashboardSubNav from '@/components/navigation/DashboardSubNav';
 import { useShortlist } from '@/contexts/ShortlistContext';
+import SafetyMenu from "@/components/SafetyMenu";
 
 export default function ProfileDetailsPage() {
     const params = useParams();
@@ -30,6 +31,7 @@ export default function ProfileDetailsPage() {
     const [connectionStatus, setConnectionStatus] = useState<any>('none');
     const [matchScore, setMatchScore] = useState(0);
     const [guna, setGuna] = useState<GunaResult | null>(null);
+    const [blocked, setBlocked] = useState(false);
     const [isPremium, setIsPremium] = useState(false);
     const [galleryPhotos, setGalleryPhotos] = useState<string[]>([]);
 
@@ -38,7 +40,7 @@ export default function ProfileDetailsPage() {
     const fetchProfileDetails = async () => {
         const { data: { user } } = await supabase.auth.getUser();
 
-        const [targetRes, myRes, connRes, photosRes] = await Promise.all([
+        const [targetRes, myRes, connRes, photosRes, blockRes] = await Promise.all([
             supabase.from('profiles').select('*').eq('id', id).single(),
             user ? supabase.from('profiles').select('*').eq('id', user.id).single() : Promise.resolve({ data: null }),
             user ? supabase.from('connections').select('*')
@@ -46,7 +48,19 @@ export default function ProfileDetailsPage() {
                 .or(`sender_id.eq.${id},receiver_id.eq.${id}`).maybeSingle() : Promise.resolve({ data: null }),
             // Fetch profile_photos table for gallery
             supabase.from('profile_photos').select('image_url').eq('profile_id', id).order('created_at', { ascending: true }),
+            // Either direction: if she blocked him he must not see her either,
+            // otherwise the block only works one way and he can still read her
+            // profile and open a conversation from it.
+            user ? supabase.from('blocks').select('id')
+                .or(`and(blocker_id.eq.${user.id},blocked_id.eq.${id}),and(blocker_id.eq.${id},blocked_id.eq.${user.id})`)
+                .limit(1) : Promise.resolve({ data: [] }),
         ]);
+
+        if ((blockRes.data?.length ?? 0) > 0) {
+            setBlocked(true);
+            setLoading(false);
+            return;
+        }
 
         if (targetRes.data) {
             setProfile(targetRes.data);
@@ -114,6 +128,14 @@ export default function ProfileDetailsPage() {
     if (loading) return (
         <div className="min-h-screen bg-stone-950 flex items-center justify-center">
             <BhruguLoader />
+        </div>
+    );
+
+    if (blocked) return (
+        <div className="min-h-screen bg-stone-950 flex items-center justify-center px-6">
+            <p className="text-stone-500 text-sm text-center max-w-sm leading-relaxed">
+                This profile is not available.
+            </p>
         </div>
     );
 
@@ -195,6 +217,15 @@ export default function ProfileDetailsPage() {
                                             </span>
                                         )}
                                     </div>
+
+                                    {/* Kept quiet and low in the hierarchy. Anyone
+                                        looking for it will find it; nobody browsing
+                                        happily is prompted to think about abuse. */}
+                                    <SafetyMenu
+                                        profileId={profile.id}
+                                        profileName={displayName}
+                                        onBlocked={() => router.push('/dashboard')}
+                                    />
                                 </div>
 
                                 {/* Action buttons */}

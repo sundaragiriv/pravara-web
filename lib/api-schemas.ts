@@ -77,6 +77,26 @@ export const launchRegistrationSchema = z.object({
   source: z.string().trim().max(64).optional(),
 });
 
+export const blockRequestSchema = z.object({
+  profile_id: z.uuid(),
+});
+
+export const reportRequestSchema = z.object({
+  profile_id: z.uuid(),
+  reason: z.enum([
+    "fake_profile",
+    "harassment",
+    "inappropriate_photos",
+    "asking_for_money",
+    "already_married",
+    "underage",
+    "other",
+  ]),
+  detail: z.string().trim().max(2_000).optional(),
+  /** Reporting blocks by default; the member can untick it. */
+  alsoBlock: z.boolean().default(true),
+});
+
 export const vouchRequestSchema = z.object({
   profile_id: z.uuid(),
   endorser_name: z.string().trim().min(2).max(80),

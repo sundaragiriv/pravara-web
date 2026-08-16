@@ -15,6 +15,12 @@ import { motion } from 'framer-motion';
 import AvatarUpload from '@/components/AvatarUpload';
 import { GothraPicker, CommunityPicker, NakshatraPicker } from "@/components/LineagePickers";
 
+/**
+ * Whether the admin ID-review queue exists yet (backlog TRUST-04). Until it
+ * does, we do not ask anyone for a government document.
+ */
+const VERIFICATION_QUEUE_LIVE = false;
+
 // ── Nakshatra → Raasi auto-fill map ──────────────────────────────────────────
 const NAKSHATRA_RAASI: Record<string, string> = {
   'Ashwini': 'Mesha',     'Bharani': 'Mesha',      'Krittika': 'Mesha',
@@ -474,25 +480,47 @@ export default function EditProfilePage() {
                                      formData.varaahi_status === 'pending_verification' ? 'PENDING' : 'UNVERIFIED'}
                                 </span>
                             </div>
-                            <p className="relative z-10 text-xs text-stone-500 mb-4 leading-relaxed max-w-[90%]">
-                                Upload Government ID to activate the <strong className="text-haldi-500">Varaahi Shield</strong> and get the Verified Badge.
-                            </p>
-                            <div className="relative z-10">
-                                <button className={`w-full py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 transition-all ${
-                                     formData.varaahi_status === 'verified'
-                                     ? 'bg-green-900/20 border-green-800 text-green-500 cursor-default'
-                                     : 'bg-stone-950 border-stone-800 text-stone-400 hover:border-haldi-500 hover:text-haldi-500'
-                                }`}>
-                                    {uploadingID ? <Loader2 className="animate-spin" size={14} /> :
-                                     formData.varaahi_status === 'verified' ? <CheckCircle size={14} /> : <Upload size={14} />}
-                                    {uploadingID ? "Uploading Securely…" :
-                                     formData.varaahi_status === 'verified' ? "Identity Verified" :
-                                     formData.varaahi_status === 'pending_verification' ? "Verification In Progress" : "Upload ID Document"}
-                                </button>
-                                {formData.varaahi_status !== 'verified' && (
-                                    <input type="file" accept="image/*,.pdf" onChange={handleVaraahiUpload} disabled={uploadingID} className="absolute inset-0 opacity-0 cursor-pointer" />
-                                )}
-                            </div>
+                            {/* The upload is deliberately withheld until the
+                                admin review queue exists. It used to write
+                                govt_id_url, set varaahi_status to
+                                pending_verification, and stop — nothing ever read
+                                that status, and the admin console's is_verified
+                                toggle was a separate switch the upload never
+                                touched. So members handed over government identity
+                                documents, saw "Verification In Progress", and
+                                waited on a process that did not exist. Collecting
+                                ID nobody reviews is worse than not collecting it.
+
+                                Restore this once TRUST-04 ships. Keep
+                                handleVaraahiUpload — it is the working half. */}
+                            {VERIFICATION_QUEUE_LIVE ? (
+                                <>
+                                    <p className="relative z-10 text-xs text-stone-500 mb-4 leading-relaxed max-w-[90%]">
+                                        Upload Government ID to activate the <strong className="text-haldi-500">Varaahi Shield</strong> and get the Verified Badge.
+                                    </p>
+                                    <div className="relative z-10">
+                                        <button className={`w-full py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 transition-all ${
+                                             formData.varaahi_status === 'verified'
+                                             ? 'bg-green-900/20 border-green-800 text-green-500 cursor-default'
+                                             : 'bg-stone-950 border-stone-800 text-stone-400 hover:border-haldi-500 hover:text-haldi-500'
+                                        }`}>
+                                            {uploadingID ? <Loader2 className="animate-spin" size={14} /> :
+                                             formData.varaahi_status === 'verified' ? <CheckCircle size={14} /> : <Upload size={14} />}
+                                            {uploadingID ? "Uploading Securely…" :
+                                             formData.varaahi_status === 'verified' ? "Identity Verified" :
+                                             formData.varaahi_status === 'pending_verification' ? "Verification In Progress" : "Upload ID Document"}
+                                        </button>
+                                        {formData.varaahi_status !== 'verified' && (
+                                            <input type="file" accept="image/*,.pdf" onChange={handleVaraahiUpload} disabled={uploadingID} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <p className="relative z-10 text-xs text-stone-500 leading-relaxed max-w-[90%]">
+                                    Identity verification opens shortly. We will ask for your ID once
+                                    there is someone ready to review it — not before.
+                                </p>
+                            )}
                         </div>
 
                         {/* IDENTITY & BIO */}
