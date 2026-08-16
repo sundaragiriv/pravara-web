@@ -268,9 +268,15 @@ the actionable list.
 
 ### Blocking the member app opening
 
-- [ ] **SAFE-01** No block, report, mute or abuse queue exists anywhere. Table
-      stakes for a platform where strangers message each other about marriage.
-      Ship before the flag comes off.
+- [x] **SAFE-01** ~~No block, report, mute or abuse queue exists anywhere.~~
+      **DEPLOYED 16 Aug 2026.** Blocks and reports tables with RLS in dev and
+      prod, silent symmetric blocking, block enforced at the database via
+      `is_blocked_between()`, report-blocks-by-default, admin queue at
+      `/admin/reports`. Verified end to end through real authenticated sessions:
+      `npm run check:safety`, 18/18.
+- [x] **TRUST-01a** ~~ID upload collects documents nobody reviews.~~ **Upload
+      withdrawn 16 Aug 2026** behind `VERIFICATION_QUEUE_LIVE = false`. Flip it
+      when the queue below ships.
 - [ ] **TRUST-01** ID upload writes `govt_id_url` and sets `varaahi_status` to
       `pending_verification`, and nothing ever reads it. The admin `is_verified`
       toggle is a separate, unconnected concept. Members hand over government ID
@@ -337,3 +343,12 @@ the actionable list.
 - [ ] **WIRE-06** Trial and coupons (FOUNDER, AGRAHARAM2026) before payments;
       they are already promised in email. Then Stripe + PayPal (US), Razorpay
       once the Indian entity exists.
+
+- [ ] **SAFE-02** `public.messages` carries two SELECT policies — "Users can read
+      messages in their connections" (from a migration) and "View messages"
+      (from nowhere), both granted to `public` rather than `authenticated`.
+      Behaviour is correct in dev — an unrelated member reads nothing, asserted
+      in `check:safety` — but duplicate policies on one command are exactly what
+      let the old permissive INSERT policy override the new strict one. Worth a
+      nuclear reset of the SELECT policies for the same reason. Not urgent;
+      verified safe.

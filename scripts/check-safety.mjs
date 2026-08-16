@@ -63,6 +63,9 @@ const stamp = process.pid;
 const people = [
   { tag: "asha", email: `safety-test-asha-${stamp}@pravara.test`, password: "Test-Passw0rd-Asha" },
   { tag: "ravi", email: `safety-test-ravi-${stamp}@pravara.test`, password: "Test-Passw0rd-Ravi" },
+  // A third member who is party to nothing, for checking that conversations
+  // are not readable by people outside them.
+  { tag: "meena", email: `safety-test-meena-${stamp}@pravara.test`, password: "Test-Passw0rd-Meena" },
 ];
 
 async function createUser(person) {
@@ -81,9 +84,9 @@ async function createUser(person) {
     headers: { ...svc, Prefer: "resolution=merge-duplicates" },
     body: JSON.stringify({
       id: body.id,
-      full_name: person.tag === "asha" ? "Asha (test)" : "Ravi (test)",
+      full_name: `${person.tag[0].toUpperCase()}${person.tag.slice(1)} (test)`,
       email: person.email,
-      gender: person.tag === "asha" ? "Female" : "Male",
+      gender: person.tag === "ravi" ? "Male" : "Female",
       age: 29,
     }),
   });
@@ -292,6 +295,24 @@ try {
         body: JSON.stringify({ connection_id: connection.id, sender_id: ravi.id, content: "hello" }),
       });
       assert(allowed.ok, "an unblocked member CAN message", `${allowed.status} ${(await allowed.text()).slice(0, 90)}`);
+
+      // There are two SELECT policies on this table and only one comes from a
+      // migration ("View messages" does not). Since policies are OR'd, a
+      // permissive stray would expose every conversation on the platform — so
+      // the read side gets asserted rather than assumed.
+      const outsider = people.find((p) => p.id !== ravi.id && p.id !== asha.id);
+      if (outsider) {
+        const rows = await (
+          await fetch(`${URL}/rest/v1/messages?select=id&connection_id=eq.${connection.id}`, {
+            headers: asUser(outsider.jwt),
+          })
+        ).json();
+        assert(
+          Array.isArray(rows) && rows.length === 0,
+          "an unrelated member cannot read someone else's conversation",
+          JSON.stringify(rows).slice(0, 90),
+        );
+      }
 
       await fetch(`${URL}/rest/v1/messages?connection_id=eq.${connection.id}`, { method: "DELETE", headers: svc });
       await fetch(`${URL}/rest/v1/connections?id=eq.${connection.id}`, { method: "DELETE", headers: svc });
