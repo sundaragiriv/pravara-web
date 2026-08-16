@@ -74,6 +74,8 @@ export default function Dashboard() {
 
   // --- DEBOUNCED FILTER FETCH ---
   const filterDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  // Cancels a match request that a newer one has superseded.
+  const matchesAbortRef = useRef<AbortController | null>(null);
 
   // --- FILTER HELPER FUNCTIONS ---
   const updateFilter = (key: string, value: string | number | string[]) => {
@@ -111,9 +113,18 @@ export default function Dashboard() {
     if (filters.minHeight) params.set('minHeight', filters.minHeight);
     if (filters.maxHeight) params.set('maxHeight', filters.maxHeight);
 
+    // Each run supersedes the one before it. Without this, a filter change
+    // while a request is in flight can land the older, slower response last and
+    // show results for filters the member has already moved on from.
+    matchesAbortRef.current?.abort();
+    const controller = new AbortController();
+    matchesAbortRef.current = controller;
+
     setMatchesLoading(true);
     try {
-      const response = await fetch(`/api/matches?${params.toString()}`);
+      const response = await fetch(`/api/matches?${params.toString()}`, {
+        signal: controller.signal,
+      });
       if (!response.ok) { setMatchesLoading(false); return; }
 
       const { profiles: rawProfiles } = await response.json();
@@ -149,9 +160,19 @@ export default function Dashboard() {
 
       setMatches(scored.sort((a: MatchProfile, b: MatchProfile) => b.score - a.score));
     } catch (error) {
+      // A superseded request is not a failure. React's development double-mount
+      // starts this fetch, tears it down and starts it again, so the dashboard
+      // logged an error on every single load — which is precisely how a real
+      // failure would have gone unnoticed.
+      //
+      // Checked against our own signal rather than the error message: a genuine
+      // network failure also arrives as "TypeError: Failed to fetch", and
+      // matching on that text would swallow the outages worth knowing about.
+      if (controller.signal.aborted) return;
+
       console.error('Filter fetch error:', error);
     } finally {
-      setMatchesLoading(false);
+      if (!controller.signal.aborted) setMatchesLoading(false);
     }
   }, [viewingAs, userProfile, filters, supabase]);
 

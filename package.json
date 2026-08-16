@@ -17,6 +17,7 @@
     "db:drift": "node scripts/check-schema-drift.mjs",
     "db:snapshot": "node scripts/dump-schema.mjs",
     "seed:dev": "node scripts/seed-dev-profiles.mjs 120 && node scripts/seed-dev-extras.mjs",
+    "build:dev-data": "node scripts/build-with-dev-db.mjs",
     "start:dev-data": "cross-env PRE_LAUNCH_ENABLED=true node scripts/start-with-dev-db.mjs",
     "email:preview": "node scripts/preview-emails.mjs",
     "email:test": "node scripts/send-test-email.mjs",

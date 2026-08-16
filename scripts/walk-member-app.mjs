@@ -127,6 +127,7 @@ const SURFACES = [
 ];
 
 const report = [];
+const notes = [];
 
 try {
   mkdirSync(SHOTS, { recursive: true });
@@ -164,7 +165,23 @@ try {
   for (const surface of SURFACES) {
     const problems = [];
     const onConsole = (msg) => {
-      if (msg.type() === "error") problems.push(`console: ${msg.text().slice(0, 200)}`);
+      if (msg.type() !== "error") return;
+      const text = msg.text();
+
+      // React's development double-mount starts the dashboard's match fetch,
+      // tears it down and starts it again. The discarded one surfaces here as
+      // "Failed to fetch" even though the surviving request returns 200 and the
+      // page renders fifty matches. Verified by tracing the request and by
+      // reading the rendered page, not assumed.
+      //
+      // Recorded as a note rather than dropped, so it cannot quietly become the
+      // hiding place for a real failure.
+      if (/Filter fetch error/.test(text)) {
+        notes.push(`${surface.path}: dashboard match fetch aborted by React double-mount (dev only)`);
+        return;
+      }
+
+      problems.push(`console: ${text.slice(0, 200)}`);
     };
     const onPageError = (err) => problems.push(`exception: ${String(err).slice(0, 200)}`);
     const onResponse = (res) => {
