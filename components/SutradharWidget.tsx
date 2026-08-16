@@ -6,14 +6,27 @@ import { usePathname } from "next/navigation";
 import { Sparkles, X, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/** A change Sutradhar has suggested. Nothing is saved until the member confirms. */
+type Proposal = { field: string; value: string; label: string };
+
+type Message = {
+  role: 'user' | 'ai';
+  content: string;
+  /** Present when this reply is asking to change a profile field. */
+  proposal?: Proposal;
+  /** Set once the member has answered, so the card stops offering buttons. */
+  outcome?: 'saved' | 'cancelled';
+};
+
 export default function SutradharWidget() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
+  const [messages, setMessages] = useState<Message[]>([
     { role: 'ai', content: "Namaste. I am Sutradhar. How can I guide your search today?" }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -42,24 +55,68 @@ export default function SutradharWidget() {
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setLoading(true);
 
+    // Prior turns, so follow-ups resolve. The opening greeting is ours, not the
+    // model's, so it is dropped rather than replayed as something it said.
+    const history = messages
+      .slice(1)
+      .map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }));
+
     try {
-      // Call the new Brain API
       const response = await fetch('/api/sutradhar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMsg,
-          contextPath: pathname
+          contextPath: pathname,
+          history,
         })
       });
 
       const data = await response.json();
-      setMessages(prev => [...prev, { role: 'ai', content: data.reply || "I am reflecting on that..." }]);
+      setMessages(prev => [...prev, {
+        role: 'ai',
+        content: data.reply || "I am reflecting on that...",
+        proposal: data.proposal,
+      }]);
     } catch {
-      setMessages(prev => [...prev, { role: 'ai', content: "My connection to the divine cloud is interrupted. Please try again." }]);
+      setMessages(prev => [...prev, { role: 'ai', content: "I could not reach the assistant. Please try again." }]);
     } finally {
       setLoading(false);
     }
+  };
+
+  /**
+   * Confirming is a separate request to a separate route, which re-checks the
+   * field and value before writing. The assistant proposes; only this saves.
+   */
+  const handleConfirm = async (index: number, proposal: Proposal) => {
+    setSaving(true);
+    try {
+      const response = await fetch('/api/sutradhar/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ field: proposal.field, value: proposal.value })
+      });
+      const data = await response.json();
+
+      setMessages(prev => {
+        const next = [...prev];
+        next[index] = { ...next[index], outcome: response.ok ? 'saved' : 'cancelled' };
+        return [...next, { role: 'ai' as const, content: data.reply || "Saved." }];
+      });
+    } catch {
+      setMessages(prev => [...prev, { role: 'ai', content: "I could not save that. Please try again." }]);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = (index: number) => {
+    setMessages(prev => {
+      const next = [...prev];
+      next[index] = { ...next[index], outcome: 'cancelled' };
+      return [...next, { role: 'ai' as const, content: "Left as it was." }];
+    });
   };
 
   return (
@@ -88,14 +145,51 @@ export default function SutradharWidget() {
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-stone-800">
               {messages.map((m, idx) => (
-                <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div key={idx} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
                   <div className={`max-w-[80%] p-3 rounded-xl text-sm leading-relaxed ${
-                    m.role === 'user' 
-                      ? 'bg-stone-800 text-stone-100 rounded-br-none' 
+                    m.role === 'user'
+                      ? 'bg-stone-800 text-stone-100 rounded-br-none'
                       : 'bg-haldi-900/20 border border-haldi-500/20 text-stone-200 rounded-bl-none'
                   }`}>
                     {m.content}
                   </div>
+
+                  {/* The change is shown in full before anything is written, so
+                      the member is agreeing to a specific value rather than to
+                      the assistant's summary of one. */}
+                  {m.proposal && (
+                    <div className="mt-2 w-[80%] rounded-xl border border-haldi-500/30 bg-stone-900/70 p-3">
+                      <p className="text-[11px] uppercase tracking-widest text-haldi-500 mb-1">
+                        {m.proposal.label}
+                      </p>
+                      <p className="text-sm text-stone-100 leading-relaxed break-words">
+                        {m.proposal.value}
+                      </p>
+
+                      {m.outcome ? (
+                        <p className="mt-2 text-xs text-stone-500">
+                          {m.outcome === 'saved' ? 'Saved.' : 'Not saved.'}
+                        </p>
+                      ) : (
+                        <div className="mt-3 flex gap-2">
+                          <button
+                            onClick={() => handleConfirm(idx, m.proposal!)}
+                            disabled={saving}
+                            className="px-3 py-1.5 rounded-lg bg-haldi-600 hover:bg-haldi-500 text-stone-950 text-xs font-bold transition-colors disabled:opacity-50"
+                          >
+                            Save this
+                          </button>
+                          <button
+                            onClick={() => handleCancel(idx)}
+                            disabled={saving}
+                            className="px-3 py-1.5 rounded-lg border border-stone-700 hover:border-stone-600 text-stone-300 text-xs transition-colors disabled:opacity-50"
+                          >
+                            Not now
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
               {loading && (

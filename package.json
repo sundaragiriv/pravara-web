@@ -18,7 +18,8 @@
     "seed:dev": "node scripts/seed-dev-profiles.mjs 120 && node scripts/seed-dev-extras.mjs",
     "start:dev-data": "cross-env PRE_LAUNCH_ENABLED=true node scripts/start-with-dev-db.mjs",
     "email:preview": "node scripts/preview-emails.mjs",
-    "email:test": "node scripts/send-test-email.mjs"
+    "email:test": "node scripts/send-test-email.mjs",
+    "ai:golden": "node scripts/check-sutradhar-answers.mjs"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.39.0",

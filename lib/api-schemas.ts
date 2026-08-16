@@ -19,9 +19,34 @@ export const biographerRequestSchema = z.object({
   currentProfile: z.record(z.string(), z.unknown()).default({}),
 });
 
+/**
+ * Prior turns, so follow-ups work. The route previously sent only the system
+ * prompt and the latest message, which made every turn amnesiac — "what about
+ * the other one?" could not resolve because there was no other one in scope.
+ * Capped at 20 to bound both the prompt cost and the blast radius of a client
+ * sending junk.
+ */
+const sutradharTurnSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().trim().min(1).max(4_000),
+});
+
 export const sutradharRequestSchema = z.object({
   message: z.string().trim().min(1).max(2_000),
   contextPath: z.string().trim().max(256).default("/"),
+  history: z.array(sutradharTurnSchema).max(20).default([]),
+});
+
+/**
+ * Confirming a proposed profile edit. The assistant never writes directly; it
+ * proposes, the member confirms, and this is what the confirmation carries.
+ *
+ * The server re-derives what is permitted from its own allow-list rather than
+ * trusting anything here — this schema only bounds the shape.
+ */
+export const sutradharConfirmSchema = z.object({
+  field: z.string().trim().min(1).max(40),
+  value: z.string().trim().min(1).max(2_000),
 });
 
 export const sutradharHintRequestSchema = z.object({
