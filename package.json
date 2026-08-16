@@ -7,6 +7,7 @@
     "dev:turbo": "next dev",
     "dev:prelaunch": "cross-env PRE_LAUNCH_ENABLED=true NODE_OPTIONS=--use-system-ca next dev --webpack",
     "dev:golive": "cross-env PRE_LAUNCH_ENABLED=false NODE_OPTIONS=--use-system-ca next dev --webpack",
+    "dev:both": "cross-env PRE_LAUNCH_ENABLED=false NEXT_DIST_DIR=.next-golive NODE_OPTIONS=--use-system-ca next dev --webpack -p 3001",
     "build": "next build",
     "build:local": "next build --webpack",
     "start": "next start",

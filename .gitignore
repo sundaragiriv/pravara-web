@@ -67,3 +67,4 @@ resend.apikey
 *.apikey
 .preview
 .walk-shots/
+.next-golive/

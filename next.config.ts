@@ -49,6 +49,15 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   /* config options here */
+
+  // Two `next dev` instances cannot share one build directory — the second
+  // fails to acquire .next/dev/lock. Setting NEXT_DIST_DIR gives it its own,
+  // which is what lets the pre-launch and go-live faces of the site run side
+  // by side on different ports instead of being flipped back and forth.
+  //
+  // Unset everywhere else, so production and CI are untouched.
+  ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
+
   reactCompiler: true,
 
   // Prevents Turbopack symlink error on Windows with Sentry's OpenTelemetry dependency
