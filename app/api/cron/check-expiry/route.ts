@@ -68,20 +68,21 @@ async function run() {
     return { error: updateError.message };
   }
 
-  // Insert notifications for each downgraded user
+  // The notifications table has `content`, not `title`/`message` — this insert
+  // named columns that do not exist, so every downgrade notification failed and
+  // the try/catch swallowed it. Members were being moved to Basic with no word.
   const notifications = expired.map((p) => ({
     user_id: p.id,
     type: "membership_expired",
-    title: "Membership Expired",
-    message: `Your ${p.membership_tier} membership has expired. You've been moved to the Basic plan.`,
+    content: `Your ${p.membership_tier} membership has ended. You are now on the Basic plan.`,
     is_read: false,
   }));
 
-  // Insert notifications (non-critical — table may not exist yet)
-  try {
-    await supabase.from("notifications").insert(notifications);
-  } catch {
-    // Notifications table may not exist — skip silently
+  const { error: notifyError } = await supabase.from("notifications").insert(notifications);
+  if (notifyError) {
+    // Still non-fatal — the downgrade itself is the job. But it is logged now
+    // rather than discarded, which is how this went unnoticed.
+    console.error("Expiry notifications failed:", notifyError.message);
   }
 
   return {

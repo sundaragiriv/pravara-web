@@ -352,3 +352,48 @@ the actionable list.
       let the old permissive INSERT policy override the new strict one. Worth a
       nuclear reset of the SELECT policies for the same reason. Not urgent;
       verified safe.
+
+## Overnight run, 16 Aug 2026 — what shipped and what is left
+
+### Deployed
+
+- [x] **OPS-03** `check-expiry` wired into `vercel.json` at 03:30. Wiring it
+      surfaced that it would not have worked anyway: Vercel Cron sends a GET
+      with `Authorization: Bearer $CRON_SECRET`, and the route exported POST
+      only and compared the raw header to the secret. Fixed both.
+- [x] **WIRE-03** Geo-gating to US/CA/IN. Never touches `/api`, never touches a
+      signed-in member, treats an unknown country as served, and `?geo=allow`
+      opts back in.
+- [x] **GROWTH-04** "Do Not Sell or Share My Personal Information" at
+      `/legal/do-not-sell`, linked in the footer as CPRA requires. Honours
+      Global Privacy Control. `hasOptedOutOfSale()` is exported for whatever
+      tracker comes later. **This unblocks the Meta Pixel.**
+- [x] **TRUST-02** Varaahi Shield — four badges, never one score.
+- [x] **TRUST-04/05/06** `/admin/verification`. Approval writes through to
+      `is_verified`; the document is deleted at decision time, before the
+      decision is saved; viewing needs a two-minute signed URL.
+- [x] **TRUST-01a** ID upload re-enabled now there is a reviewer.
+
+### Needs SQL run (dev then prod)
+
+- [ ] `fix_policies_reading_auth_users.sql` — **still outstanding.** Until this
+      runs, every `collaborators` read 403s and the notification bell stays
+      empty.
+- [ ] `add_message_notifications.sql` — new. Interest and acceptance alerts
+      already fire via the existing `notify_on_connection` trigger; messages
+      were the gap. At most one unread message alert per conversation, so a
+      lively exchange does not become forty notifications.
+
+### Not done, and why
+
+- **Guardian mode (TRUST-03)** — depends on `collaborators`, which is broken
+  until the SQL above runs. Building against a path that cannot be exercised
+  would repeat the mistake this whole run has been correcting.
+- **Payments (WIRE-06)** — needs Stripe keys, a PayPal account, and an Indian
+  entity for Razorpay. None of that is mine to create.
+- **Community validation** — the family review. Not ours to finish.
+- **Meta Pixel** — now unblocked, but switching on a tracker is a decision, not
+  a task. Left for you.
+- **Baseline migration** — `profiles`, `connections`, `notifications` and
+  `photo_access` are still created by no migration. Needs a real `pg_dump`,
+  which needs database credentials I do not have.
