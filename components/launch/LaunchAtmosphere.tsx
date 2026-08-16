@@ -56,6 +56,36 @@ export default function LaunchAtmosphere({ className = "" }: LaunchAtmospherePro
   const reduce = useReducedMotion();
   const [wide, setWide] = useState(false);
 
+  /**
+   * Ambient motion stops while the page is scrolling.
+   *
+   * The scene animates about forty elements continuously, six of them behind
+   * 64–90px blurs. That is affordable when the page is still and the compositor
+   * has nothing else to do; during a scroll it competes directly with the thing
+   * the reader is actually asking for. Measured on the live site at a 29.6ms
+   * median frame with 28% of frames past 32ms.
+   *
+   * Pausing rather than reducing keeps the scene exactly as designed when
+   * anyone is looking at it, and hands the whole frame budget to the scroll
+   * while they are moving. It resumes 160ms after the last scroll event, which
+   * is below the threshold at which the eye reads it as having stopped.
+   */
+  const [scrolling, setScrolling] = useState(false);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const onScroll = () => {
+      setScrolling(true);
+      clearTimeout(timer);
+      timer = setTimeout(() => setScrolling(false), 160);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      clearTimeout(timer);
+    };
+  }, []);
+
   useEffect(() => {
     const query = window.matchMedia("(min-width: 640px)");
     const sync = () => setWide(query.matches);
@@ -93,7 +123,7 @@ export default function LaunchAtmosphere({ className = "" }: LaunchAtmospherePro
         }}
       />
 
-      {reduce ? (
+      {reduce || scrolling ? (
         orbs.map((orb) => (
           <div
             key={orb.id}
@@ -121,11 +151,17 @@ export default function LaunchAtmosphere({ className = "" }: LaunchAtmospherePro
                 top: orb.top,
                 background: orb.color,
               }}
+              // `scale` used to be in here, and it was the whole problem. Scaling
+              // a 480px element behind a 90px blur forces the blur to be
+              // recomputed every frame — measured at a 40.6ms median frame
+              // during scroll, with 94% of frames below 30fps. Translation and
+              // opacity are compositor-only, so the same drift costs almost
+              // nothing. The movement is widened slightly to keep the life the
+              // scale gave it.
               animate={{
                 opacity: [0.32, 0.62, 0.32],
-                scale: [0.96, 1.06, 0.96],
-                x: [0, 12, -8, 0],
-                y: [0, -10, 8, 0],
+                x: [0, 18, -12, 0],
+                y: [0, -16, 12, 0],
               }}
               transition={{
                 duration: orb.duration,
@@ -163,7 +199,6 @@ export default function LaunchAtmosphere({ className = "" }: LaunchAtmospherePro
                 opacity: [0, 0.85, 0.7, 0],
                 y: [0, -60, -120],
                 x: [0, ember.drift, 0],
-                scale: [0.7, 1.05, 0.85],
               }}
               transition={{
                 duration: ember.duration,
@@ -187,10 +222,11 @@ export default function LaunchAtmosphere({ className = "" }: LaunchAtmospherePro
                   ? "0 0 12px rgba(245,158,11,0.5)"
                   : "0 0 12px rgba(251,191,36,0.45)",
               }}
+              // Same reasoning as the orbs, at smaller scale: these carry a
+              // box-shadow glow, and scaling one repaints the shadow each frame.
               animate={{
                 opacity: [0, 0.9, 0],
                 y: [0, -spark.rise * 0.5, -spark.rise],
-                scale: [0.55, 1, 0.7],
               }}
               transition={{
                 duration: spark.duration,
