@@ -355,7 +355,7 @@ export default function LoginPage() {
                       <button
                         type="button"
                         onClick={() => { setView("forgot"); setError(null); }}
-                        className="-my-2 py-2 text-xs text-haldi-500 hover:text-haldi-400 transition-colors font-medium"
+                        className="-my-3 inline-flex min-h-[44px] items-center py-3 text-xs font-medium text-haldi-500 transition-colors hover:text-haldi-400"
                       >
                         Forgot password?
                       </button>

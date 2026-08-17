@@ -8,8 +8,28 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+
+/**
+ * The Supabase browser client is imported on demand rather than at module
+ * scope.
+ *
+ * This provider sits in the ROOT layout, so a static `import` put the whole
+ * ~198KB SDK into the first-paint bundle of every page — including the
+ * pre-launch landing page, where nobody is signed in and there is no shortlist
+ * to load. It was the largest thing on that page's critical path that the page
+ * had no use for.
+ *
+ * Loaded once, on first actual use, and cached.
+ */
+let clientPromise: Promise<ReturnType<typeof import("@/utils/supabase/client").createClient>> | null = null;
+
+function getSupabase() {
+  if (!clientPromise) {
+    clientPromise = import("@/utils/supabase/client").then((m) => m.createClient());
+  }
+  return clientPromise;
+}
 
 interface ShortlistContextValue {
   /** Set of shortlisted profile IDs — the single source of truth */
@@ -35,9 +55,9 @@ const ShortlistContext = createContext<ShortlistContextValue>({
 
 export function ShortlistProvider({ children }: { children: ReactNode }) {
   const [ids, setIds] = useState<Set<string>>(new Set());
-  const supabase = createClient();
 
   const refresh = useCallback(async () => {
+    const supabase = await getSupabase();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -55,7 +75,7 @@ export function ShortlistProvider({ children }: { children: ReactNode }) {
     if (data) {
       setIds(new Set(data.map((r: { profile_id: string }) => r.profile_id)));
     }
-  }, [supabase]);
+  }, []);
 
   // Fetch on mount + whenever the browser tab regains focus
   useEffect(() => {
@@ -67,6 +87,7 @@ export function ShortlistProvider({ children }: { children: ReactNode }) {
 
   const toggle = useCallback(
     async (profileId: string) => {
+      const supabase = await getSupabase();
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -114,11 +135,12 @@ export function ShortlistProvider({ children }: { children: ReactNode }) {
         toast.error("Could not update shortlist — please try again");
       }
     },
-    [ids, supabase]
+    [ids]
   );
 
   const remove = useCallback(
     async (profileId: string) => {
+      const supabase = await getSupabase();
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -143,7 +165,7 @@ export function ShortlistProvider({ children }: { children: ReactNode }) {
         toast.error("Could not remove from shortlist");
       }
     },
-    [supabase]
+    []
   );
 
   return (

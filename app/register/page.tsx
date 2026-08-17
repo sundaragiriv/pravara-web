@@ -75,7 +75,11 @@ export default async function RegisterPage() {
           <div className="mb-10 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 justify-self-start whitespace-nowrap text-[0.7rem] uppercase tracking-[0.28em] text-stone-400 transition-colors hover:text-haldi-300"
+              // min-h-[44px] and the negative margin keep the visual position
+              // while giving a thumb something to land on. The link was 17px
+              // tall, well under the 44px both Apple and Google call the
+              // minimum, and it is the only way back from this page.
+              className="-my-3 inline-flex min-h-[44px] items-center gap-2 justify-self-start whitespace-nowrap py-3 text-[0.7rem] uppercase tracking-[0.28em] text-stone-400 transition-colors hover:text-haldi-300"
             >
               <ArrowLeft className="h-4 w-4 shrink-0" />
               <span className="hidden sm:inline">Back to invitation</span>

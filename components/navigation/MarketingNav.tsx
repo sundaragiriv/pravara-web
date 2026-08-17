@@ -159,13 +159,13 @@ export default function MarketingNav({
                   <>
                     <Link
                       href="/membership"
-                      className="text-stone-400 hover:text-haldi-400 transition-colors duration-200"
+                      className="-my-3 inline-flex min-h-[44px] items-center py-3 text-stone-400 hover:text-haldi-400 transition-colors duration-200"
                     >
                       Membership
                     </Link>
                     <Link
                       href="/login"
-                      className="text-stone-400 hover:text-haldi-400 transition-colors duration-200"
+                      className="-my-3 inline-flex min-h-[44px] items-center py-3 text-stone-400 hover:text-haldi-400 transition-colors duration-200"
                     >
                       Login
                     </Link>
@@ -176,14 +176,14 @@ export default function MarketingNav({
                 <LaunchCtaLink
                   href="/register"
                   source="marketing-nav"
-                  className="bg-haldi-600 hover:bg-haldi-500 text-stone-950 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-200 hover:scale-105"
+                  className="bg-haldi-600 hover:bg-haldi-500 text-stone-950 px-5 min-h-[44px] inline-flex items-center rounded-full text-sm font-bold transition-all duration-200 hover:scale-105"
                 >
                   Register Free
                 </LaunchCtaLink>
               ) : (
                 <Link
                   href="/signup"
-                  className="bg-haldi-600 hover:bg-haldi-500 text-stone-950 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-200 hover:scale-105"
+                  className="bg-haldi-600 hover:bg-haldi-500 text-stone-950 px-5 min-h-[44px] inline-flex items-center rounded-full text-sm font-bold transition-all duration-200 hover:scale-105"
                 >
                   Join Free
                 </Link>

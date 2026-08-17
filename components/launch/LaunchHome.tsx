@@ -174,7 +174,7 @@ export default function LaunchHome({ isLoggedIn }: { isLoggedIn: boolean }) {
         {/* -my-2 py-2 grows the touch target to ~44px without moving anything
             visually — these are standalone nav links, not inline prose, so the
             WCAG 2.5.8 inline exception does not apply to them. */}
-        <div className="flex flex-wrap items-center justify-center gap-5 text-xs uppercase tracking-[0.2em] text-stone-400 [&>a]:-my-2 [&>a]:py-2">
+        <div className="flex flex-wrap items-center justify-center gap-5 text-xs uppercase tracking-[0.2em] text-stone-400 [&>a]:-my-3 [&>a]:inline-flex [&>a]:min-h-[44px] [&>a]:items-center">
           <Link href="/legal/privacy" className="transition-colors hover:text-stone-200">
             Privacy
           </Link>

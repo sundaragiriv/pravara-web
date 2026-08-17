@@ -143,17 +143,20 @@ export default function SupportPage() {
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
           <Link
             href="/"
-            className="flex items-center gap-2 text-sm text-stone-400 transition-colors hover:text-stone-100"
+            className="-my-3 flex min-h-[44px] items-center gap-2 py-3 text-sm text-stone-400 transition-colors hover:text-stone-100"
           >
             <ArrowLeft size={15} />
             Back to Home
           </Link>
-          <Link href="/" className="font-serif text-lg tracking-wide text-haldi-400">
+          <Link
+            href="/"
+            className="-my-3 inline-flex min-h-[44px] items-center py-3 font-serif text-lg tracking-wide text-haldi-400"
+          >
             Pravara
           </Link>
           <Link
             href="/membership"
-            className="text-sm text-stone-500 transition-colors hover:text-stone-300"
+            className="-my-3 inline-flex min-h-[44px] items-center py-3 text-sm text-stone-500 transition-colors hover:text-stone-300"
           >
             Membership
           </Link>
