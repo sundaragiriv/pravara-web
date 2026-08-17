@@ -344,7 +344,7 @@ export default function SupportPage() {
                         key={tier}
                         type="button"
                         onClick={() => setForm((prev) => ({ ...prev, tier }))}
-                        className={`flex-1 rounded-lg border py-2 text-xs font-medium transition-all ${
+                        className={`flex min-h-[44px] flex-1 items-center justify-center rounded-lg border py-2 text-xs font-medium transition-all ${
                           form.tier === tier
                             ? tier === "Gold"
                               ? "border-haldi-500/60 bg-haldi-500/10 text-haldi-400"
