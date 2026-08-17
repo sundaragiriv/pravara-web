@@ -25,11 +25,11 @@ export default async function Footer() {
         <div className="space-y-4">
           <Link href="/">
             <Image
-              src="/logo3.png"
+              src="/logo-mark.png"
               alt="Pravara"
               width={120}
               height={40}
-              className="object-contain [mix-blend-mode:lighten]"
+              className="object-contain"
             />
           </Link>
           <p className="leading-relaxed text-stone-500">

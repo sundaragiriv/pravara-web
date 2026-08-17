@@ -78,11 +78,11 @@ export default async function FoundingDashboardPage() {
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
           <Link href="/" className="flex items-center">
             <Image
-              src="/logo3.png"
+              src="/logo-mark.png"
               alt="Pravara"
               width={130}
               height={44}
-              className="object-contain [mix-blend-mode:lighten]"
+              className="object-contain"
               priority
             />
           </Link>

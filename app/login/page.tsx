@@ -175,10 +175,14 @@ export default function LoginPage() {
         {/* Logo fills the entire panel */}
         <div className="absolute inset-0 flex items-center justify-center p-16">
           <Image
-            src="/logo3.png"
+            src="/logo-mark.png"
             alt="Pravara"
             fill
-            className="object-contain [mix-blend-mode:lighten] p-16"
+            // Without `sizes`, next/image assumes the image spans the viewport
+            // and serves the largest candidate. This panel is half the screen
+            // and hidden entirely below lg.
+            sizes="(min-width: 1024px) 50vw, 0px"
+            className="object-contain p-16"
             priority
           />
         </div>
@@ -198,11 +202,13 @@ export default function LoginPage() {
           {/* Mobile logo */}
           <div className="lg:hidden flex justify-center mb-8">
             <Image
-              src="/logo3.png"
+              src="/logo-mark.png"
               alt="Pravara"
-              width={130}
-              height={44}
-              className="object-contain [mix-blend-mode:lighten]"
+              // 130x44 was a 2.95 ratio against a mark that is 1.438, so the
+              // browser kept its own and the declared height meant nothing.
+              width={182}
+              height={127}
+              className="h-16 w-auto object-contain"
               priority
             />
           </div>

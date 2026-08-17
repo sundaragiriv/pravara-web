@@ -132,11 +132,11 @@ export default function DashboardSubNav({
         {/* ── Logo ── */}
         <Link href="/dashboard" aria-label="Pravara — Dashboard" className="flex-shrink-0">
           <Image
-            src="/logo3.png"
+            src="/logo-mark.png"
             alt="Pravara"
             width={110}
             height={38}
-            className="object-contain [mix-blend-mode:lighten] hover:brightness-110 transition-all duration-300"
+            className="object-contain hover:brightness-110 transition-all duration-300"
             priority
           />
         </Link>

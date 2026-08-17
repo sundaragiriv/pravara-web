@@ -591,8 +591,8 @@ export default function Onboarding() {
         {/* Header */}
         <div className="h-16 px-5 flex items-center justify-between border-b border-stone-800 bg-stone-950/95 backdrop-blur shrink-0">
           <Link href="/" aria-label="Pravara">
-            <Image src="/logo3.png" alt="Pravara" width={96} height={32}
-              className="object-contain [mix-blend-mode:lighten] hover:brightness-110 transition-all" priority />
+            <Image src="/logo-mark.png" alt="Pravara" width={138} height={96}
+              className="object-contain hover:brightness-110 transition-all" priority />
           </Link>
           <div className="flex items-center gap-3">
             <NaradaAvatar size="sm" />

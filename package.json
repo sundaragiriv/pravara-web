@@ -16,6 +16,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "db:drift": "node scripts/check-schema-drift.mjs",
+    "logo:build": "node scripts/make-transparent-logo.mjs",
     "db:snapshot": "node scripts/dump-schema.mjs",
     "db:baseline": "node scripts/build-baseline-migration.mjs",
     "seed:photos": "node scripts/seed-dev-photos.mjs",

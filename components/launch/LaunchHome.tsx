@@ -66,12 +66,12 @@ export default function LaunchHome({ isLoggedIn }: { isLoggedIn: boolean }) {
               className="pointer-events-none absolute left-1/2 top-1/2 h-[230px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-haldi-500/[0.10] blur-[90px]"
             />
             <Image
-              src="/logo3.png"
+              src="/logo-mark.png"
               alt="Pravara — Modern Heritage Matrimony"
               width={300}
               height={120}
               priority
-              className="relative h-auto w-[220px] object-contain [mix-blend-mode:lighten] short:w-[150px] md:w-[270px] md:short:w-[170px]"
+              className="relative h-auto w-[220px] object-contain short:w-[150px] md:w-[270px] md:short:w-[170px]"
             />
           </div>
 

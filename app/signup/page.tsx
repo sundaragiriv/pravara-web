@@ -34,10 +34,10 @@ export default async function SignupPage({
         <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-kumkum-900/15 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute inset-0 flex items-center justify-center p-16">
           <Image
-            src="/logo3.png"
+            src="/logo-mark.png"
             alt="Pravara"
             fill
-            className="object-contain [mix-blend-mode:lighten] p-16"
+            className="object-contain p-16"
             priority
           />
         </div>

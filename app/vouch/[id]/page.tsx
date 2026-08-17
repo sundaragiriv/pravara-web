@@ -22,11 +22,11 @@ export default async function VouchPage({
 
       <Link href="/" className="relative mb-8">
         <Image
-          src="/logo3.png"
+          src="/logo-mark.png"
           alt="Pravara"
           width={130}
           height={44}
-          className="object-contain [mix-blend-mode:lighten]"
+          className="object-contain"
           priority
         />
       </Link>
