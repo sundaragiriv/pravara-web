@@ -41,12 +41,12 @@ export default async function Footer() {
           <h4 className="text-xs font-bold uppercase tracking-widest text-stone-100">Company</h4>
           <ul className="space-y-2 text-stone-500">
             <li>
-              <Link href="/about" className="transition-colors hover:text-haldi-500">
+              <Link href="/about" prefetch={false} className="transition-colors hover:text-haldi-500">
                 About Pravara
               </Link>
             </li>
             <li>
-              <Link href="/about#values" className="transition-colors hover:text-haldi-500">
+              <Link href="/about#values" prefetch={false} className="transition-colors hover:text-haldi-500">
                 Our Values
               </Link>
             </li>
@@ -65,12 +65,12 @@ export default async function Footer() {
           <h4 className="text-xs font-bold uppercase tracking-widest text-stone-100">Legal</h4>
           <ul className="space-y-2 text-stone-500">
             <li>
-              <Link href="/legal/privacy" className="transition-colors hover:text-haldi-500">
+              <Link href="/legal/privacy" prefetch={false} className="transition-colors hover:text-haldi-500">
                 Privacy Policy
               </Link>
             </li>
             <li>
-              <Link href="/legal/terms" className="transition-colors hover:text-haldi-500">
+              <Link href="/legal/terms" prefetch={false} className="transition-colors hover:text-haldi-500">
                 Terms of Service
               </Link>
             </li>
@@ -78,12 +78,12 @@ export default async function Footer() {
                 reachable from every page — hence the footer rather than a
                 settings screen. */}
             <li>
-              <Link href="/legal/do-not-sell" className="transition-colors hover:text-haldi-500">
+              <Link href="/legal/do-not-sell" prefetch={false} className="transition-colors hover:text-haldi-500">
                 Do Not Sell or Share My Personal Information
               </Link>
             </li>
             <li>
-              <Link href="/legal/trust" className="transition-colors hover:text-haldi-500">
+              <Link href="/legal/trust" prefetch={false} className="transition-colors hover:text-haldi-500">
                 Trust & Safety
               </Link>
             </li>
@@ -92,7 +92,7 @@ export default async function Footer() {
 
         <div className="space-y-3">
           <h4 className="text-xs font-bold uppercase tracking-widest text-stone-100">Connect</h4>
-          <Link href="/support" className="block text-stone-500 transition-colors hover:text-haldi-500">
+          <Link href="/support" prefetch={false} className="block text-stone-500 transition-colors hover:text-haldi-500">
             Support Center
           </Link>
           <Link href="/faq" className="block text-stone-500 transition-colors hover:text-haldi-500">

@@ -86,6 +86,25 @@ export default function LaunchAtmosphere({ className = "" }: LaunchAtmospherePro
     };
   }, []);
 
+  /**
+   * Nothing animates while the tab is in the background.
+   *
+   * Thirty-nine infinite animations kept running when the page was not on
+   * screen, draining a phone in a pocket for a scene nobody was looking at.
+   * Browsers throttle background rAF but do not stop compositor animations, so
+   * this has to be said explicitly.
+   *
+   * Unlike the frame-rate work, this needs no measurement to justify: animating
+   * a hidden page is simply wrong.
+   */
+  const [hidden, setHidden] = useState(false);
+
+  useEffect(() => {
+    const onVisibility = () => setHidden(document.hidden);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
   useEffect(() => {
     const query = window.matchMedia("(min-width: 640px)");
     const sync = () => setWide(query.matches);
@@ -123,7 +142,7 @@ export default function LaunchAtmosphere({ className = "" }: LaunchAtmospherePro
         }}
       />
 
-      {reduce || scrolling ? (
+      {reduce || scrolling || hidden ? (
         orbs.map((orb) => (
           <div
             key={orb.id}
