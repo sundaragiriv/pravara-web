@@ -77,12 +77,20 @@ export default function MarketingNav({
           className="flex items-center group"
           aria-label="Pravara - Modern Heritage Matrimony"
         >
+          {/* width/height must match the file's own 3:2, or the browser keeps
+              the intrinsic ratio and ignores the shorter number. It was set to
+              160x54 against a 1536x1024 image, so 160 wide forced 107 tall
+              inside an 80px bar — the mark sat 13px above the viewport and was
+              clipped by the top of the screen.
+
+              Height is now the constrained dimension, since the bar's height is
+              the real limit, and width follows. */}
           <Image
             src="/logo3.png"
             alt="Pravara - Modern Heritage Matrimony"
-            width={160}
-            height={54}
-            className="object-contain [mix-blend-mode:lighten] group-hover:brightness-110 transition-all duration-300"
+            width={240}
+            height={160}
+            className="h-14 w-auto object-contain [mix-blend-mode:lighten] transition-all duration-300 group-hover:brightness-110"
             priority
           />
         </Link>

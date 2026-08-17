@@ -37,7 +37,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      // Browser extensions write attributes onto <html> before React hydrates
+      // — Scribe's `data-scribe-recorder-ready` is one — and React reports the
+      // difference as a hydration mismatch that reads like an application bug.
+      // <body> was already suppressed for the same reason; <html> was not.
+      suppressHydrationWarning
+    >
       <body
         className={`${inter.variable} ${playfair.variable} font-sans bg-stone-950 text-stone-50 antialiased`}
         suppressHydrationWarning

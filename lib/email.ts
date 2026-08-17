@@ -3,7 +3,7 @@ import "server-only";
 import { Resend } from "resend";
 import type { LaunchRegistrationRequest, SupportRequest } from "@/lib/api-schemas";
 import { getSiteUrl } from "@/lib/env";
-import { founderWelcomeEmail, profileReminderEmail } from "@/lib/email-templates";
+import { founderWelcomeEmail, guardianInviteEmail, profileReminderEmail } from "@/lib/email-templates";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -139,5 +139,29 @@ export async function sendProfileReminderEmail(input: { email: string; full_name
     subject: reminder.subject,
     html: reminder.html,
     text: reminder.text,
+  });
+}
+
+export async function sendGuardianInviteEmail(input: {
+  email: string;
+  inviterName: string;
+  role: string;
+}) {
+  if (!resend || !emailFrom) return;
+
+  const invite = guardianInviteEmail({
+    inviterName: input.inviterName,
+    role: input.role,
+    ctaUrl: `${getSiteUrl()}/kutumba`,
+    contactEmail: supportInbox,
+  });
+
+  await resend.emails.send({
+    from: emailFrom,
+    to: input.email,
+    replyTo: supportInbox,
+    subject: invite.subject,
+    html: invite.html,
+    text: invite.text,
   });
 }

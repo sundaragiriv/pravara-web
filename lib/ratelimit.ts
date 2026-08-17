@@ -77,6 +77,10 @@ export const RATE_LIMITS = {
   launchRegister: { key: "launch-register", requests: 8, window: "10 m" },
   vouch: { key: "vouch", requests: 5, window: "10 m" },
   launchAnalytics: { key: "launch-analytics", requests: 80, window: "10 m" },
+  // Generous on purpose. Blocking and reporting are things a distressed member
+  // may do several times in a row, and a rate limit that gets in the way of
+  // someone trying to protect themselves is the wrong trade.
+  safety: { key: "safety", requests: 30, window: "10 m" },
 } satisfies Record<string, RateLimitPreset>;
 
 export function getClientIP(request: Request): string {

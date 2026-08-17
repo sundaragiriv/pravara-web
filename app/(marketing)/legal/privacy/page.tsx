@@ -161,7 +161,7 @@ export default async function PrivacyPage() {
                   "Know — what personal information we have collected about you, where it came from, why we collected it, and who we disclosed it to.",
                   "Delete — ask us to erase the personal information we hold about you.",
                   "Correct — ask us to fix personal information that is inaccurate.",
-                  "Opt out of sale or sharing — we do not sell or share personal information, so there is nothing to opt out of today. If that ever changes we will add a “Do Not Sell or Share My Personal Information” link before it does.",
+                  "Opt out of sale or sharing — we do not sell or share personal information, so there is nothing to opt out of today. The control exists anyway, at /legal/do-not-sell, so your choice is recorded now and honoured if that ever changes. We also honour Global Privacy Control.",
                   "Limit the use of sensitive personal information — we use Gothra, community, and Vedic data only to calculate compatibility and enforce exogamy rules, which is the purpose you gave it to us for. We do not use it to infer characteristics about you.",
                   "Non-discrimination — we will not deny service, change prices, or reduce quality because you exercised any of these rights.",
                 ].map((item) => (

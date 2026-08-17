@@ -13,6 +13,14 @@ import {
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import AvatarUpload from '@/components/AvatarUpload';
+import { GothraPicker, CommunityPicker, NakshatraPicker } from "@/components/LineagePickers";
+
+/**
+ * The admin review queue now exists at /admin/verification, so it is honest to
+ * ask for a document again: a person looks at it, a decision is recorded, and
+ * the scan is deleted at that moment rather than kept.
+ */
+const VERIFICATION_QUEUE_LIVE = true;
 
 // ── Nakshatra → Raasi auto-fill map ──────────────────────────────────────────
 const NAKSHATRA_RAASI: Record<string, string> = {
@@ -323,13 +331,22 @@ export default function EditProfilePage() {
             return;
         }
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-            const { error } = await supabase.from('collaborators').insert({
-                user_id: user.id, collaborator_email: inviteEmail, role: inviteRole, status: 'pending'
+            // Goes through the API so an email is actually sent. Inserting from
+            // here told the member "Invite sent!" while sending nothing, and the
+            // invitation sat unseen unless they happened to open Kutumba.
+            const response = await fetch('/api/collaborators/invite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
             });
-            if (error) throw error;
-            toast.success(`Invite sent to ${inviteEmail}!`);
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Could not send that invitation.');
+
+            toast.success(
+                result.emailed === false
+                    ? `Invitation created for ${inviteEmail}. We could not email them — ask them to open Kutumba.`
+                    : `Invitation emailed to ${inviteEmail}.`
+            );
             setCollaborators(prev => [{ collaborator_email: inviteEmail, role: inviteRole, status: 'pending', id: crypto.randomUUID() }, ...prev]);
             setIsInviting(false);
             setInviteEmail("");
@@ -473,25 +490,47 @@ export default function EditProfilePage() {
                                      formData.varaahi_status === 'pending_verification' ? 'PENDING' : 'UNVERIFIED'}
                                 </span>
                             </div>
-                            <p className="relative z-10 text-xs text-stone-500 mb-4 leading-relaxed max-w-[90%]">
-                                Upload Government ID to activate the <strong className="text-haldi-500">Varaahi Shield</strong> and get the Verified Badge.
-                            </p>
-                            <div className="relative z-10">
-                                <button className={`w-full py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 transition-all ${
-                                     formData.varaahi_status === 'verified'
-                                     ? 'bg-green-900/20 border-green-800 text-green-500 cursor-default'
-                                     : 'bg-stone-950 border-stone-800 text-stone-400 hover:border-haldi-500 hover:text-haldi-500'
-                                }`}>
-                                    {uploadingID ? <Loader2 className="animate-spin" size={14} /> :
-                                     formData.varaahi_status === 'verified' ? <CheckCircle size={14} /> : <Upload size={14} />}
-                                    {uploadingID ? "Uploading Securely…" :
-                                     formData.varaahi_status === 'verified' ? "Identity Verified" :
-                                     formData.varaahi_status === 'pending_verification' ? "Verification In Progress" : "Upload ID Document"}
-                                </button>
-                                {formData.varaahi_status !== 'verified' && (
-                                    <input type="file" accept="image/*,.pdf" onChange={handleVaraahiUpload} disabled={uploadingID} className="absolute inset-0 opacity-0 cursor-pointer" />
-                                )}
-                            </div>
+                            {/* The upload is deliberately withheld until the
+                                admin review queue exists. It used to write
+                                govt_id_url, set varaahi_status to
+                                pending_verification, and stop — nothing ever read
+                                that status, and the admin console's is_verified
+                                toggle was a separate switch the upload never
+                                touched. So members handed over government identity
+                                documents, saw "Verification In Progress", and
+                                waited on a process that did not exist. Collecting
+                                ID nobody reviews is worse than not collecting it.
+
+                                Restore this once TRUST-04 ships. Keep
+                                handleVaraahiUpload — it is the working half. */}
+                            {VERIFICATION_QUEUE_LIVE ? (
+                                <>
+                                    <p className="relative z-10 text-xs text-stone-500 mb-4 leading-relaxed max-w-[90%]">
+                                        Upload Government ID to activate the <strong className="text-haldi-500">Varaahi Shield</strong> and get the Verified Badge.
+                                    </p>
+                                    <div className="relative z-10">
+                                        <button className={`w-full py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 transition-all ${
+                                             formData.varaahi_status === 'verified'
+                                             ? 'bg-green-900/20 border-green-800 text-green-500 cursor-default'
+                                             : 'bg-stone-950 border-stone-800 text-stone-400 hover:border-haldi-500 hover:text-haldi-500'
+                                        }`}>
+                                            {uploadingID ? <Loader2 className="animate-spin" size={14} /> :
+                                             formData.varaahi_status === 'verified' ? <CheckCircle size={14} /> : <Upload size={14} />}
+                                            {uploadingID ? "Uploading Securely…" :
+                                             formData.varaahi_status === 'verified' ? "Identity Verified" :
+                                             formData.varaahi_status === 'pending_verification' ? "Verification In Progress" : "Upload ID Document"}
+                                        </button>
+                                        {formData.varaahi_status !== 'verified' && (
+                                            <input type="file" accept="image/*,.pdf" onChange={handleVaraahiUpload} disabled={uploadingID} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <p className="relative z-10 text-xs text-stone-500 leading-relaxed max-w-[90%]">
+                                    Identity verification opens shortly. We will ask for your ID once
+                                    there is someone ready to review it — not before.
+                                </p>
+                            )}
                         </div>
 
                         {/* IDENTITY & BIO */}
@@ -606,14 +645,28 @@ export default function EditProfilePage() {
                                     <InputGroup label="Place of Birth" name="birth_place" value={formData.birth_place} onChange={handleChange} placeholder="City, State" />
                                 </div>
 
+                                {/* Gothra, community and Nakshatra were free-text
+                                inputs. All three feed the compatibility engine
+                                — Gothra decides whether a match is permitted at
+                                all — and free text meant a dozen spellings of
+                                one lineage, none of which compare equal. */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-                                    <InputGroup label="Gothra" name="gothra" value={formData.gothra} onChange={handleChange} placeholder="e.g. Kashyap" />
-                                    <InputGroup label="Sub Community" name="sub_community" value={formData.sub_community} onChange={handleChange} placeholder="e.g. Iyer / Smartha" />
-                                    <InputGroup label="Pravara (Optional)" name="pravara" value={formData.pravara} onChange={handleChange} placeholder="e.g. Trayarshreya" />
+                                    <GothraPicker
+                                        value={formData.gothra}
+                                        onChange={(next) => setFormData((prev: any) => ({ ...prev, gothra: next }))}
+                                    />
+                                    <CommunityPicker
+                                        value={formData.sub_community}
+                                        onChange={(next) => setFormData((prev: any) => ({ ...prev, sub_community: next }))}
+                                    />
+                                    <InputGroup label="Pravara (Optional)" name="pravara" value={formData.pravara} onChange={handleChange} placeholder="e.g. Angirasa - Barhaspatya - Bharadwaja" />
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-                                    <InputGroup label="Nakshatra" name="nakshatra" value={formData.nakshatra} onChange={handleChange} placeholder="e.g. Rohini" />
+                                    <NakshatraPicker
+                                        value={formData.nakshatra}
+                                        onChange={(next) => handleChange({ target: { name: "nakshatra", value: next } } as any)}
+                                    />
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] uppercase font-bold text-stone-500 tracking-wider">
                                             Raasi (Moon Sign)

@@ -113,8 +113,18 @@ export default function LaunchHome({ isLoggedIn }: { isLoggedIn: boolean }) {
           </div>
         </section>
 
-        {/* Trust layer — the hero is an invitation; this is the reason to accept it. */}
-        <section className="mx-auto w-full max-w-4xl border-t border-stone-900 pb-20 pt-20">
+        {/* Trust layer — the hero is an invitation; this is the reason to accept it.
+
+            The section break is drawn as a thread that dissolves at both ends
+            rather than a `border-t`. A hard rule butting into the page edges was
+            the only straight line in a composition otherwise made of glow and
+            gold, so it read as a wireframe divider — and it sat directly under
+            the hero, which is the last place the eye should find one. */}
+        <section className="relative mx-auto w-full max-w-4xl pb-20 pt-20">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(251,191,36,0.16)_28%,rgba(251,191,36,0.28)_50%,rgba(251,191,36,0.16)_72%,transparent)]"
+          />
           {/* Personal, not geographic. A country list dates fast and tells a
               visitor nothing about themselves; gotra is an insider signal that
               lands the same way in New Jersey, Toronto, Dubai, or Hyderabad. */}

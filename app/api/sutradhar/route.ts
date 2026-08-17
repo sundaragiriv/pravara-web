@@ -3,7 +3,14 @@ import OpenAI from "openai";
 
 import { sutradharRequestSchema } from "@/lib/api-schemas";
 import { RATE_LIMITS, enforceRateLimit } from "@/lib/ratelimit";
-import { sanitizePlainText, sanitizeProfileValue } from "@/lib/sanitize";
+import { sanitizePlainText } from "@/lib/sanitize";
+import { SUTRADHAR_FACTS, SUTRADHAR_RULES } from "@/lib/sutradhar-facts";
+import {
+  EDITABLE_FIELDS,
+  FIELD_LABELS,
+  checkFieldValue,
+  isEditableField,
+} from "@/lib/sutradhar-fields";
 import { createClient } from "@/utils/supabase/server";
 
 // Lazy so the client isn't constructed at build time (Next "collecting page
@@ -14,51 +21,33 @@ function getOpenAI() {
   return _openai;
 }
 
-const ALLOWED_UPDATE_FIELDS = new Set([
-  "bio",
-  "profession",
-  "education",
-  "location",
-  "gothra",
-  "nakshatra",
-  "sub_community",
-  "diet",
-  "height",
-  "weight",
-  "employer",
-  "visa_status",
-]);
+/**
+ * Bounds the reply. Without it, output length — and cost — is unbounded, and a
+ * prompt-injection attempt that asks for ten thousand words simply gets them.
+ */
+const MAX_REPLY_TOKENS = 500;
 
 const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
   {
     type: "function",
     function: {
-      name: "update_profile",
-      description: "Update a specific field in the user's matrimonial profile database.",
+      // Named for what it does. The old name was update_profile and it wrote
+      // straight to the database, so the model's own sense of the tool matched
+      // the danger rather than the intent.
+      name: "propose_profile_update",
+      description:
+        "Propose a change to one field of the member's own profile. This does NOT save anything — it shows the member the change so they can confirm it. Only call this when the member has actually told you the new value.",
       parameters: {
         type: "object",
         properties: {
           field: {
             type: "string",
-            enum: [
-              "bio",
-              "profession",
-              "education",
-              "location",
-              "gothra",
-              "nakshatra",
-              "sub_community",
-              "diet",
-              "height",
-              "weight",
-              "employer",
-              "visa_status",
-            ],
-            description: "The database column to update.",
+            enum: [...EDITABLE_FIELDS],
+            description: "The profile field to change.",
           },
           value: {
             type: "string",
-            description: "The new value to write to the database.",
+            description: "The new value, exactly as the member gave it.",
           },
         },
         required: ["field", "value"],
@@ -69,7 +58,8 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
     type: "function",
     function: {
       name: "search_matches",
-      description: "Search for other user profiles based on criteria like profession, age, gothra, or location.",
+      description:
+        "Search other member profiles by profession, gothra, location or age range.",
       parameters: {
         type: "object",
         properties: {
@@ -113,24 +103,34 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid request payload" }, { status: 400 });
     }
 
-    const { message, contextPath } = payload.data;
+    const { message, contextPath, history } = payload.data;
     const sanitizedMessage = sanitizePlainText(message);
     const sanitizedContextPath = sanitizePlainText(contextPath || "/");
 
-    const systemPrompt = `
-      You are "Sutradhar", the intelligent agent for Pravara Matrimony.
-      Context: User is currently on ${sanitizedContextPath}.
+    // Facts first, then rules, then where the member is standing. The rules
+    // reference the facts ("answer only from the above"), so the order matters.
+    const systemPrompt = [
+      SUTRADHAR_FACTS,
+      "",
+      SUTRADHAR_RULES,
+      "",
+      `The member is currently on the page ${sanitizedContextPath}.`,
+    ].join("\n");
 
-      RULES:
-      - If the user asks to change or update their profile, use the "update_profile" tool.
-      - If the user asks for advice, answer normally.
-      - Be polite, Vedic, and concise.
-    `;
+    const priorTurns = history.map((turn) => ({
+      role: turn.role,
+      content: sanitizePlainText(turn.content),
+    }));
 
     const completion = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
+      // Low but not zero. This is a factual assistant reading from a fixed pack;
+      // invention is the failure mode we are designing against, not dullness.
+      temperature: 0.3,
+      max_tokens: MAX_REPLY_TOKENS,
       messages: [
         { role: "system", content: systemPrompt },
+        ...priorTurns,
         { role: "user", content: sanitizedMessage },
       ],
       tools,
@@ -148,41 +148,53 @@ export async function POST(request: Request) {
       return NextResponse.json({ reply: "I received an unexpected response format." });
     }
 
-    if (toolCall.function.name === "update_profile") {
-      const args = JSON.parse(toolCall.function.arguments) as { field?: string; value?: string };
+    if (toolCall.function.name === "propose_profile_update") {
+      let args: { field?: string; value?: string };
+      try {
+        args = JSON.parse(toolCall.function.arguments);
+      } catch {
+        return NextResponse.json({ reply: "I could not read that change. Could you say it again?" });
+      }
 
-      if (!args.field || !ALLOWED_UPDATE_FIELDS.has(args.field)) {
+      const field = args.field ?? "";
+      if (!isEditableField(field)) {
         return NextResponse.json({
-          reply: `I cannot update the field "${args.field ?? "unknown"}". Please ask me to update a valid profile field.`,
+          reply: `I cannot change "${field || "that"}" from here. You can edit it in your profile.`,
         });
       }
 
-      const cleanValue = sanitizeProfileValue(args.value ?? "");
-      const { error } = await supabase
-        .from("profiles")
-        .update({ [args.field]: cleanValue })
-        .eq("id", user.id);
-
-      if (error) {
-        console.error("Sutradhar DB Error:", error);
-        return NextResponse.json({
-          reply: "I tried to update your profile, but the stars were not aligned.",
-        });
+      const checked = checkFieldValue(field, args.value ?? "");
+      if (!checked.ok) {
+        // Refusals for the constrained fields carry their own explanation —
+        // they are the interesting case and deserve to be read, not swallowed.
+        return NextResponse.json({ reply: checked.reason });
       }
 
+      // Nothing is written here. The proposal goes back for the member to
+      // confirm, and only /api/sutradhar/confirm touches the database.
       return NextResponse.json({
-        reply: `Done. I updated your ${args.field} to "${String(cleanValue)}".`,
+        reply: `Shall I set your ${FIELD_LABELS[field]} to this?`,
+        proposal: {
+          field,
+          value: checked.value,
+          label: FIELD_LABELS[field],
+        },
       });
     }
 
     if (toolCall.function.name === "search_matches") {
-      const args = JSON.parse(toolCall.function.arguments) as {
+      let args: {
         profession?: string;
         gothra?: string;
         location?: string;
         min_age?: number;
         max_age?: number;
       };
+      try {
+        args = JSON.parse(toolCall.function.arguments);
+      } catch {
+        return NextResponse.json({ reply: "I could not read those search terms." });
+      }
 
       let query = supabase
         .from("profiles")
@@ -197,15 +209,15 @@ export async function POST(request: Request) {
 
       const { data: matches, error } = await query.limit(5);
       if (error) {
-        console.error("Search Error:", error);
+        console.error("Sutradhar search error:", error.message);
         return NextResponse.json({
-          reply: "I tried to look for matches, but my vision is clouded.",
+          reply: "I could not run that search just now. Please try again in a moment.",
         });
       }
 
       if (!matches?.length) {
         return NextResponse.json({
-          reply: "I searched far and wide, but found no profiles matching those criteria.",
+          reply: "I did not find any profiles matching those criteria.",
         });
       }
 
@@ -217,20 +229,20 @@ export async function POST(request: Request) {
             profession: string | null;
             location: string | null;
           }) =>
-            `- ${match.full_name} (${match.age || "N/A"}, ${match.profession || "N/A"}, ${match.location || "N/A"})`
+            `- ${match.full_name} (${match.age || "age not given"}, ${match.profession || "profession not given"}, ${match.location || "location not given"})`
         )
         .join("\n");
 
       return NextResponse.json({
-        reply: `Here are the matches I found for you:\n\n${resultString}\n\nShall I send a connection request to any of them?`,
+        reply: `Here is what I found:\n\n${resultString}`,
       });
     }
 
     return NextResponse.json({ reply: "I am not sure how to do that yet." });
   } catch (error) {
-    console.error("Sutradhar Brain Error:", error);
+    console.error("Sutradhar error:", error instanceof Error ? error.message : String(error));
     return NextResponse.json(
-      { reply: "My connection to the divine cloud is interrupted." },
+      { reply: "I could not reach the assistant just now. Please try again in a moment." },
       { status: 500 }
     );
   }

@@ -69,6 +69,30 @@ US / Canada / India.
 
 ---
 
+## P0b — Exogamy correctness (found 2026-08-16)
+
+The gotra block is described in our own FAQ as "a core, non-negotiable feature".
+It is currently wrong in four ways, all verified against the code. A wrong
+marriage recommendation is the most serious error this product can make, so these
+sit above everything except things already live and wrong.
+
+| ID | Item | Evidence | Status |
+| --- | --- | --- | --- |
+| EXO-01 | Exogamy check ignores pravara entirely | `isSagothra()` (`utils/matchEngine.ts:352`) compares `gothra_id` only. Traditional practice blocks on rishi-set overlap. Our own data proves the gap: `bharadwaja` pravara is *Angirasa-Barhaspatya-Bharadwaja*; `gargya` is *Angirasa-Barhaspatya-Bharadwaja-Sainya-Gargya*. Bharadwaja's entire pravara sits inside Gargya's — traditionally prohibited, and we recommend the match. Same for Kashyapa vs Sandilya (2 of 3 rishis shared). | `todo` |
+| EXO-02 | Fail-open when gotra is missing | `isSagothra` returns `false` — i.e. *not sagotra*, i.e. approved — when either side has no gotra. A check billed as non-negotiable must fail closed or surface as unknown. | `todo` |
+| EXO-03 | `koushika` alt-name collision swaps lineages | `'koushika'` appears in `altNames` of **both** Kaundinya (id 9) and Kaushika (id 16) in `utils/community-data.ts`. `findGothra` uses `.find()`, so it always resolves to Kaundinya. Different primary lineages, different pravaras — a Kaushika user is silently stored as Kaundinya. | `todo` |
+| EXO-04 | Pravara lookup fails for 21 of 30 gotras | Two divergent sources: `lib/vedicData.ts` holds 15 gotras, `utils/community-data.ts` holds 30, keyed differently. `Vasishtha`→`vashishta`, `Parasara`→`parashara`, `Garga`→`gargya`, `Harita`→`harithasa`, `Kaushika`→`kausika`, `Upamanya`→`upamanyu` all miss. `isPravaraValidForGothra` returns `false` on a miss, so it **rejects valid input** for 70% of the list. | `todo` |
+| EXO-05 | The 30-gotra list mixes three different tiers | `Naidhruva` (id 30) is listed as a peer gotra but is a *pravara rishi of Kashyapa* — per our own `vedicData.ts`. `Angirasa` (id 18) is a primary lineage, not a sibling of Bharadwaja. Marichi, Pulaha, Pulastya, Kratu are Prajapati-level. Two people can be flagged "different gotra" when one entry is literally the other's ancestor. | `todo` |
+| EXO-06 | **Decision:** should the block be overridable? | Sagotra marriage is legal — validated by the Hindu Marriage Disabilities Removal Act 1946, carried into s.29(1) of the Hindu Marriage Act 1955. Our block is a cultural preference enforced on families' behalf, not a legal requirement. Argues for a clearly-labelled, overridable setting rather than a silent hard filter. | `todo` — **yours** |
+
+Sizing: the practical gotra list runs to **~400+** (a Kanchi Kamakoti–approved
+compilation lists 421). A survey of 3,507 Tamil Iyer matrimonial advertisements
+found 51 distinct gotras in actual use, with Bharadwaja at 19.5%. So ~50 covers
+the bulk and the tail is hundreds long — our 30 guarantees silent misses.
+Recommended: searchable autocomplete over the full list, plus a "not listed"
+free-text fallback that marks the profile *gotra unverified* and excludes it from
+the auto-block guarantee rather than silently passing it.
+
 ## P1 — Gates the marketing push
 
 Do not drive traffic until these are done. Sending people to a funnel whose
@@ -201,3 +225,196 @@ Verified on `pravara.ai`. Newest first.
 | 2026-07-30 | P0 code complete. DATA-02 withdrawn (already existed). country column applied to dev by Raj; prod SQL still pending. pravara-dev seeded with 120 profiles + admin account. |
 | 2026-07-30 | **P0 closed.** country migration applied to production, drift check clean, country selector verified live. |
 | 2026-07-31 | Email pipeline live: domain verified, keys wired, founder welcome delivered. Rebranded to site palette with a hosted logo. Found care@pravara.ai has no mailbox and DMARC is missing. MOB-02/04 done. |
+| 2026-08-16 | Gotra research returned four verified correctness bugs in the exogamy check, not just missing data. Added as P0b. |
+
+### P0b additions from the taxonomy research (2026-08-16)
+
+- [x] **DATA-03** `utils/community-data.ts` listed `'chitragupta'` as a Chitpavan
+      alias. Chitragupta is the **Kayastha** divine progenitor. Removed.
+- [x] **DATA-04** Gaur described as "From Gaud (Bengal/UP) region - highly
+      respected lineage". Bengal derivation is disputed folk etymology; the
+      praise ranks a community in user-facing copy. Rewritten.
+- [x] **DATA-05** `VEDIC_HIERARCHY_GUIDE.md` listed Pancha Gauda as six
+      divisions, dropped Utkala, added Saryupareen (a sub-caste of Kanyakubja)
+      and Kashmiri Pandit (who are Saraswat). Corrected.
+- [ ] **EXO-07** Ten colliding `altNames` across communities: `vaidiki`,
+      `vaidika`, `smartha`, `havyaka`, `hoysala karnataka`, `saraswat`,
+      `mulakanadu`, `koushika`, `shandilya`, `shaunaka`. `findCommunity` uses
+      `.find()`, so each silently resolves to whichever entry was declared
+      first. Same defect class as the `koushika` gotra bug. Resolve within the
+      selected language; make a genuinely ambiguous string ask, not guess.
+- [ ] **EXO-08** No fuzzy matching on community names, anywhere. `Hali` is a
+      Scheduled Caste in Himachal and a slur in Kumaon; `Halbaha` is a Brahmin
+      group one character away. Bridging them would assign a wrong caste status,
+      which touches reservation entitlement. Exact match or explicit selection.
+- [ ] **EXO-09** Block-list of derisive terms, never stored and never suggested:
+      Khasa, Khasiya, Khasia, Khas Brahmin, Pitali, Hali, Nan-dhoti, Agradani,
+      Mahabrahmin, Kattaha, Ghatiya, Jugi. Accept silently in free text if a
+      user types one; never offer.
+- [ ] **EXO-10** Bengal needs two fields, not one: territorial division (Rarhi,
+      Varendra, Vaidik...) and Kulin rank (Kulin/Shrotriya/Vangaja; Kap for
+      Varendra). They are orthogonal. Rank optional, never required.
+- [ ] **EXO-11** Four communities need neutral top-level entries rather than
+      nesting under Brahmin: Bhumihar, Tyagi, Rajpurohit, Anavil. Each has a
+      live dispute; nesting or omitting both take a side.
+- [ ] **EXO-12** Free-text "Other / not listed" escape hatch on every community
+      field, plus "prefer not to say". A fixed list will miss real
+      self-identifications, and many users genuinely do not know their subcaste.
+
+## Post-P0b: the four topics (16 Aug 2026)
+
+Full audit published as an artifact; findings summarised here so the repo carries
+the actionable list.
+
+### Blocking the member app opening
+
+- [x] **SAFE-01** ~~No block, report, mute or abuse queue exists anywhere.~~
+      **DEPLOYED 16 Aug 2026.** Blocks and reports tables with RLS in dev and
+      prod, silent symmetric blocking, block enforced at the database via
+      `is_blocked_between()`, report-blocks-by-default, admin queue at
+      `/admin/reports`. Verified end to end through real authenticated sessions:
+      `npm run check:safety`, 18/18.
+- [x] **TRUST-01a** ~~ID upload collects documents nobody reviews.~~ **Upload
+      withdrawn 16 Aug 2026** behind `VERIFICATION_QUEUE_LIVE = false`. Flip it
+      when the queue below ships.
+- [ ] **TRUST-01** ID upload writes `govt_id_url` and sets `varaahi_status` to
+      `pending_verification`, and nothing ever reads it. The admin `is_verified`
+      toggle is a separate, unconnected concept. Members hand over government ID
+      and wait for a process that does not exist. Build the queue or hide the
+      upload — holding documents unread is the worst of both.
+- [ ] **QA-01** Eleven member-app surfaces compile and typecheck but have never
+      been used by a member. Turn `PRE_LAUNCH_ENABLED` off in dev and walk them.
+
+### Correctness
+
+- [ ] **OPS-03** `/api/cron/check-expiry` exists but is not in `vercel.json`, so
+      subscription expiry never runs. Harmless until payments land, then a
+      billing bug. One line, and it belongs in before payments.
+- [ ] **DATA-06** `varaahi_status` and `govt_id_url` are live in dev and prod but
+      created by no migration. Drift checker passes because both agree; a fresh
+      environment built from `supabase/migrations` would lack them and the ID
+      upload would fail unexplainably. Backfill the migration.
+
+### Varaahi Shield
+
+- [ ] **TRUST-02** Four independent signals, shown as separate badges, never as a
+      single score — a number invites "why is theirs higher", which is the
+      ranking problem in another costume. Identity (human-reviewed ID) ·
+      Vouches (already collected, never surfaced; show the relationship) ·
+      Family participation (guardian mode doing double duty) · Completeness
+      (computed, not claimed).
+- [ ] **TRUST-03** Guardian mode, built out from the `collaborators` table. The
+      most culturally correct feature on the list — in these marriages parents
+      are participants, and the software currently assumes a solo user.
+
+### ID verification
+
+- [ ] **TRUST-04** Admin review queue; decision writes through to `is_verified`.
+- [ ] **TRUST-05** Delete the document on decision. Keep the verdict and date,
+      not the passport scan — the privacy policy already commits us to
+      minimisation.
+- [ ] **TRUST-06** Audit the storage bucket policy before it holds a real ID.
+- [ ] **TRUST-07** Tell the member the outcome either way. Silence after handing
+      over an ID is the worst possible experience.
+
+### Tradition, structurally
+
+- [ ] **CULT-01** Panchangam strip — today's tithi, nakshatra, vara.
+- [ ] **CULT-02** Transliteration plus a one-line meaning on first use of every
+      Sanskrit term in the member app. The FAQ does this well; the app does not.
+- [ ] **CULT-03** Muhurta note on introductions. Suggestion, never a block.
+- [ ] **CULT-04** Seasonal treatment for Akshaya Tritiya, Vasant Panchami — when
+      families actually start looking.
+- **Standing constraint:** "more tradition" and "never rank a community" are the
+  same project. No ordering, no purity language, no "higher" or "purer" in copy
+  or data; block list stays enforced; the platform never tells anyone what their
+  community is. `npm run check:data` fails if a blocked term becomes resolvable.
+
+### Wiring still to do
+
+- [ ] **WIRE-01** Notifications table behind the existing bell — Narada is
+      email-only today.
+- [x] **WIRE-02** ~~Supabase Realtime for chat; it polls today.~~ **Already done
+      — I was wrong.** Chat uses a `postgres_changes` subscription with
+      optimistic local updates, and `messages` is in the `supabase_realtime`
+      publication. Nothing to build.
+- [ ] **WIRE-03** Geo-gate to US/CA/IN via the Vercel geo header, with a
+      courteous message and an email capture for everyone else.
+- [ ] **WIRE-04** City autocomplete. No city table exists. Skip pincodes.
+- [ ] **WIRE-05** `ref_languages` is missing Malayalam, Bengali, Gujarati, Odia,
+      Punjabi, Konkani, Tulu, Assamese — which caps what the picker can offer.
+- [ ] **WIRE-06** Trial and coupons (FOUNDER, AGRAHARAM2026) before payments;
+      they are already promised in email. Then Stripe + PayPal (US), Razorpay
+      once the Indian entity exists.
+
+- [ ] **SAFE-02** `public.messages` carries two SELECT policies — "Users can read
+      messages in their connections" (from a migration) and "View messages"
+      (from nowhere), both granted to `public` rather than `authenticated`.
+      Behaviour is correct in dev — an unrelated member reads nothing, asserted
+      in `check:safety` — but duplicate policies on one command are exactly what
+      let the old permissive INSERT policy override the new strict one. Worth a
+      nuclear reset of the SELECT policies for the same reason. Not urgent;
+      verified safe.
+
+## Overnight run, 16 Aug 2026 — what shipped and what is left
+
+### Deployed
+
+- [x] **OPS-03** `check-expiry` wired into `vercel.json` at 03:30. Wiring it
+      surfaced that it would not have worked anyway: Vercel Cron sends a GET
+      with `Authorization: Bearer $CRON_SECRET`, and the route exported POST
+      only and compared the raw header to the secret. Fixed both.
+- [x] **WIRE-03** Geo-gating to US/CA/IN. Never touches `/api`, never touches a
+      signed-in member, treats an unknown country as served, and `?geo=allow`
+      opts back in.
+- [x] **GROWTH-04** "Do Not Sell or Share My Personal Information" at
+      `/legal/do-not-sell`, linked in the footer as CPRA requires. Honours
+      Global Privacy Control. `hasOptedOutOfSale()` is exported for whatever
+      tracker comes later. **This unblocks the Meta Pixel.**
+- [x] **TRUST-02** Varaahi Shield — four badges, never one score.
+- [x] **TRUST-04/05/06** `/admin/verification`. Approval writes through to
+      `is_verified`; the document is deleted at decision time, before the
+      decision is saved; viewing needs a two-minute signed URL.
+- [x] **TRUST-01a** ID upload re-enabled now there is a reviewer.
+
+### Needs SQL run (dev then prod)
+
+- [ ] `fix_policies_reading_auth_users.sql` — **still outstanding.** Until this
+      runs, every `collaborators` read 403s and the notification bell stays
+      empty.
+- [ ] `add_message_notifications.sql` — new. Interest and acceptance alerts
+      already fire via the existing `notify_on_connection` trigger; messages
+      were the gap. At most one unread message alert per conversation, so a
+      lively exchange does not become forty notifications.
+
+### Not done, and why
+
+- **Guardian mode (TRUST-03)** — depends on `collaborators`, which is broken
+  until the SQL above runs. Building against a path that cannot be exercised
+  would repeat the mistake this whole run has been correcting.
+- **Payments (WIRE-06)** — needs Stripe keys, a PayPal account, and an Indian
+  entity for Razorpay. None of that is mine to create.
+- **Community validation** — the family review. Not ours to finish.
+- **Meta Pixel** — now unblocked, but switching on a tracker is a decision, not
+  a task. Left for you.
+- **Baseline migration** — `profiles`, `connections`, `notifications` and
+  `photo_access` are still created by no migration. Needs a real `pg_dump`,
+  which needs database credentials I do not have.
+
+### Second overnight pass
+
+- [x] **TRUST-03 Guardian mode.** Three bugs found by exercising it: a *pending*
+      invite silently switched the invitee's dashboard to managing someone
+      else's profile; `maybeSingle()` meant a parent helping two children saw
+      neither; and the computed `roleLabel` was never rendered, so an interest
+      sent by a guardian went out in the member's name with nothing on screen
+      to say so. Banner, profile switcher, and an invite email that is actually
+      sent — the old flow said "Invite sent!" and sent nothing.
+- [ ] **SAFE-02** SQL written (`fix_messages_select_policies.sql`), needs running.
+- [ ] **Payments / trial / coupons.** Deliberately not started. FOUNDER and
+      AGRAHARAM2026 grant free months, which without a membership lifecycle to
+      grant them *into* is just writing a tier string onto a profile. Doing it
+      properly means the subscription model, and that arrives with payments —
+      which need Stripe keys, PayPal, and an Indian entity for Razorpay.
+      Building half of it now would be the same mistake as the ID upload:
+      machinery with nothing on the other end.

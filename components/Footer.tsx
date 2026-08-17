@@ -2,8 +2,23 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { CONTACT_EMAIL } from "@/lib/site";
+import { createClient } from "@/utils/supabase/server";
 
-export default function Footer() {
+/**
+ * Reads auth itself rather than taking a prop.
+ *
+ * It sits in the marketing layout and on the go-live home page, so threading
+ * `isLoggedIn` down would mean touching every page that renders it. As a server
+ * component it can simply ask — and it needs to, because a signed-in member was
+ * being offered "Register Free" in the footer of every public page.
+ */
+export default async function Footer() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const isLoggedIn = Boolean(user);
+
   return (
     <footer className="border-t border-stone-900 bg-stone-950 px-6 py-12 [&_a]:inline-block [&_a]:py-1.5">
       <div className="container mx-auto grid gap-8 text-sm md:grid-cols-4">
@@ -36,8 +51,11 @@ export default function Footer() {
               </Link>
             </li>
             <li>
-              <Link href="/register" className="transition-colors hover:text-haldi-500">
-                Register Free
+              <Link
+                href={isLoggedIn ? "/dashboard" : "/register"}
+                className="transition-colors hover:text-haldi-500"
+              >
+                {isLoggedIn ? "My Dashboard" : "Register Free"}
               </Link>
             </li>
           </ul>
@@ -54,6 +72,14 @@ export default function Footer() {
             <li>
               <Link href="/legal/terms" className="transition-colors hover:text-haldi-500">
                 Terms of Service
+              </Link>
+            </li>
+            {/* CPRA requires this exact link text, and requires it to be
+                reachable from every page — hence the footer rather than a
+                settings screen. */}
+            <li>
+              <Link href="/legal/do-not-sell" className="transition-colors hover:text-haldi-500">
+                Do Not Sell or Share My Personal Information
               </Link>
             </li>
             <li>

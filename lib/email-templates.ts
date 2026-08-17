@@ -291,3 +291,73 @@ export function profileReminderEmail(opts: { firstName: string; ctaUrl: string; 
     text,
   };
 }
+
+/**
+ * Guardian invitation.
+ *
+ * The invite flow inserted a row, said "Invite sent!", and sent nothing. The
+ * person invited had no way of knowing unless they happened to sign in and
+ * visit Kutumba — so in practice most invitations simply sat there.
+ *
+ * Written to the person being asked, not about them. In these families being
+ * invited to help with a child's match is a mark of trust, and the email should
+ * read that way rather than as a system notification.
+ */
+export function guardianInviteEmail(opts: {
+  inviterName: string;
+  role: string;
+  ctaUrl: string;
+  contactEmail: string;
+}) {
+  const inviter = opts.inviterName?.trim() || "A member of your family";
+  const role = opts.role?.trim() || "Guardian";
+
+  const body = `
+    <p style="font-family:Georgia,serif;font-size:17px;color:${MUTED};margin:0 0 6px;font-style:italic;">Namaste,</p>
+
+    <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:29px;line-height:1.3;color:${INK};margin:14px 0 0;font-weight:400;">
+      ${inviter} has asked for your help.
+    </h1>
+
+    <div style="height:1px;width:48px;background:${GOLD};opacity:.6;margin:22px 0;"></div>
+
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.8;color:${MUTED};margin:0 0 18px;">
+      They have invited you to join their search on Pravara as
+      <strong style="color:${GOLD};">${role}</strong>. You will be able to see the matches
+      suggested for them and help shortlist the ones worth a closer look.
+    </p>
+
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.8;color:${MUTED};margin:0;">
+      Their private messages stay private. You are being asked to help choose, not to watch.
+    </p>
+
+    ${button(opts.ctaUrl, "ACCEPT THE INVITATION")}
+
+    <p style="font-family:Georgia,serif;font-size:15px;line-height:1.8;color:${MUTED};margin:26px 0 0;">
+      With warmth,<br>
+      <span style="color:${GOLD};font-size:16px;">The Sundaragiri Family</span>
+    </p>`;
+
+  const text = [
+    `Namaste,`,
+    ``,
+    `${inviter} has asked for your help.`,
+    ``,
+    `They have invited you to join their search on Pravara as ${role}. You will be`,
+    `able to see the matches suggested for them and help shortlist the ones worth a`,
+    `closer look.`,
+    ``,
+    `Their private messages stay private. You are being asked to help choose, not to watch.`,
+    ``,
+    `Accept the invitation: ${opts.ctaUrl}`,
+    ``,
+    `With warmth,`,
+    `The Sundaragiri Family`,
+  ].join("\n");
+
+  return {
+    subject: `${inviter} has asked for your help on Pravara`,
+    html: shell({ preheader: `An invitation to join their search as ${role}.`, body, contactEmail: opts.contactEmail }),
+    text,
+  };
+}

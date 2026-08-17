@@ -12,7 +12,7 @@ import {
   CheckCircle, XCircle, Crown, ChevronDown, Settings,
   Calendar, UserCheck, Loader2, Eye, EyeOff, Save,
   Mail, Edit2, X, ToggleLeft, ToggleRight, Zap, Image as ImageIcon,
-  AlertTriangle, Bell, Globe,
+  AlertTriangle, Bell, Globe, ShieldAlert,
 } from "lucide-react";
 
 /* ═══════════════════════════════════════════════════ Types */
@@ -452,6 +452,16 @@ export default function AdminPage() {
             <Link href="/admin/cohort"
               className="flex items-center gap-2 text-stone-400 hover:text-haldi-400 text-sm transition-colors">
               <BarChart2 className="w-4 h-4" /><span className="hidden sm:inline">Cohort</span>
+            </Link>
+            {/* Both queues are things a member is waiting on, so they sit in the
+                top nav rather than behind a menu. */}
+            <Link href="/admin/verification"
+              className="flex items-center gap-2 text-stone-400 hover:text-haldi-400 text-sm transition-colors">
+              <ShieldCheck className="w-4 h-4" /><span className="hidden sm:inline">Verify IDs</span>
+            </Link>
+            <Link href="/admin/reports"
+              className="flex items-center gap-2 text-stone-400 hover:text-red-400 text-sm transition-colors">
+              <ShieldAlert className="w-4 h-4" /><span className="hidden sm:inline">Reports</span>
             </Link>
             <button type="button" onClick={async () => { await supabase.auth.signOut(); router.push("/"); }}
               className="flex items-center gap-2 text-stone-500 hover:text-red-400 text-sm transition-colors">
