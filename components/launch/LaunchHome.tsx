@@ -68,8 +68,13 @@ export default function LaunchHome({ isLoggedIn }: { isLoggedIn: boolean }) {
             <Image
               src="/logo-mark.png"
               alt="Pravara — Modern Heritage Matrimony"
-              width={300}
-              height={120}
+              // Declared at the size it actually renders at the widest
+              // breakpoint, so the reserved box never differs from the painted
+              // one. It was 300x120 — a 2.5 ratio against a 1.438 mark — which
+              // reserved a box 89px too short, and everything below it jumped
+              // once the PNG landed.
+              width={270}
+              height={188}
               priority
               className="relative h-auto w-[220px] object-contain short:w-[150px] md:w-[270px] md:short:w-[170px]"
             />

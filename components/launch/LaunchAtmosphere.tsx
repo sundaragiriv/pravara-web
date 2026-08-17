@@ -43,18 +43,25 @@ type LaunchAtmosphereProps = {
  * Small screens get a pared-back field. Measured at 4x CPU throttle on a 390px
  * viewport, the full atmosphere produced 52 long tasks totalling ~6.6s over six
  * seconds versus 11 totalling ~3.7s with motion off — roughly 2.8s of extra
- * main-thread blocking, which is felt as scroll jank and delayed taps.
+ * main-thread blocking, felt as scroll jank and delayed taps.
  *
- * Rendering the reduced set first also keeps SSR and hydration identical; the
- * full field is added after mount, and only on a wide viewport.
+ * The split is done in CSS, not JS state. It used to render the reduced set,
+ * then flip a `wide` flag in an effect and add the rest — which meant the
+ * desktop hero visibly popped from 2 orbs and 9 motes to 4 and 26 a beat after
+ * load. Everything is rendered now and the extras carry `hidden sm:block`, so
+ * the server and the client agree, nothing appears late, and a phone still
+ * never paints them.
  */
 const MOBILE_ORBS = 2;
 const MOBILE_SPARKS = 9;
 const MOBILE_EMBERS = 3;
 
+/** Extras beyond the mobile budget are painted only from the sm breakpoint. */
+const wideOnly = (index: number, mobileCount: number) =>
+  index >= mobileCount ? "hidden sm:block" : "";
+
 export default function LaunchAtmosphere({ className = "" }: LaunchAtmosphereProps) {
   const reduce = useReducedMotion();
-  const [wide, setWide] = useState(false);
 
   /**
    * Ambient motion stops while the page is scrolling.
@@ -105,17 +112,10 @@ export default function LaunchAtmosphere({ className = "" }: LaunchAtmospherePro
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
 
-  useEffect(() => {
-    const query = window.matchMedia("(min-width: 640px)");
-    const sync = () => setWide(query.matches);
-    sync();
-    query.addEventListener("change", sync);
-    return () => query.removeEventListener("change", sync);
-  }, []);
 
-  const orbs = wide ? ORBS : ORBS.slice(0, MOBILE_ORBS);
-  const sparks = wide ? SPARKS : SPARKS.slice(0, MOBILE_SPARKS);
-  const embers = wide ? EMBERS : EMBERS.slice(0, MOBILE_EMBERS);
+  const orbs = ORBS;
+  const sparks = SPARKS;
+  const embers = EMBERS;
 
   return (
     <div className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}>
@@ -146,7 +146,7 @@ export default function LaunchAtmosphere({ className = "" }: LaunchAtmospherePro
         orbs.map((orb) => (
           <div
             key={orb.id}
-            className="absolute rounded-full blur-[90px]"
+            className={`absolute rounded-full blur-[90px] ${wideOnly(orbs.indexOf(orb), MOBILE_ORBS)}`}
             style={{
               width: orb.size,
               height: orb.size,
@@ -162,7 +162,7 @@ export default function LaunchAtmosphere({ className = "" }: LaunchAtmospherePro
           {orbs.map((orb) => (
             <motion.div
               key={orb.id}
-              className="absolute rounded-full blur-[90px]"
+              className={`absolute rounded-full blur-[90px] ${wideOnly(orbs.indexOf(orb), MOBILE_ORBS)}`}
               style={{
                 width: orb.size,
                 height: orb.size,
@@ -204,7 +204,7 @@ export default function LaunchAtmosphere({ className = "" }: LaunchAtmospherePro
           {embers.map((ember) => (
             <motion.span
               key={`ember-${ember.id}`}
-              className="absolute rounded-full"
+              className={`absolute rounded-full ${wideOnly(ember.id, MOBILE_EMBERS)}`}
               style={{
                 left: ember.left,
                 top: ember.top,
@@ -231,7 +231,7 @@ export default function LaunchAtmosphere({ className = "" }: LaunchAtmospherePro
           {sparks.map((spark) => (
             <motion.span
               key={spark.id}
-              className={`absolute rounded-full ${spark.warm ? "bg-amber-300/80" : "bg-haldi-200/80"}`}
+              className={`absolute rounded-full ${spark.warm ? "bg-amber-300/80" : "bg-haldi-200/80"} ${wideOnly(spark.id, MOBILE_SPARKS)}`}
               style={{
                 left: spark.left,
                 top: spark.top,

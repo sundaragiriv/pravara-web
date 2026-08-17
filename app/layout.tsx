@@ -11,8 +11,22 @@ import { getSiteUrl } from "@/lib/env";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
+// `display: swap` paints immediately in a fallback and swaps when the webfont
+// arrives; `adjustFontFallback` (on by default, stated here because it is the
+// point) synthesises a fallback with matching metrics so that swap does not
+// move any text. Without it the page visibly reflowed from Times New Roman.
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+  adjustFontFallback: true,
+});
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  display: "swap",
+  adjustFontFallback: true,
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
