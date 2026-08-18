@@ -30,11 +30,11 @@ export default function NotYetAvailablePage() {
       <main className="relative flex min-h-screen items-center justify-center px-6 py-16">
         <div className="w-full max-w-lg text-center">
           <Image
-            src="/logo-mark.png"
+            src="/logo3.png"
             alt="Pravara"
             width={180}
             height={66}
-            className="mx-auto w-[150px] object-contain"
+            className="mx-auto w-[150px] object-contain [mix-blend-mode:lighten]"
             priority
           />
 

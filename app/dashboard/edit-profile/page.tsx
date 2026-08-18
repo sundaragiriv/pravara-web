@@ -395,11 +395,11 @@ export default function EditProfilePage() {
                     <div className="flex items-center gap-4">
                         <Link href="/" aria-label="Pravara Home">
                             <Image
-                                src="/logo-mark.png"
+                                src="/logo3.png"
                                 alt="Pravara"
                                 width={100}
                                 height={34}
-                                className="object-contain"
+                                className="object-contain [mix-blend-mode:lighten]"
                                 priority
                             />
                         </Link>

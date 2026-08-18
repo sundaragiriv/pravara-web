@@ -87,11 +87,11 @@ export default async function RegisterPage() {
             </Link>
 
             <Image
-              src="/logo-mark.png"
+              src="/logo3.png"
               alt="Pravara"
               width={180}
               height={66}
-              className="w-[130px] object-contain sm:w-[180px]"
+              className="w-[130px] object-contain [mix-blend-mode:lighten] sm:w-[180px]"
               priority
             />
 

@@ -208,11 +208,11 @@ export default function ChatPage() {
         {/* Sidebar header */}
         <div className="p-4 border-b border-stone-800 flex justify-between items-center bg-stone-950/80">
           <Image
-            src="/logo-mark.png"
+            src="/logo3.png"
             alt="Pravara"
             width={96}
             height={32}
-            className="object-contain"
+            className="object-contain [mix-blend-mode:lighten]"
             priority
           />
           <Link

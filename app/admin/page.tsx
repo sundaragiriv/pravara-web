@@ -431,8 +431,8 @@ export default function AdminPage() {
       <header className="sticky top-0 z-40 bg-stone-950/95 border-b border-stone-900 backdrop-blur-md">
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <Link href="/dashboard">
-            <Image src="/logo-mark.png" alt="Pravara" width={144} height={100}
-              className="object-contain hover:brightness-110 transition-all" priority />
+            <Image src="/logo3.png" alt="Pravara" width={100} height={34}
+              className="object-contain [mix-blend-mode:lighten] hover:brightness-110 transition-all" priority />
           </Link>
           <div className="flex items-center gap-2 text-sm text-stone-400">
             <ShieldCheck className="w-4 h-4 text-haldi-500" />
