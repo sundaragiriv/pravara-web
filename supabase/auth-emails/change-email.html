@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="dark">
+<meta name="supported-color-schemes" content="dark light">
+<title>Pravara</title>
+</head>
+<body style="margin:0;padding:0;background:#0C0A09;">
+<span style="display:none;visibility:hidden;opacity:0;color:transparent;height:0;width:0;overflow:hidden;">Confirm the new address on your Pravara account.</span>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#0C0A09" style="background:#0C0A09;">
+  <tr><td align="center" style="padding:36px 16px;">
+
+    <!-- Double rule: the outer keyline and inner card echo the border of a
+         printed invitation, which is the whole reason for the extra table. -->
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" bgcolor="#12100E" style="max-width:600px;width:100%;background:#12100E;border:2px solid #C9A24A;border-radius:4px;">
+      <tr><td style="padding:5px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #2A231E;border-radius:2px;">
+
+          <!-- Full-bleed header band: the logo image spans the card width so
+               its dark matte meets the edges rather than floating in a box. -->
+          <tr><td align="center" bgcolor="#040609" style="padding:0;font-size:0;line-height:0;background:#040609;">
+            <img src="https://www.pravara.ai/email-logo.png" width="600" height="330" alt="PRAVARA — Modern Heritage Matrimony"
+                 style="display:block;width:100%;max-width:600px;height:auto;border:0;outline:none;text-decoration:none;font-family:Georgia,serif;font-size:22px;letter-spacing:7px;color:#E8C56B;">
+          </td></tr>
+
+          <tr><td style="padding:28px 44px 40px;font-family:Georgia,'Times New Roman',serif;color:#F5F0E6;">
+            
+    <p style="font-family:Georgia,serif;font-size:17px;color:#A8A29E;margin:0 0 6px;font-style:italic;">Namaste,</p>
+
+    <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:29px;line-height:1.3;color:#F5F0E6;margin:14px 0 0;font-weight:400;">
+      Confirm your new address.
+    </h1>
+
+    <div style="height:1px;width:48px;background:#E8C56B;opacity:.6;margin:22px 0;"></div>
+
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.8;color:#A8A29E;margin:0 0 18px;">
+      Your Pravara account is moving from
+      <strong style="color:#F5F0E6;">{{ .Email }}</strong> to
+      <strong style="color:#E8C56B;">{{ .NewEmail }}</strong>.
+      Confirm it and the change takes effect.
+    </p>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:30px auto 6px;">
+    <tr><td align="center" bgcolor="#E8C56B" style="border-radius:999px;">
+      <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:16px 38px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;color:#0C0A09;text-decoration:none;border-radius:999px;">CONFIRM NEW ADDRESS</a>
+    </td></tr></table>
+
+    
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;color:#A8A29E;margin:6px 0 0;text-align:center;">
+      Or paste this into your browser:<br>
+      <a href="{{ .ConfirmationURL }}" style="color:#E8C56B;word-break:break-all;">{{ .ConfirmationURL }}</a>
+    </p>
+
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.7;color:#A8A29E;margin:26px 0 0;padding-top:18px;border-top:1px solid #2A231E;">
+      If you did not ask to change your address, ignore this message and write to us — your account stays on the address you have now.
+    </p>
+          </td></tr>
+
+          <tr><td align="center" style="padding:0 44px 30px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
+    <tr>
+      <td style="width:56px;border-bottom:1px solid #C9A24A;font-size:0;line-height:0;">&nbsp;</td>
+      <td style="padding:0 6px;font-family:Arial,Helvetica,sans-serif;font-size:7px;line-height:1;color:#C9A24A;">&#9670;</td>
+      <td style="padding:0 6px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1;color:#E8C56B;">&#9670;</td>
+      <td style="padding:0 6px;font-family:Arial,Helvetica,sans-serif;font-size:7px;line-height:1;color:#C9A24A;">&#9670;</td>
+      <td style="width:56px;border-bottom:1px solid #C9A24A;font-size:0;line-height:0;">&nbsp;</td>
+    </tr>
+  </table>
+          </td></tr>
+
+          <tr><td style="padding:20px 40px 26px;background:#0C0A09;border-top:1px solid #2A231E;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#A8A29E;text-align:center;line-height:1.7;">
+            You are receiving this because an email change was requested for this account.<br>
+            Reply to this message, or write to <a href="mailto:care@pravara.ai" style="color:#E8C56B;text-decoration:none;">care@pravara.ai</a> — a person reads it.
+          </td></tr>
+
+        </table>
+      </td></tr>
+    </table>
+
+  </td></tr>
+</table>
+</body>
+</html>

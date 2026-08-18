@@ -53,7 +53,22 @@ function toran(): string {
   </table>`;
 }
 
-function shell(opts: { preheader: string; body: string; contactEmail: string }): string {
+/**
+ * Why the reader is being written to. It used to be hardcoded to the founding
+ * circle, which was true of the only two emails that existed then and false the
+ * moment an account email — a password reset, say — went through the same
+ * shell. Saying "you reserved a seat" on a security email is the kind of
+ * mismatch that makes a real message look like a phish.
+ */
+const FOUNDING_CIRCLE_NOTE =
+  "You are receiving this because you reserved a seat in the Pravara founding circle.";
+
+function shell(opts: {
+  preheader: string;
+  body: string;
+  contactEmail: string;
+  footerNote?: string;
+}): string {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -91,7 +106,7 @@ function shell(opts: { preheader: string; body: string; contactEmail: string }):
           </td></tr>
 
           <tr><td style="padding:20px 40px 26px;background:${GROUND};border-top:1px solid ${RULE};font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${MUTED};text-align:center;line-height:1.7;">
-            You are receiving this because you reserved a seat in the Pravara founding circle.<br>
+            ${opts.footerNote ?? FOUNDING_CIRCLE_NOTE}<br>
             Reply to this message, or write to <a href="mailto:${opts.contactEmail}" style="color:${GOLD};text-decoration:none;">${opts.contactEmail}</a> — a person reads it.
           </td></tr>
 
@@ -359,5 +374,144 @@ export function guardianInviteEmail(opts: {
     subject: `${inviter} has asked for your help on Pravara`,
     html: shell({ preheader: `An invitation to join their search as ${role}.`, body, contactEmail: opts.contactEmail }),
     text,
+  };
+}
+
+/* ---------------------------------------------------------------------------
+ * Supabase auth emails.
+ *
+ * These are the first and the most security-sensitive messages Pravara sends,
+ * and until now they were Supabase's stock templates: a white page, a system
+ * font, "Follow this link to confirm your user", no mark and no voice. A member
+ * meets that before they ever see the site logged in.
+ *
+ * Supabase renders these itself, so they cannot take runtime arguments — the
+ * links are Go template variables it substitutes at send time. That is why
+ * these functions take nothing and return a finished string: the output IS the
+ * template, pasted into Authentication → Email Templates. `npm run
+ * email:auth` writes them out, and the preview substitutes a dummy URL so they
+ * can be read like ordinary mail.
+ *
+ * Keep the `{{ ... }}` spellings exactly as they are. Supabase does not warn on
+ * an unknown variable; it renders an empty string, and the member gets a button
+ * that goes nowhere.
+ * ------------------------------------------------------------------------- */
+
+/** Supabase substitutes the action link here. */
+const CONFIRMATION_URL = "{{ .ConfirmationURL }}";
+
+const AUTH_CONTACT = "care@pravara.ai";
+
+/** Shared closing for the two links that expire and can be ignored. */
+function authFallback(label: string): string {
+  return `
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;color:${MUTED};margin:6px 0 0;text-align:center;">
+      Or paste this into your browser:<br>
+      <a href="${CONFIRMATION_URL}" style="color:${GOLD};word-break:break-all;">${CONFIRMATION_URL}</a>
+    </p>
+
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.7;color:${MUTED};margin:26px 0 0;padding-top:18px;border-top:1px solid ${RULE};">
+      ${label}
+    </p>`;
+}
+
+/** The first email a new member receives. Sent by Supabase on sign-up. */
+export function confirmSignupEmail(): { subject: string; html: string } {
+  const body = `
+    <p style="font-family:Georgia,serif;font-size:17px;color:${MUTED};margin:0 0 6px;font-style:italic;">Namaste,</p>
+
+    <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:29px;line-height:1.3;color:${INK};margin:14px 0 0;font-weight:400;">
+      Confirm your email to begin.
+    </h1>
+
+    <div style="height:1px;width:48px;background:${GOLD};opacity:.6;margin:22px 0;"></div>
+
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.8;color:${MUTED};margin:0 0 18px;">
+      Pravara is a small, deliberately closed circle, and every member is a real family.
+      Confirming this address is the first of the checks that keeps it that way.
+    </p>
+
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.8;color:${MUTED};margin:0;">
+      One tap and your account is open.
+    </p>
+
+    ${button(CONFIRMATION_URL, "CONFIRM MY EMAIL")}
+
+    ${authFallback("If you did not create a Pravara account, no action is needed — this link expires on its own and nothing is created until it is used.")}
+
+    ${blessing()}`;
+
+  return {
+    subject: "Confirm your email — Pravara",
+    html: shell({
+      preheader: "One tap confirms your address and opens your Pravara account.",
+      body,
+      contactEmail: AUTH_CONTACT,
+      footerNote: "You are receiving this because this address was used to create a Pravara account.",
+    }),
+  };
+}
+
+/** Sent by Supabase from the login page's "Forgot password?" flow. */
+export function passwordResetEmail(): { subject: string; html: string } {
+  const body = `
+    <p style="font-family:Georgia,serif;font-size:17px;color:${MUTED};margin:0 0 6px;font-style:italic;">Namaste,</p>
+
+    <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:29px;line-height:1.3;color:${INK};margin:14px 0 0;font-weight:400;">
+      Set a new password.
+    </h1>
+
+    <div style="height:1px;width:48px;background:${GOLD};opacity:.6;margin:22px 0;"></div>
+
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.8;color:${MUTED};margin:0 0 18px;">
+      Someone asked to reset the password for the Pravara account at this address.
+      If that was you, choose a new one here.
+    </p>
+
+    ${button(CONFIRMATION_URL, "SET A NEW PASSWORD")}
+
+    ${authFallback("If this was not you, ignore this message — your password stays as it is, and the link expires shortly. If you would like us to look into it, write to us and a person will.")}`;
+
+  return {
+    subject: "Reset your Pravara password",
+    html: shell({
+      preheader: "A link to set a new password. It expires shortly.",
+      body,
+      contactEmail: AUTH_CONTACT,
+      footerNote: "You are receiving this because a password reset was requested for this address.",
+    }),
+  };
+}
+
+/** Sent by Supabase when a member changes the address on their account. */
+export function emailChangeEmail(): { subject: string; html: string } {
+  const body = `
+    <p style="font-family:Georgia,serif;font-size:17px;color:${MUTED};margin:0 0 6px;font-style:italic;">Namaste,</p>
+
+    <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:29px;line-height:1.3;color:${INK};margin:14px 0 0;font-weight:400;">
+      Confirm your new address.
+    </h1>
+
+    <div style="height:1px;width:48px;background:${GOLD};opacity:.6;margin:22px 0;"></div>
+
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.8;color:${MUTED};margin:0 0 18px;">
+      Your Pravara account is moving from
+      <strong style="color:${INK};">{{ .Email }}</strong> to
+      <strong style="color:${GOLD};">{{ .NewEmail }}</strong>.
+      Confirm it and the change takes effect.
+    </p>
+
+    ${button(CONFIRMATION_URL, "CONFIRM NEW ADDRESS")}
+
+    ${authFallback("If you did not ask to change your address, ignore this message and write to us — your account stays on the address you have now.")}`;
+
+  return {
+    subject: "Confirm your new email — Pravara",
+    html: shell({
+      preheader: "Confirm the new address on your Pravara account.",
+      body,
+      contactEmail: AUTH_CONTACT,
+      footerNote: "You are receiving this because an email change was requested for this account.",
+    }),
   };
 }
