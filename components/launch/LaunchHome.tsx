@@ -7,8 +7,12 @@ import LaunchCtaLink from "@/components/launch/LaunchCtaLink";
 import LaunchPageView from "@/components/launch/LaunchPageView";
 import MandalaWatermark from "@/components/launch/MandalaWatermark";
 
+// Padding and tracking tighten below `sm` only. At 390px the label was running
+// to 359px inside 342px of usable width, so it wrapped to two lines with the
+// arrow left hanging beside the pair — the one piece of the hero that looked
+// unconsidered on a phone. Everything from `sm` up is untouched.
 const ctaClass =
-  "btn-sheen btn-festive launch-cta-glow inline-flex items-center justify-center gap-2 rounded-full px-10 py-4 text-sm font-bold uppercase tracking-[0.14em] text-stone-950 transition-all hover:scale-[1.02] hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-haldi-300 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950";
+  "btn-sheen btn-festive launch-cta-glow inline-flex items-center justify-center gap-2 rounded-full px-7 py-4 text-sm font-bold uppercase tracking-[0.1em] text-stone-950 transition-all hover:scale-[1.02] hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-haldi-300 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950 sm:px-10 sm:tracking-[0.14em]";
 
 /** What separates Pravara — kept to three, stated plainly. */
 const PILLARS = [
@@ -66,17 +70,16 @@ export default function LaunchHome({ isLoggedIn }: { isLoggedIn: boolean }) {
               className="pointer-events-none absolute left-1/2 top-1/2 h-[230px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-haldi-500/[0.10] blur-[90px]"
             />
             <Image
-              src="/logo-mark.png"
+              src="/logo3.png"
               alt="Pravara — Modern Heritage Matrimony"
-              // Declared at the size it actually renders at the widest
-              // breakpoint, so the reserved box never differs from the painted
-              // one. It was 300x120 — a 2.5 ratio against a 1.438 mark — which
-              // reserved a box 89px too short, and everything below it jumped
-              // once the PNG landed.
+              // 1536x1024 is a 1.5 ratio. Declared 300x120 the box came out at
+              // 2.5, so next/image reserved something 80px too short and
+              // everything below the mark jumped once the PNG landed. Same
+              // numbers as the render width, same ratio as the file.
               width={270}
-              height={188}
+              height={180}
               priority
-              className="relative h-auto w-[220px] object-contain short:w-[150px] md:w-[270px] md:short:w-[170px]"
+              className="relative h-auto w-[220px] object-contain [mix-blend-mode:lighten] short:w-[150px] md:w-[270px] md:short:w-[170px]"
             />
           </div>
 
@@ -168,7 +171,7 @@ export default function LaunchHome({ isLoggedIn }: { isLoggedIn: boolean }) {
                 <span className="block font-serif text-base text-haldi-200">
                   {FOUNDER_SIGNATURE}
                 </span>
-                <span className="mt-1 block text-[0.7rem] uppercase tracking-[0.24em] text-stone-500">
+                <span className="mt-1 block text-xs uppercase tracking-[0.24em] text-stone-400">
                   Founding family, Pravara
                 </span>
               </span>

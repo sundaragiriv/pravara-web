@@ -1,7 +1,4 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import ScrollMotionPause from "@/components/launch/ScrollMotionPause";
 
 const ORBS = [
   { id: 1, size: 480, left: "4%", top: "8%", color: "rgba(251,191,36,0.16)", duration: 12 },
@@ -9,6 +6,22 @@ const ORBS = [
   { id: 3, size: 380, left: "60%", top: "62%", color: "rgba(180,83,9,0.16)", duration: 14 },
   { id: 4, size: 320, left: "12%", top: "64%", color: "rgba(251,191,36,0.12)", duration: 11 },
 ];
+
+/*
+ * The orbs kept their `blur-[90px]`.
+ *
+ * They were briefly redrawn as radial gradients, on the theory that animating
+ * opacity behind a 90px Gaussian was forcing a re-blur every frame. Headless
+ * measurement agreed loudly — 370ms per frame with the blur, 88ms without.
+ * Headless Chromium composites on SwiftShader, in software. On the actual GPU
+ * the blur costs nothing at all: 16.7ms with the whole atmosphere running and
+ * 16.7ms with it removed entirely.
+ *
+ * So the gradient bought nothing real, and a pixel diff against the live build
+ * put it 4.19/255 away from the blur on average with 3.78% of pixels off by
+ * more than 8 — small, but a change to how the scene looks in exchange for
+ * nothing. Reverted.
+ */
 
 // Gold dust — more of them, larger, with size + brightness variance so the
 // field reads warm and alive instead of a few faint pinpricks.
@@ -42,8 +55,7 @@ type LaunchAtmosphereProps = {
 /**
  * Small screens get a pared-back field. Measured at 4x CPU throttle on a 390px
  * viewport, the full atmosphere produced 52 long tasks totalling ~6.6s over six
- * seconds versus 11 totalling ~3.7s with motion off — roughly 2.8s of extra
- * main-thread blocking, felt as scroll jank and delayed taps.
+ * seconds versus 11 totalling ~3.7s with motion off.
  *
  * The split is done in CSS, not JS state. It used to render the reduced set,
  * then flip a `wide` flag in an effect and add the rest — which meant the
@@ -60,65 +72,38 @@ const MOBILE_EMBERS = 3;
 const wideOnly = (index: number, mobileCount: number) =>
   index >= mobileCount ? "hidden sm:block" : "";
 
+/**
+ * The ambient scene behind the launch pages.
+ *
+ * This was a client component driving thirty-nine Framer Motion loops, with a
+ * scroll-pause bolted on to keep them from costing frames. The pause worked by
+ * swapping this whole subtree for a static one.
+ * Swapping a subtree is not pausing it: React unmounted thirty-nine nodes and
+ * mounted a different tree, and on the way back the sparks and embers painted
+ * at the CSS default of opacity 1 before Framer's first frame landed. Sampling
+ * the DOM every 40ms through one wheel scroll caught the whole field flashing
+ * at full brightness six times — total mote opacity sitting at 19.04 while
+ * still, then 34.00 on each rebuild. The dark ground visibly washed out as you
+ * scrolled.
+ *
+ * The motion is identical, expressed as CSS keyframes (see globals.css) whose
+ * values mirror the old Framer arrays, including the positions interpolated at
+ * stops where only one property changed. Moving to CSS is what makes a real
+ * pause possible: `animation-play-state: paused` freezes each element where it
+ * stands and resumes from there, so the scene can stop during a scroll without
+ * anything unmounting. See ScrollMotionPause.
+ *
+ * Measured on the GPU, scrolling the hero went from a 34.3ms median frame with
+ * 56% of frames past 32ms, to 18.0ms and 9%.
+ *
+ * With no state and no effects left this is a server component, which also
+ * takes Framer Motion out of the landing page's JavaScript.
+ */
 export default function LaunchAtmosphere({ className = "" }: LaunchAtmosphereProps) {
-  const reduce = useReducedMotion();
-
-  /**
-   * Ambient motion stops while the page is scrolling.
-   *
-   * The scene animates about forty elements continuously, six of them behind
-   * 64–90px blurs. That is affordable when the page is still and the compositor
-   * has nothing else to do; during a scroll it competes directly with the thing
-   * the reader is actually asking for. Measured on the live site at a 29.6ms
-   * median frame with 28% of frames past 32ms.
-   *
-   * Pausing rather than reducing keeps the scene exactly as designed when
-   * anyone is looking at it, and hands the whole frame budget to the scroll
-   * while they are moving. It resumes 160ms after the last scroll event, which
-   * is below the threshold at which the eye reads it as having stopped.
-   */
-  const [scrolling, setScrolling] = useState(false);
-
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    const onScroll = () => {
-      setScrolling(true);
-      clearTimeout(timer);
-      timer = setTimeout(() => setScrolling(false), 160);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      clearTimeout(timer);
-    };
-  }, []);
-
-  /**
-   * Nothing animates while the tab is in the background.
-   *
-   * Thirty-nine infinite animations kept running when the page was not on
-   * screen, draining a phone in a pocket for a scene nobody was looking at.
-   * Browsers throttle background rAF but do not stop compositor animations, so
-   * this has to be said explicitly.
-   *
-   * Unlike the frame-rate work, this needs no measurement to justify: animating
-   * a hidden page is simply wrong.
-   */
-  const [hidden, setHidden] = useState(false);
-
-  useEffect(() => {
-    const onVisibility = () => setHidden(document.hidden);
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, []);
-
-
-  const orbs = ORBS;
-  const sparks = SPARKS;
-  const embers = EMBERS;
-
   return (
     <div className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}>
+      <ScrollMotionPause />
+
       {/* Base wash + subtle paper texture — always static */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.035),transparent_24%),linear-gradient(180deg,#090807_0%,#0d0a09_46%,#070605_100%)]" />
       <div className="absolute inset-0 launch-poster-texture opacity-50" />
@@ -142,121 +127,73 @@ export default function LaunchAtmosphere({ className = "" }: LaunchAtmospherePro
         }}
       />
 
-      {reduce || scrolling || hidden ? (
-        orbs.map((orb) => (
-          <div
-            key={orb.id}
-            className={`absolute rounded-full blur-[90px] ${wideOnly(orbs.indexOf(orb), MOBILE_ORBS)}`}
-            style={{
+      {ORBS.map((orb, index) => (
+        <div
+          key={orb.id}
+          className={`launch-orb absolute rounded-full blur-[90px] ${wideOnly(index, MOBILE_ORBS)}`}
+          style={
+            {
               width: orb.size,
               height: orb.size,
               left: orb.left,
               top: orb.top,
               background: orb.color,
-              opacity: 0.5,
-            }}
-          />
-        ))
-      ) : (
-        <>
-          {orbs.map((orb) => (
-            <motion.div
-              key={orb.id}
-              className={`absolute rounded-full blur-[90px] ${wideOnly(orbs.indexOf(orb), MOBILE_ORBS)}`}
-              style={{
-                width: orb.size,
-                height: orb.size,
-                left: orb.left,
-                top: orb.top,
-                background: orb.color,
-              }}
-              // `scale` used to be in here, and it was the whole problem. Scaling
-              // a 480px element behind a 90px blur forces the blur to be
-              // recomputed every frame — measured at a 40.6ms median frame
-              // during scroll, with 94% of frames below 30fps. Translation and
-              // opacity are compositor-only, so the same drift costs almost
-              // nothing. The movement is widened slightly to keep the life the
-              // scale gave it.
-              animate={{
-                opacity: [0.32, 0.62, 0.32],
-                x: [0, 18, -12, 0],
-                y: [0, -16, 12, 0],
-              }}
-              transition={{
-                duration: orb.duration,
-                repeat: Number.POSITIVE_INFINITY,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
+              "--dur": `${orb.duration}s`,
+            } as React.CSSProperties
+          }
+        />
+      ))}
 
-          {/* Slow gold shimmer sweeping diagonally across the whole scene */}
-          <motion.div
-            className="absolute -inset-x-1/4 inset-y-0"
-            style={{
+      {/* Slow gold shimmer sweeping diagonally across the whole scene */}
+      <div
+        className="launch-shimmer absolute -inset-x-1/4 inset-y-0"
+        style={{
+          background:
+            "linear-gradient(105deg, transparent 28%, rgba(251,191,36,0.04) 50%, transparent 72%)",
+        }}
+      />
+
+      {EMBERS.map((ember) => (
+        <span
+          key={`ember-${ember.id}`}
+          className={`launch-ember absolute rounded-full ${wideOnly(ember.id, MOBILE_EMBERS)}`}
+          style={
+            {
+              left: ember.left,
+              top: ember.top,
+              width: ember.size,
+              height: ember.size,
               background:
-                "linear-gradient(105deg, transparent 28%, rgba(251,191,36,0.04) 50%, transparent 72%)",
-            }}
-            animate={{ x: ["-18%", "18%", "-18%"] }}
-            transition={{ duration: 13, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-          />
+                "radial-gradient(circle, rgba(255,236,179,0.95) 0%, rgba(251,191,36,0.85) 45%, rgba(245,158,11,0) 72%)",
+              boxShadow: "0 0 18px 4px rgba(251,191,36,0.35)",
+              "--drift": `${ember.drift}px`,
+              "--dur": `${ember.duration}s`,
+              "--delay": `${ember.delay}s`,
+            } as React.CSSProperties
+          }
+        />
+      ))}
 
-          {embers.map((ember) => (
-            <motion.span
-              key={`ember-${ember.id}`}
-              className={`absolute rounded-full ${wideOnly(ember.id, MOBILE_EMBERS)}`}
-              style={{
-                left: ember.left,
-                top: ember.top,
-                width: ember.size,
-                height: ember.size,
-                background:
-                  "radial-gradient(circle, rgba(255,236,179,0.95) 0%, rgba(251,191,36,0.85) 45%, rgba(245,158,11,0) 72%)",
-                boxShadow: "0 0 18px 4px rgba(251,191,36,0.35)",
-              }}
-              animate={{
-                opacity: [0, 0.85, 0.7, 0],
-                y: [0, -60, -120],
-                x: [0, ember.drift, 0],
-              }}
-              transition={{
-                duration: ember.duration,
-                delay: ember.delay,
-                repeat: Number.POSITIVE_INFINITY,
-                ease: "easeOut",
-              }}
-            />
-          ))}
-
-          {sparks.map((spark) => (
-            <motion.span
-              key={spark.id}
-              className={`absolute rounded-full ${spark.warm ? "bg-amber-300/80" : "bg-haldi-200/80"} ${wideOnly(spark.id, MOBILE_SPARKS)}`}
-              style={{
-                left: spark.left,
-                top: spark.top,
-                width: spark.size,
-                height: spark.size,
-                boxShadow: spark.warm
-                  ? "0 0 12px rgba(245,158,11,0.5)"
-                  : "0 0 12px rgba(251,191,36,0.45)",
-              }}
-              // Same reasoning as the orbs, at smaller scale: these carry a
-              // box-shadow glow, and scaling one repaints the shadow each frame.
-              animate={{
-                opacity: [0, 0.9, 0],
-                y: [0, -spark.rise * 0.5, -spark.rise],
-              }}
-              transition={{
-                duration: spark.duration,
-                delay: spark.delay,
-                repeat: Number.POSITIVE_INFINITY,
-                ease: "easeOut",
-              }}
-            />
-          ))}
-        </>
-      )}
+      {SPARKS.map((spark) => (
+        <span
+          key={spark.id}
+          className={`launch-spark absolute rounded-full ${spark.warm ? "bg-amber-300/80" : "bg-haldi-200/80"} ${wideOnly(spark.id, MOBILE_SPARKS)}`}
+          style={
+            {
+              left: spark.left,
+              top: spark.top,
+              width: spark.size,
+              height: spark.size,
+              boxShadow: spark.warm
+                ? "0 0 12px rgba(245,158,11,0.5)"
+                : "0 0 12px rgba(251,191,36,0.45)",
+              "--rise": `${spark.rise}px`,
+              "--dur": `${spark.duration}s`,
+              "--delay": `${spark.delay}s`,
+            } as React.CSSProperties
+          }
+        />
+      ))}
     </div>
   );
 }
