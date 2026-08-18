@@ -104,8 +104,8 @@ export default async function Footer() {
           >
             {CONTACT_EMAIL}
           </a>
-          <p className="text-stone-600">Built for families who value clarity, trust, and cultural fit.</p>
-          <p className="mt-4 text-xs text-stone-700">(c) 2026 Pravara Inc.</p>
+          <p className="text-stone-400">Built for families who value clarity, trust, and cultural fit.</p>
+          <p className="mt-4 text-xs text-stone-400">(c) 2026 Pravara Inc.</p>
         </div>
       </div>
     </footer>

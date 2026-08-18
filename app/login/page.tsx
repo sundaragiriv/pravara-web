@@ -252,8 +252,9 @@ export default function LoginPage() {
 
               <form onSubmit={handleForgotPassword} className="space-y-6">
                 <div>
-                  <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Email Address</label>
+                  <label htmlFor="reset-email" className="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Email Address</label>
                   <input
+                    id="reset-email"
                     type="email"
                     autoComplete="email"
                     inputMode="email"
@@ -329,15 +330,16 @@ export default function LoginPage() {
                   <div className="w-full border-t border-stone-800" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-stone-950 px-3 text-stone-500 tracking-widest">or continue with email</span>
+                  <span className="bg-stone-950 px-3 text-stone-400 tracking-widest">or continue with email</span>
                 </div>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-6">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Email Address</label>
+                    <label htmlFor="login-email" className="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Email Address</label>
                     <input
+                      id="login-email"
                       type="email"
                       autoComplete="email"
                       inputMode="email"
@@ -351,7 +353,7 @@ export default function LoginPage() {
 
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider">Password</label>
+                      <label htmlFor="login-password" className="block text-xs font-bold text-stone-400 uppercase tracking-wider">Password</label>
                       <button
                         type="button"
                         onClick={() => { setView("forgot"); setError(null); }}
@@ -361,6 +363,7 @@ export default function LoginPage() {
                       </button>
                     </div>
                     <input
+                      id="login-password"
                       type="password"
                       autoComplete="current-password"
                       required

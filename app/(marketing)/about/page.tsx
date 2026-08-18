@@ -70,7 +70,7 @@ export default async function AboutPage() {
                 </div>
                 <div>
                   <h3 className="text-stone-200 font-semibold mb-1">Conversational Matching</h3>
-                  <p className="text-stone-500 text-sm">No more filters. Describe what you're looking for in plain language and let Sutradhar interpret intent, not just keywords.</p>
+                  <p className="text-stone-400 text-sm">No more filters. Describe what you're looking for in plain language and let Sutradhar interpret intent, not just keywords.</p>
                 </div>
               </div>
               <div className="p-5 rounded-2xl bg-stone-950/60 border border-stone-800 flex items-start gap-4">
@@ -79,7 +79,7 @@ export default async function AboutPage() {
                 </div>
                 <div>
                   <h3 className="text-stone-200 font-semibold mb-1">Vedic Compatibility Engine</h3>
-                  <p className="text-stone-500 text-sm">Bhrugu Kundali analysis — Guna Milan, Nadi, Bhakoot, Gana — runs automatically on every candidate so you never discover a mismatch at the last step.</p>
+                  <p className="text-stone-400 text-sm">Bhrugu Kundali analysis — Guna Milan, Nadi, Bhakoot, Gana — runs automatically on every candidate so you never discover a mismatch at the last step.</p>
                 </div>
               </div>
               <div className="p-5 rounded-2xl bg-stone-950/60 border border-stone-800 flex items-start gap-4">
@@ -88,7 +88,7 @@ export default async function AboutPage() {
                 </div>
                 <div>
                   <h3 className="text-stone-200 font-semibold mb-1">Gothra Safeguarding</h3>
-                  <p className="text-stone-500 text-sm">Same-Gothra matches are blocked automatically at the algorithm level — a non-negotiable protection for communities that observe this tradition.</p>
+                  <p className="text-stone-400 text-sm">Same-Gothra matches are blocked automatically at the algorithm level — a non-negotiable protection for communities that observe this tradition.</p>
                 </div>
               </div>
             </div>
@@ -115,7 +115,7 @@ export default async function AboutPage() {
                 <Heart className="w-6 h-6 text-stone-400 group-hover:text-haldi-500 transition-colors" />
               </div>
               <h3 className="text-lg font-serif text-stone-200 mb-3">Intention Over Volume</h3>
-              <p className="text-stone-500 text-sm leading-relaxed">Quality introductions are worth more than thousands of swipes. We optimise for meaningful connections, not engagement metrics.</p>
+              <p className="text-stone-400 text-sm leading-relaxed">Quality introductions are worth more than thousands of swipes. We optimise for meaningful connections, not engagement metrics.</p>
             </div>
 
             <div className="p-6 rounded-2xl bg-stone-900/40 border border-stone-800 hover:border-haldi-500/30 transition-colors group text-center">
@@ -123,7 +123,7 @@ export default async function AboutPage() {
                 <Users className="w-6 h-6 text-stone-400 group-hover:text-haldi-500 transition-colors" />
               </div>
               <h3 className="text-lg font-serif text-stone-200 mb-3">Family is the Unit</h3>
-              <p className="text-stone-500 text-sm leading-relaxed">Guardian Mode lets parents and trusted elders participate with appropriate access — because a marriage involves two families, not just two individuals.</p>
+              <p className="text-stone-400 text-sm leading-relaxed">Guardian Mode lets parents and trusted elders participate with appropriate access — because a marriage involves two families, not just two individuals.</p>
             </div>
 
             <div className="p-6 rounded-2xl bg-stone-900/40 border border-stone-800 hover:border-haldi-500/30 transition-colors group text-center">
@@ -131,7 +131,7 @@ export default async function AboutPage() {
                 <Eye className="w-6 h-6 text-stone-400 group-hover:text-haldi-500 transition-colors" />
               </div>
               <h3 className="text-lg font-serif text-stone-200 mb-3">Privacy is Sacred</h3>
-              <p className="text-stone-500 text-sm leading-relaxed">Ghost Mode, profile visibility controls, and zero data-selling are defaults — not premium add-ons. Your family's details are never a product.</p>
+              <p className="text-stone-400 text-sm leading-relaxed">Ghost Mode, profile visibility controls, and zero data-selling are defaults — not premium add-ons. Your family's details are never a product.</p>
             </div>
 
             <div className="p-6 rounded-2xl bg-stone-900/40 border border-stone-800 hover:border-haldi-500/30 transition-colors group text-center">
@@ -139,7 +139,7 @@ export default async function AboutPage() {
                 <ShieldCheck className="w-6 h-6 text-stone-400 group-hover:text-haldi-500 transition-colors" />
               </div>
               <h3 className="text-lg font-serif text-stone-200 mb-3">Cultural Integrity</h3>
-              <p className="text-stone-500 text-sm leading-relaxed">We don't flatten traditions for the sake of scalability. Gothra, sub-community, Nakshatra — these distinctions matter, and our platform honours them.</p>
+              <p className="text-stone-400 text-sm leading-relaxed">We don't flatten traditions for the sake of scalability. Gothra, sub-community, Nakshatra — these distinctions matter, and our platform honours them.</p>
             </div>
           </div>
         </div>
@@ -156,7 +156,7 @@ export default async function AboutPage() {
             <p className="text-stone-400 leading-relaxed text-lg">
               In the Vedic tradition, <span className="italic text-stone-300">Pravara</span> refers to the most excellent or distinguished sages in one's Gotra lineage — the ancestral line declared aloud during sacred rites to establish identity and belonging. It is the answer to the question: <span className="italic text-stone-300">"Who are your people?"</span>
             </p>
-            <p className="text-stone-500 leading-relaxed">
+            <p className="text-stone-400 leading-relaxed">
               We chose this name because matrimony is fundamentally about the meeting of lineages. Pravara is not just a platform — it is a declaration of who you are and a search for who you are meant to join.
             </p>
           </div>

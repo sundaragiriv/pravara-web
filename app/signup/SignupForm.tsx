@@ -180,14 +180,15 @@ export default function SignupForm({
                 <div className="w-full border-t border-stone-800" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-stone-950 px-3 text-stone-500 tracking-widest">or sign up with email</span>
+                <span className="bg-stone-950 px-3 text-stone-400 tracking-widest">or sign up with email</span>
               </div>
             </div>
 
             <form onSubmit={handleSignup} className="space-y-5">
               <div>
-                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Full Name</label>
+                <label htmlFor="signup-name" className="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Full Name</label>
                 <input
+                  id="signup-name"
                   type="text"
                   required
                   autoComplete="name"
@@ -198,8 +199,9 @@ export default function SignupForm({
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Email Address</label>
+                <label htmlFor="signup-email" className="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Email Address</label>
                 <input
+                  id="signup-email"
                   type="email"
                   required
                   autoComplete="email"
@@ -210,8 +212,9 @@ export default function SignupForm({
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Password</label>
+                <label htmlFor="signup-password" className="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Password</label>
                 <input
+                  id="signup-password"
                   type="password"
                   required
                   autoComplete="new-password"
@@ -222,8 +225,9 @@ export default function SignupForm({
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Confirm Password</label>
+                <label htmlFor="signup-confirm" className="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Confirm Password</label>
                 <input
+                  id="signup-confirm"
                   type="password"
                   required
                   autoComplete="new-password"

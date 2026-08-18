@@ -305,12 +305,14 @@ export default function SupportPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-stone-400">
+                  <label htmlFor="support-name" className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-stone-400">
                     Your Name
                   </label>
                   <input
+                    id="support-name"
                     name="name"
                     type="text"
+                    autoComplete="name"
                     required
                     value={form.name}
                     onChange={handleChange}
@@ -320,12 +322,14 @@ export default function SupportPage() {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-stone-400">
+                  <label htmlFor="support-email" className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-stone-400">
                     Email Address
                   </label>
                   <input
+                    id="support-email"
                     name="email"
                     type="email"
+                    autoComplete="email"
                     required
                     value={form.email}
                     onChange={handleChange}
@@ -335,10 +339,10 @@ export default function SupportPage() {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-stone-400">
+                  <span id="support-tier-label" className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-stone-400">
                     Membership Tier
-                  </label>
-                  <div className="flex gap-2">
+                  </span>
+                  <div role="group" aria-labelledby="support-tier-label" className="flex gap-2">
                     {(["Basic", "Gold", "Concierge"] as SupportForm["tier"][]).map((tier) => (
                       <button
                         key={tier}
@@ -361,10 +365,11 @@ export default function SupportPage() {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-stone-400">
+                  <label htmlFor="support-subject" className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-stone-400">
                     Subject
                   </label>
                   <select
+                    id="support-subject"
                     name="subject"
                     required
                     value={form.subject}
@@ -383,10 +388,11 @@ export default function SupportPage() {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-stone-400">
+                  <label htmlFor="support-message" className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-stone-400">
                     Message
                   </label>
                   <textarea
+                    id="support-message"
                     name="message"
                     required
                     value={form.message}
@@ -425,9 +431,9 @@ export default function SupportPage() {
                   </p>
                 )}
 
-                <p className="text-center text-xs text-stone-600">
+                <p className="text-center text-xs text-stone-400">
                   By submitting, you agree to our{" "}
-                  <Link href="/legal/privacy" className="text-stone-500 underline hover:text-stone-400">
+                  <Link href="/legal/privacy" className="text-haldi-500 underline hover:text-haldi-400">
                     Privacy Policy
                   </Link>
                   .

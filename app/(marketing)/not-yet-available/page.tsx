@@ -63,7 +63,7 @@ export default function NotYetAvailablePage() {
             Tell us where you are
           </a>
 
-          <p className="mt-10 text-xs leading-relaxed text-stone-600">
+          <p className="mt-10 text-xs leading-relaxed text-stone-400">
             Reached this by mistake?{" "}
             <Link href="/?geo=allow" className="text-stone-400 underline underline-offset-2 hover:text-haldi-300">
               Continue to the site
