@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+
+import { createAdminClient } from "@/lib/supabase-admin";
+import { isEmailConfigured, sendSequenceEmail, sequenceContactEmail } from "@/lib/email";
+import { premiumEndedEmail } from "@/lib/email-sequence-templates";
+import { getSiteUrl } from "@/lib/env";
 
 /**
  * POST /api/cron/check-expiry
@@ -28,17 +32,84 @@ function authorized(req: NextRequest): boolean {
   );
 }
 
+type ExpiredMember = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  membership_tier: string;
+  founding_member: boolean | null;
+};
+
+/**
+ * "Your 3 months are up" — the conversion email, sent only to founding members.
+ *
+ * A member who paid for Gold and let it lapse should not be told their founding
+ * premium ended, so this is scoped to founding_member. Everyone else still gets
+ * the in-app notification above.
+ */
+async function sendExpiryEmails(
+  supabase: ReturnType<typeof createAdminClient>,
+  expired: ExpiredMember[],
+): Promise<number> {
+  if (!isEmailConfigured()) return 0;
+
+  const site = getSiteUrl();
+  const contactEmail = sequenceContactEmail();
+  let sent = 0;
+
+  for (const member of expired) {
+    if (!member.founding_member || !member.email) continue;
+
+    // Claim before sending; a unique violation (23505) means it already went.
+    const { data: claim, error: claimError } = await supabase
+      .from("email_sends")
+      .insert({
+        email: member.email,
+        template_key: "premium-ended",
+        profile_id: member.id,
+        meta: { tier: member.membership_tier },
+      })
+      .select("id")
+      .single();
+
+    if (claimError) {
+      if (claimError.code !== "23505") {
+        console.error("premium-ended claim failed:", claimError.code, claimError.message);
+      }
+      continue;
+    }
+
+    try {
+      await sendSequenceEmail(
+        member.email,
+        premiumEndedEmail({
+          firstName: (member.full_name ?? "").split(" ")[0] ?? "",
+          ctaUrl: `${site}/membership`,
+          contactEmail,
+          tier: member.membership_tier,
+        }),
+      );
+      sent++;
+    } catch (e) {
+      console.error("premium-ended send failed for", member.id, e);
+      // Hand the claim back so the member stays eligible on the next run.
+      await supabase.from("email_sends").delete().eq("id", claim.id);
+    }
+  }
+
+  return sent;
+}
+
 async function run() {
-  // Use service role key for admin-level access (bypasses RLS)
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  // Service role, so this bypasses RLS. createAdminClient throws when the
+  // environment is missing rather than asserting the variables are present and
+  // failing later with an opaque error from the client.
+  const supabase = createAdminClient();
 
   // Find all non-Basic users whose subscription has expired
   const { data: expired, error: fetchError } = await supabase
     .from("profiles")
-    .select("id, full_name, membership_tier")
+    .select("id, full_name, email, membership_tier, founding_member")
     .neq("membership_tier", "Basic")
     .not("subscription_end_date", "is", null)
     .lt("subscription_end_date", new Date().toISOString());
@@ -85,9 +156,20 @@ async function run() {
     console.error("Expiry notifications failed:", notifyError.message);
   }
 
+  // The last email in the founding sequence is sent from here rather than from
+  // the sequence cron, because the update above clears subscription_end_date —
+  // once it has run there is no longer any way to find the members who just
+  // expired. Sending it at the moment of the downgrade also means the email and
+  // the account state can never disagree.
+  //
+  // It is claimed through the same email_sends ledger as the rest of the
+  // sequence, so a retried cron run cannot send it twice.
+  const emailed = await sendExpiryEmails(supabase, expired);
+
   return {
     message: `Downgraded ${expiredIds.length} expired subscription(s)`,
     downgraded: expiredIds.length,
+    emailed,
     users: expired.map((p) => ({ id: p.id, name: p.full_name, was: p.membership_tier })),
   };
 }

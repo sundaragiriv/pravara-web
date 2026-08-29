@@ -17,13 +17,13 @@ import { COHORT_TARGET, FOUNDER_PREMIUM_MONTHS } from "@/lib/offer";
  */
 // The site's own tokens, so the email and pravara.ai are recognisably the same
 // thing. haldi gold on stone-950; kumkum for the blessing.
-const GOLD = "#E8C56B";        // haldi-200, the site's brightest gold
+export const GOLD = "#E8C56B";        // haldi-200, the site's brightest gold
 const GOLD_DEEP = "#C9A24A";   // gold.DEFAULT — rules and ornament
 const KUMKUM = "#D08C6A";      // lifted off kumkum-900 for contrast on dark
 const GROUND = "#0C0A09";      // stone-950, the site background
 const CARD = "#12100E";        // a shade above the ground, as the site's cards are
-const INK = "#F5F0E6";         // warm off-white, not pure #fff
-const MUTED = "#A8A29E";       // stone-400
+export const INK = "#F5F0E6";         // warm off-white, not pure #fff
+export const MUTED = "#A8A29E";       // stone-400
 const RULE = "#2A231E";
 /** The logo's own matte, so the header band shows no seam around the mark. */
 const MATTE = "#040609";
@@ -63,7 +63,7 @@ function toran(): string {
 const FOUNDING_CIRCLE_NOTE =
   "You are receiving this because you reserved a seat in the Pravara founding circle.";
 
-function shell(opts: {
+export function shell(opts: {
   preheader: string;
   body: string;
   contactEmail: string;
@@ -120,7 +120,7 @@ function shell(opts: {
 </html>`;
 }
 
-function button(href: string, label: string): string {
+export function button(href: string, label: string): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:30px auto 6px;">
     <tr><td align="center" bgcolor="${GOLD}" style="border-radius:999px;">
       <a href="${href}" style="display:inline-block;padding:16px 38px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;color:#0C0A09;text-decoration:none;border-radius:999px;">${label}</a>
@@ -128,7 +128,7 @@ function button(href: string, label: string): string {
 }
 
 /** A blessing, set the way it would be spoken — script, sound, then meaning. */
-function blessing(): string {
+export function blessing(): string {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:30px 0 8px;">
     <tr><td align="center" bgcolor="${GROUND}" style="padding:22px 20px;background:${GROUND};border-left:2px solid ${GOLD_DEEP};border-right:2px solid ${GOLD_DEEP};">
       <div style="font-family:Georgia,'Times New Roman',serif;font-size:19px;color:${KUMKUM};line-height:1.6;">&#x0965; &#x0936;&#x0941;&#x092D;&#x092E;&#x0938;&#x094D;&#x0924;&#x0941; &#x0965;</div>
@@ -237,7 +237,12 @@ export function founderWelcomeEmail(opts: FounderWelcomeOptions) {
     .join("\n");
 
   return {
-    subject: `${name}, your founding seat is reserved`,
+    // The seat number carries the message, so it leads when we know it. Falls
+    // back to the name when we do not, rather than inventing a number — the one
+    // detail in this email a reader could catch us making up.
+    subject: opts.seatNumber
+      ? `You are founder #${opts.seatNumber} of ${COHORT_TARGET.toLocaleString()} — welcome to Pravara`
+      : `${name}, your founding seat is reserved`,
     html: shell({
       // Shown next to the subject in most inboxes — the second thing read, so
       // it carries the specific detail rather than repeating the subject.

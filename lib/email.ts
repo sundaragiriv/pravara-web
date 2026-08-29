@@ -165,3 +165,40 @@ export async function sendGuardianInviteEmail(input: {
     text: invite.text,
   });
 }
+
+/* ---------------------------------------------------------------------------
+ * The founding-circle sequence.
+ *
+ * One sender for all five, because they differ only in which template rendered
+ * them. The cron decides who gets what and records it; this just puts a
+ * rendered message on the wire.
+ * ------------------------------------------------------------------------- */
+
+export type RenderedEmail = { subject: string; html: string; text: string };
+
+/**
+ * Sends one already-rendered sequence email.
+ *
+ * Throws rather than returning false on a Resend failure, so the caller can
+ * roll back the ledger row it wrote before sending — a member who did not get
+ * the email must stay eligible for it.
+ */
+export async function sendSequenceEmail(to: string, email: RenderedEmail): Promise<void> {
+  if (!resend || !emailFrom) {
+    throw new Error("Email service is not configured");
+  }
+
+  await resend.emails.send({
+    from: emailFrom,
+    to,
+    replyTo: launchInbox,
+    subject: email.subject,
+    html: email.html,
+    text: email.text,
+  });
+}
+
+/** The address a sequence recipient should reply to. Exposed for the cron. */
+export function sequenceContactEmail(): string {
+  return supportInbox;
+}

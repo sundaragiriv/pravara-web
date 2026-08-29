@@ -44,6 +44,17 @@ const {
   emailChangeEmail,
 } = await import("../lib/email-templates.ts");
 
+const {
+  cohortQuarterEmail,
+  cohortSeatsLeftEmail,
+  cohortFullEmail,
+  premiumEndingEmail,
+  premiumEndedEmail,
+} = await import("../lib/email-sequence-templates.ts");
+const { fractionPhrase, seatsLeft, MILESTONES, MATCHING_OPENS_IN_DAYS, PREMIUM_WARNING_DAYS } =
+  await import("../lib/email-sequence.ts");
+const { COHORT_TARGET } = await import("../lib/offer.ts");
+
 const OUT = ".preview";
 /**
  * Supabase renders its own auth emails, so those templates are written out as
@@ -67,6 +78,69 @@ const EMAILS = [
         ctaUrl: `${SITE}/signup?email=someone%40example.com&name=Venkata`,
         contactEmail: CONTACT,
         seatNumber: 47,
+      }),
+  },
+  {
+    // Rendered at each milestone's own threshold, so the preview shows the
+    // numbers a recipient would actually read rather than invented ones.
+    file: "cohort-quarter.html",
+    label: `Milestone 1 of 3 — fires at ${MILESTONES[0].at} registrations`,
+    render: () =>
+      cohortQuarterEmail({
+        firstName: "Venkata",
+        ctaUrl: `${SITE}/register`,
+        contactEmail: CONTACT,
+        joined: MILESTONES[0].at,
+        target: COHORT_TARGET,
+        phrase: fractionPhrase(MILESTONES[0].at),
+      }),
+  },
+  {
+    file: "cohort-seats-left.html",
+    label: `Milestone 2 of 3 — fires at ${MILESTONES[1].at} registrations`,
+    render: () =>
+      cohortSeatsLeftEmail({
+        firstName: "Venkata",
+        ctaUrl: `${SITE}/register`,
+        contactEmail: CONTACT,
+        joined: MILESTONES[1].at,
+        target: COHORT_TARGET,
+        left: seatsLeft(MILESTONES[1].at),
+      }),
+  },
+  {
+    file: "cohort-full.html",
+    label: `Milestone 3 of 3 — fires at ${MILESTONES[2].at} registrations (circle closed)`,
+    render: () =>
+      cohortFullEmail({
+        firstName: "Venkata",
+        ctaUrl: `${SITE}/signup`,
+        contactEmail: CONTACT,
+        target: COHORT_TARGET,
+        days: MATCHING_OPENS_IN_DAYS,
+      }),
+  },
+  {
+    file: "premium-ending.html",
+    label: `Founding premium ending (cron, ${PREMIUM_WARNING_DAYS} days before it lapses)`,
+    render: () =>
+      premiumEndingEmail({
+        firstName: "Venkata",
+        ctaUrl: `${SITE}/membership`,
+        contactEmail: CONTACT,
+        days: PREMIUM_WARNING_DAYS,
+        tier: "Gold",
+      }),
+  },
+  {
+    file: "premium-ended.html",
+    label: "Founding premium ended (sent by check-expiry at the downgrade)",
+    render: () =>
+      premiumEndedEmail({
+        firstName: "Venkata",
+        ctaUrl: `${SITE}/membership`,
+        contactEmail: CONTACT,
+        tier: "Gold",
       }),
   },
   {
