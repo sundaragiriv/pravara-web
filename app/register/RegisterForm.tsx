@@ -247,8 +247,10 @@ export default function RegisterForm({ founderProgress, aside }: RegisterFormPro
           aria-hidden="true"
           className="pointer-events-none absolute bottom-3 right-3 h-6 w-6 rounded-br-2xl border-b border-r border-haldi-500/30"
         />
-      {/* Progress toward the first circle of 1,000 — only once the number
-          reads as momentum rather than emptiness (see FOUNDER_COUNT_DISPLAY_THRESHOLD). */}
+      {/* Progress toward the first circle — COHORT_TARGET, never a number typed
+          here, which is how this once read 1,000 while the copy above it
+          promised 500. Shown only once the count reads as momentum rather than
+          emptiness (see FOUNDER_COUNT_DISPLAY_THRESHOLD). */}
       {founderProgress.show ? (
         <div>
           <div className="flex items-baseline justify-between text-xs uppercase tracking-[0.18em]">

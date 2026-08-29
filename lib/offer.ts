@@ -11,8 +11,16 @@
  * needs the same numbers the server renders.
  */
 
-/** Size of the founding circle. The registration counter fills toward this. */
-export const COHORT_TARGET = 1000;
+/**
+ * Size of the founding circle. The registration counter fills toward this.
+ *
+ * 500 for launch, with the option of raising it to 1,000 once there is
+ * feedback and a clearer timeline. It is not just a progress bar: the whole
+ * email sequence derives its thresholds from this number, so moving it moves
+ * when the milestone emails fire and what they claim. At 500 they land at 125,
+ * 400 and 500. See lib/email-sequence.ts.
+ */
+export const COHORT_TARGET = 500;
 
 /** Months of Gold a founding registration earns when matching opens. */
 export const FOUNDER_PREMIUM_MONTHS = 3;

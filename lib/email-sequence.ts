@@ -6,11 +6,13 @@ import { COHORT_TARGET } from "@/lib/offer";
  * Every threshold and every number in the copy is derived from COHORT_TARGET
  * rather than written down twice. The sequence was specified as "250 → a
  * quarter of the way", "400 → 100 seats left", "500 → matching opens", which
- * only holds together if the circle is 500 — at the 1,000 the site actually
- * advertises, 400 registrations leaves 600 seats, not 100. Deriving the
- * thresholds means the claim is true whatever the target is set to, and moving
- * the target moves the whole sequence with it instead of quietly turning the
- * scarcity emails into false ones.
+ * only holds together if the circle is 500 — against the 1,000 the site
+ * advertised at the time, 400 registrations left 600 seats, not 100. The
+ * circle is 500 now, so those thresholds land at 125, 400 and 500.
+ *
+ * Deriving them means the claim stays true whatever the target is set to. If
+ * the circle is later raised to 1,000, the whole sequence moves with it rather
+ * than quietly turning the scarcity email into a false one.
  */
 
 export type MilestoneKey = "cohort-quarter" | "cohort-hundred-left" | "cohort-full";
@@ -51,8 +53,7 @@ export function pendingMilestone(count: number): Milestone | null {
 /**
  * "a quarter of the way", "halfway", and so on — describing the real fraction
  * rather than trusting a phrase written when the target was a different number.
- * The quarter milestone is a quarter at a target of 1,000 and half at 500, and
- * the subject line has to survive that either way.
+ * The subject line has to survive the target moving, which it already has once.
  */
 export function fractionPhrase(count: number, target = COHORT_TARGET): string {
   const f = target > 0 ? count / target : 0;
