@@ -56,9 +56,17 @@ async function sendExpiryEmails(
   const site = getSiteUrl();
   const contactEmail = sequenceContactEmail();
   let sent = 0;
+  let noAddress = 0;
 
   for (const member of expired) {
-    if (!member.founding_member || !member.email) continue;
+    if (!member.founding_member) continue;
+    if (!member.email) {
+      // Was silently true for every production profile until the email column
+      // was backfilled. Logged rather than swallowed.
+      noAddress += 1;
+      console.warn("premium-ended skipped, no address on profile", member.id);
+      continue;
+    }
 
     // Claim before sending; a unique violation (23505) means it already went.
     const { data: claim, error: claimError } = await supabase
@@ -97,6 +105,7 @@ async function sendExpiryEmails(
     }
   }
 
+  if (noAddress) console.warn(`premium-ended: ${noAddress} founding member(s) had no address`);
   return sent;
 }
 

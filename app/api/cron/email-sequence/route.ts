@@ -149,8 +149,12 @@ async function runMilestones(supabase: Supabase, site: string, contactEmail: str
   };
 
   let sent = 0;
+  let noAddress = 0;
   for (const person of people ?? []) {
-    if (!person.email) continue;
+    if (!person.email) {
+      noAddress += 1;
+      continue;
+    }
     const claimId = await claim(supabase, {
       email: person.email,
       template_key: milestone.key,
@@ -168,7 +172,7 @@ async function runMilestones(supabase: Supabase, site: string, contactEmail: str
     }
   }
 
-  return { milestone: milestone.key, sent, count, considered: people?.length ?? 0 };
+  return { milestone: milestone.key, sent, count, considered: people?.length ?? 0, noAddress };
 }
 
 /**
@@ -196,8 +200,16 @@ async function runPremiumWarnings(supabase: Supabase, site: string, contactEmail
   if (error) return { sent: 0, error: error.message };
 
   let sent = 0;
+  // Counted, not just skipped. profiles.email was null for every production
+  // row and both premium emails simply `continue`d past it, so the job
+  // reported success while sending nothing. A number in the response is what
+  // would have made that visible.
+  let noAddress = 0;
   for (const member of members ?? []) {
-    if (!member.email) continue;
+    if (!member.email) {
+      noAddress += 1;
+      continue;
+    }
 
     const days = Math.max(
       1,
@@ -230,7 +242,7 @@ async function runPremiumWarnings(supabase: Supabase, site: string, contactEmail
     }
   }
 
-  return { sent, considered: members?.length ?? 0 };
+  return { sent, considered: members?.length ?? 0, noAddress };
 }
 
 async function run() {
