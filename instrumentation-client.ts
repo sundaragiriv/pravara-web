@@ -25,6 +25,28 @@ const SENTRY_DSN =
  * Past 10s the page has settled and only FCP benefits remain.
  */
 const IDLE_TIMEOUT_MS = 10000;
+
+/**
+ * Fraction of sessions that load the SDK without waiting for something to go
+ * wrong. Everything else loads it only if an error is actually caught.
+ *
+ * Deferring to idle stopped Sentry blocking first paint, but it did not stop it
+ * costing anything: parsing and initialising 382KB is a single long task, and on
+ * a phone at 4x CPU throttle that measured 1183ms of the page's 2682ms total
+ * blocking time. Blocking the chunk outright took TBT to 1499ms. So on a mid-
+ * range phone, roughly a second of unresponsiveness was being spent, in every
+ * session, on a library that in most sessions has nothing to report.
+ *
+ * The native error listeners below already catch and buffer everything from the
+ * first moment of the page, and the buffer is replayed the instant the SDK
+ * arrives — so error reporting is not what is being traded away here. What
+ * needs the SDK loaded regardless is performance tracing, which is sampled
+ * anyway. Sampling the decision at the session level instead of the transaction
+ * level gives the same coverage: these sessions trace fully, the rest do not
+ * trace at all, and 1 in 10 is what tracesSampleRate: 0.1 was already asking for.
+ */
+const TRACE_SESSION_RATE = 0.1;
+const tracedSession = Math.random() < TRACE_SESSION_RATE;
 /** Enough to capture a broken first render; small enough to never be a leak. */
 const MAX_BUFFERED_ERRORS = 12;
 
@@ -38,6 +60,10 @@ function bufferError(error: unknown) {
     return;
   }
   if (buffered.length < MAX_BUFFERED_ERRORS) buffered.push(error);
+  // An error is the reason this session needs the SDK. Load it now rather than
+  // waiting for an idle callback that may be a long way off, or may already
+  // have decided not to load it at all.
+  void loadSentry();
 }
 
 function onWindowError(event: ErrorEvent) {
@@ -57,8 +83,11 @@ function loadSentry(): Promise<void> {
     Sentry.init({
       dsn: SENTRY_DSN,
 
-      // Sample 10% of traces in production to preserve quota. Raise to 1.0 only during debugging.
-      tracesSampleRate: 0.1,
+      // The session was already sampled at load time, so this is all-or-nothing
+      // rather than 0.1 — sampling twice would trace 1 session in 100, not 1
+      // in 10. Sessions that loaded the SDK because something broke report the
+      // error and trace nothing.
+      tracesSampleRate: tracedSession ? 1 : 0,
 
       // Pravara handles sensitive matrimonial data — never attach IPs or emails to error reports.
       sendDefaultPii: false,
@@ -83,11 +112,15 @@ if (typeof window !== "undefined") {
   window.addEventListener("error", onWindowError);
   window.addEventListener("unhandledrejection", onUnhandledRejection);
 
-  const idle = window.requestIdleCallback;
-  if (typeof idle === "function") {
-    idle(() => void loadSentry(), { timeout: IDLE_TIMEOUT_MS });
-  } else {
-    window.setTimeout(() => void loadSentry(), IDLE_TIMEOUT_MS);
+  // Only the sampled sessions pay for the SDK up front. The rest load it if and
+  // when bufferError decides they need it.
+  if (tracedSession) {
+    const idle = window.requestIdleCallback;
+    if (typeof idle === "function") {
+      idle(() => void loadSentry(), { timeout: IDLE_TIMEOUT_MS });
+    } else {
+      window.setTimeout(() => void loadSentry(), IDLE_TIMEOUT_MS);
+    }
   }
 }
 

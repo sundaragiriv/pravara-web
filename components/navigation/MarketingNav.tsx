@@ -7,7 +7,6 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 
 import LaunchCtaLink from "@/components/launch/LaunchCtaLink";
-import { createClient } from "@/utils/supabase/client";
 import type { FounderProgress } from "@/lib/launch";
 
 interface MarketingNavProps {
@@ -47,9 +46,21 @@ export default function MarketingNav({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  /**
+   * The Supabase browser client is imported here rather than at module scope.
+   *
+   * This component is the nav on every marketing page, and the only thing it
+   * used the client for was this one call — so a 199KB dependency was being
+   * parsed on first load of /about, /faq and every legal page to serve a click
+   * that most visitors never make. Everything else the nav renders (the avatar,
+   * the name, whether anyone is signed in) already arrives as props from the
+   * server.
+   *
+   * Same treatment ShortlistContext got, and for the same reason.
+   */
   const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    const { createClient } = await import("@/utils/supabase/client");
+    await createClient().auth.signOut();
     router.push("/");
     router.refresh();
   };
