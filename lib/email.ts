@@ -8,8 +8,22 @@ import { CONTACT_EMAIL } from "@/lib/site";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const emailFrom = process.env.EMAIL_FROM;
-const supportInbox = process.env.SUPPORT_EMAIL || CONTACT_EMAIL;
-const launchInbox = process.env.LAUNCH_EMAIL || supportInbox;
+
+/**
+ * One inbox for everything.
+ *
+ * There were two environment variables here, SUPPORT_EMAIL and LAUNCH_EMAIL,
+ * chained so that launch fell back to support and support fell back to
+ * CONTACT_EMAIL. Neither was ever set, so all three resolved to the same
+ * address anyway — the indirection described a routing arrangement that did
+ * not exist, and reading the code suggested support and launch mail went to
+ * different places.
+ *
+ * While Pravara is small it is deliberately one address: care@pravara.ai, the
+ * same one printed in every footer. If support and launch ever need to split,
+ * this is the one line to change.
+ */
+const inbox = CONTACT_EMAIL;
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
@@ -55,7 +69,7 @@ export async function sendSupportRequestEmails(input: SupportRequest) {
 
   await resend.emails.send({
     from: emailFrom,
-    to: supportInbox,
+    to: inbox,
     replyTo: input.email,
     subject: `[Pravara Support] ${input.subject}`,
     text: buildSupportInboxText(input),
@@ -64,7 +78,7 @@ export async function sendSupportRequestEmails(input: SupportRequest) {
   await resend.emails.send({
     from: emailFrom,
     to: input.email,
-    replyTo: supportInbox,
+    replyTo: inbox,
     subject: "We received your Pravara support request",
     text: buildSupportAckText(input),
   });
@@ -96,7 +110,7 @@ export async function sendLaunchRegistrationEmails(
 
   await resend.emails.send({
     from: emailFrom,
-    to: launchInbox,
+    to: inbox,
     replyTo: input.email,
     subject: `[Pravara Launch] ${input.full_name} joined the founding list`,
     text: buildLaunchInboxText(input),
@@ -109,14 +123,14 @@ export async function sendLaunchRegistrationEmails(
   const welcome = founderWelcomeEmail({
     firstName,
     ctaUrl,
-    contactEmail: supportInbox,
+    contactEmail: inbox,
     seatNumber,
   });
 
   await resend.emails.send({
     from: emailFrom,
     to: input.email,
-    replyTo: launchInbox,
+    replyTo: inbox,
     subject: welcome.subject,
     html: welcome.html,
     text: welcome.text,
@@ -130,12 +144,12 @@ export async function sendProfileReminderEmail(input: { email: string; full_name
   const ctaUrl =
     `${getSiteUrl()}/signup?email=${encodeURIComponent(input.email)}` +
     `&name=${encodeURIComponent(input.full_name)}`;
-  const reminder = profileReminderEmail({ firstName, ctaUrl, contactEmail: supportInbox });
+  const reminder = profileReminderEmail({ firstName, ctaUrl, contactEmail: inbox });
 
   await resend.emails.send({
     from: emailFrom,
     to: input.email,
-    replyTo: launchInbox,
+    replyTo: inbox,
     subject: reminder.subject,
     html: reminder.html,
     text: reminder.text,
@@ -153,13 +167,13 @@ export async function sendGuardianInviteEmail(input: {
     inviterName: input.inviterName,
     role: input.role,
     ctaUrl: `${getSiteUrl()}/kutumba`,
-    contactEmail: supportInbox,
+    contactEmail: inbox,
   });
 
   await resend.emails.send({
     from: emailFrom,
     to: input.email,
-    replyTo: supportInbox,
+    replyTo: inbox,
     subject: invite.subject,
     html: invite.html,
     text: invite.text,
@@ -191,7 +205,7 @@ export async function sendSequenceEmail(to: string, email: RenderedEmail): Promi
   await resend.emails.send({
     from: emailFrom,
     to,
-    replyTo: launchInbox,
+    replyTo: inbox,
     subject: email.subject,
     html: email.html,
     text: email.text,
@@ -200,5 +214,5 @@ export async function sendSequenceEmail(to: string, email: RenderedEmail): Promi
 
 /** The address a sequence recipient should reply to. Exposed for the cron. */
 export function sequenceContactEmail(): string {
-  return supportInbox;
+  return inbox;
 }
