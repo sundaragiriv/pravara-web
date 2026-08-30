@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { cronAuth, cronUnauthorized } from "@/lib/cron-auth";
+
 import { createAdminClient } from "@/lib/supabase-admin";
 import { isEmailConfigured, sendSequenceEmail, sequenceContactEmail } from "@/lib/email";
 import { premiumEndedEmail } from "@/lib/email-sequence-templates";
@@ -23,14 +25,6 @@ import { getSiteUrl } from "@/lib/env";
  * a mismatch on the "Bearer " prefix even if it had not. Matches the pattern the
  * profile-reminder cron already uses.
  */
-function authorized(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  return (
-    req.headers.get("authorization") === `Bearer ${secret}` ||
-    req.headers.get("x-cron-secret") === secret
-  );
-}
 
 type ExpiredMember = {
   id: string;
@@ -184,11 +178,13 @@ async function run() {
 }
 
 export async function GET(req: NextRequest) {
-  if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = cronAuth(req);
+  if (!auth.ok) return cronUnauthorized(auth);
   return NextResponse.json(await run());
 }
 
 export async function POST(req: NextRequest) {
-  if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = cronAuth(req);
+  if (!auth.ok) return cronUnauthorized(auth);
   return NextResponse.json(await run());
 }

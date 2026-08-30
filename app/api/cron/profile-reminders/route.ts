@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { cronAuth, cronUnauthorized } from "@/lib/cron-auth";
+
 import { isEmailConfigured, sendProfileReminderEmail } from "@/lib/email";
 import { createAdminClient } from "@/lib/supabase-admin";
 
@@ -12,14 +14,6 @@ export const dynamic = "force-dynamic";
  * 'registered'). Capped at 2 reminders each, no sooner than 24h after sign-up and
  * 3 days apart. Secured by CRON_SECRET (Vercel Cron sends `Authorization: Bearer`).
  */
-function authorized(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  return (
-    req.headers.get("authorization") === `Bearer ${secret}` ||
-    req.headers.get("x-cron-secret") === secret
-  );
-}
 
 async function run() {
   if (!isEmailConfigured()) {
@@ -65,11 +59,13 @@ async function run() {
 }
 
 export async function GET(req: NextRequest) {
-  if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = cronAuth(req);
+  if (!auth.ok) return cronUnauthorized(auth);
   return NextResponse.json(await run());
 }
 
 export async function POST(req: NextRequest) {
-  if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = cronAuth(req);
+  if (!auth.ok) return cronUnauthorized(auth);
   return NextResponse.json(await run());
 }

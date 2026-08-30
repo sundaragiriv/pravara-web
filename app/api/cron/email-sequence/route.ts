@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { cronAuth, cronUnauthorized } from "@/lib/cron-auth";
+
 import {
   cohortFullEmail,
   cohortQuarterEmail,
@@ -36,14 +38,6 @@ export const dynamic = "force-dynamic";
  *
  * Secured by CRON_SECRET, as the other two jobs are.
  */
-function authorized(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  return (
-    req.headers.get("authorization") === `Bearer ${secret}` ||
-    req.headers.get("x-cron-secret") === secret
-  );
-}
 
 /** Nothing sends more than this in one run, so a mistake stays a small one. */
 const BATCH = 200;
@@ -259,11 +253,13 @@ async function run() {
 }
 
 export async function GET(req: NextRequest) {
-  if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = cronAuth(req);
+  if (!auth.ok) return cronUnauthorized(auth);
   return NextResponse.json(await run());
 }
 
 export async function POST(req: NextRequest) {
-  if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = cronAuth(req);
+  if (!auth.ok) return cronUnauthorized(auth);
   return NextResponse.json(await run());
 }
