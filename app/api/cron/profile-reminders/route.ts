@@ -39,9 +39,22 @@ async function run() {
   }
 
   let sent = 0;
+  let optedOut = 0;
   for (const r of data ?? []) {
     try {
-      await sendProfileReminderEmail({ email: r.email, full_name: r.full_name, first_name: r.first_name });
+      // Only record a reminder that actually went. The send returns false when
+      // the address has opted out, and counting that as sent would spend one of
+      // their two reminders on an email nobody received.
+      const delivered = await sendProfileReminderEmail({
+        email: r.email,
+        full_name: r.full_name,
+        first_name: r.first_name,
+      });
+      if (!delivered) {
+        optedOut += 1;
+        continue;
+      }
+
       await supabase
         .from("launch_registrations")
         .update({
@@ -55,7 +68,7 @@ async function run() {
     }
   }
 
-  return { sent, considered: data?.length ?? 0 };
+  return { sent, optedOut, considered: data?.length ?? 0 };
 }
 
 export async function GET(req: NextRequest) {

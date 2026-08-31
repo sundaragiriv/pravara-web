@@ -35,6 +35,27 @@ export function isEmailConfigured(): boolean {
 }
 
 /**
+ * Addresses that cannot receive mail, and must never be attempted.
+ *
+ * RFC 2606 and RFC 6761 reserve .test, .example, .invalid and .localhost so
+ * they can never resolve. Dev's seeded registrations use @lead.pravara.test,
+ * and running the reminder cron against dev queued 78 messages to a domain
+ * that does not exist. Every one is a hard bounce, and a bounce rate like that
+ * is exactly what Gmail and Yahoo use to decide whether a domain's mail reaches
+ * inboxes at all — including the password resets.
+ *
+ * Cheaper to refuse here than to remember not to run a job. The same guard
+ * protects production from a typo'd or seeded address getting in.
+ */
+const UNDELIVERABLE_TLDS = ["test", "example", "invalid", "localhost"];
+
+function isUndeliverable(email: string): boolean {
+  const domain = email.split("@")[1]?.toLowerCase() ?? "";
+  if (!domain) return true;
+  return UNDELIVERABLE_TLDS.some((tld) => domain === tld || domain.endsWith(`.${tld}`));
+}
+
+/**
  * Everything a non-transactional send needs: whether it may go at all, the
  * link for the footer, and the headers that put an Unsubscribe button in the
  * reader's mail client.
@@ -46,6 +67,11 @@ export function isEmailConfigured(): boolean {
  * not.
  */
 async function marketingContext(email: string) {
+  if (isUndeliverable(email)) {
+    console.warn("skipping undeliverable address:", email);
+    return null;
+  }
+
   const preference = await mailPreferenceFor(email);
   if (!preference || preference.unsubscribed) return null;
   return {
@@ -141,7 +167,7 @@ export async function sendLaunchRegistrationEmails(
   input: LaunchRegistrationRequest,
   /** Position in the founding circle. Left out rather than guessed if unknown. */
   seatNumber?: number,
-) {
+): Promise<boolean> {
   if (!resend || !emailFrom) {
     throw new Error("Email service is not configured");
   }
@@ -164,7 +190,7 @@ export async function sendLaunchRegistrationEmails(
   // therefore respects their preference. Someone who opted out and later
   // registers again has still asked not to be emailed.
   const marketing = await marketingContext(input.email);
-  if (!marketing) return;
+  if (!marketing) return false;
 
   const welcome = founderWelcomeEmail({
     firstName,
@@ -183,16 +209,26 @@ export async function sendLaunchRegistrationEmails(
     text: welcome.text,
     headers: marketing.headers,
   });
+
+  return true;
 }
 
-/** Reminder to a registered founder who hasn't finished their profile. */
+/**
+ * Reminder to a registered founder who hasn't finished their profile.
+ *
+ * Returns whether anything was actually sent. It used to return void, so a
+ * caller could not tell a delivered reminder from one skipped for an opt-out —
+ * and the cron, seeing no error, counted the skip as a send and burned one of
+ * that person's two reminder slots. Someone who unsubscribed and later changed
+ * their mind would then never receive the reminder they were owed.
+ */
 export async function sendProfileReminderEmail(input: {
   email: string;
   full_name: string;
   /** Absent on rows registered before the name was split in two. */
   first_name?: string | null;
-}) {
-  if (!resend || !emailFrom) return;
+}): Promise<boolean> {
+  if (!resend || !emailFrom) return false;
   // Prefer the real first name. Splitting on the first space is the old guess,
   // kept only for rows that predate the split — it greets "Sri Venkata Raja"
   // as "Sri", which is exactly why the form asks for the two separately now.
@@ -201,7 +237,7 @@ export async function sendProfileReminderEmail(input: {
     `${getSiteUrl()}/signup?email=${encodeURIComponent(input.email)}` +
     `&name=${encodeURIComponent(input.full_name)}`;
   const marketing = await marketingContext(input.email);
-  if (!marketing) return;
+  if (!marketing) return false;
 
   const reminder = profileReminderEmail({
     firstName,
@@ -219,6 +255,8 @@ export async function sendProfileReminderEmail(input: {
     text: reminder.text,
     headers: marketing.headers,
   });
+
+  return true;
 }
 
 export async function sendGuardianInviteEmail(input: {
