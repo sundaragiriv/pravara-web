@@ -19,7 +19,11 @@ export async function POST(request: Request) {
 
   if (!rateLimit.success) {
     return NextResponse.json(
-      { error: "Too many registration attempts. Please wait before trying again." },
+      {
+        error:
+          "We are seeing a lot of registrations from your network right now. " +
+          "Please try again in a few minutes — your seat is not affected.",
+      },
       { status: 429, headers: rateLimit.headers },
     );
   }

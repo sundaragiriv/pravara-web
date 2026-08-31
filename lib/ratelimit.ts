@@ -74,7 +74,28 @@ export const RATE_LIMITS = {
   sutradhar: { key: "sutradhar", requests: 20, window: "1 m" },
   matches: { key: "matches", requests: 60, window: "1 m" },
   support: { key: "support", requests: 5, window: "10 m" },
-  launchRegister: { key: "launch-register", requests: 8, window: "10 m" },
+  /**
+   * Registration, keyed by IP, and deliberately generous.
+   *
+   * This was 8 per 10 minutes, which is a sensible number for organic traffic
+   * and the wrong one the moment a link is shared into WhatsApp groups. Indian
+   * mobile carriers run carrier-grade NAT: thousands of Jio and Airtel
+   * subscribers leave through a small pool of public addresses, so a burst of
+   * genuine registrations arrives looking like one very busy IP. Office and
+   * campus networks do the same. At 8, the ninth real founder behind a shared
+   * address is told to wait, with no way to tell that from being blocked.
+   *
+   * The asymmetry decides the number. A refused genuine registration costs a
+   * founder we will never hear from again; a spam one costs a table row and an
+   * email. And registration is not the soft target here anyway — duplicate
+   * addresses are refused by a unique constraint, the payload is validated, and
+   * a date of birth under 18 is rejected outright.
+   *
+   * 100 in ten minutes is still roughly one every six seconds sustained from a
+   * single address, which no group of humans produces and which leaves a script
+   * plainly visible in the logs.
+   */
+  launchRegister: { key: "launch-register", requests: 100, window: "10 m" },
   vouch: { key: "vouch", requests: 5, window: "10 m" },
   launchAnalytics: { key: "launch-analytics", requests: 80, window: "10 m" },
   // Generous on purpose. Blocking and reporting are things a distressed member
