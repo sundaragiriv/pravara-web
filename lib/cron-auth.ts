@@ -32,6 +32,10 @@ export type CronAuthResult =
         headerScheme: string | null;
         credentialLength: number;
         hint: string;
+        /** Names of injected variables containing "CRON". Names only. */
+        cronEnvKeysPresent: string[];
+        /** Proof that environment injection works at all in this deployment. */
+        otherEnvKeys: string[];
       };
     };
 
@@ -71,6 +75,24 @@ function describe(secret: string | undefined, req: NextRequest) {
     headerScheme: auth ? auth.split(" ")[0] : alt ? "x-cron-secret" : null,
     credentialLength,
     hint,
+    /**
+     * Names only, never values, and only names containing "CRON".
+     *
+     * After the variable was added, ticked for Production and redeployed twice,
+     * the runtime still reported it absent. At that point the value cannot be
+     * the problem and the name has to be — a typo, a trailing space, an
+     * underscore that is a hyphen. Printing the names Vercel actually injected
+     * settles it in one call. `otherEnvKeys` proves environment injection is
+     * working at all, so an empty list means "this name is not there" rather
+     * than "nothing is there".
+     */
+    cronEnvKeysPresent: Object.keys(process.env).filter((k) => /CRON/i.test(k)),
+    otherEnvKeys: [
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "RESEND_API_KEY",
+      "EMAIL_FROM",
+      "PRE_LAUNCH_ENABLED",
+    ].filter((k) => Boolean(process.env[k])),
   };
 }
 
