@@ -4,6 +4,8 @@ import { Resend } from "resend";
 import type { LaunchRegistrationRequest, SupportRequest } from "@/lib/api-schemas";
 import { getSiteUrl } from "@/lib/env";
 import { founderWelcomeEmail, guardianInviteEmail, profileReminderEmail } from "@/lib/email-templates";
+import { ageFromDob } from "@/lib/api-schemas";
+import { regionName } from "@/lib/regions";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -84,15 +86,30 @@ export async function sendSupportRequestEmails(input: SupportRequest) {
   });
 }
 
+/** The full name, assembled the one way everything else assembles it. */
+function fullName(input: LaunchRegistrationRequest): string {
+  return `${input.first_name} ${input.last_name}`.trim();
+}
+
 function buildLaunchInboxText(input: LaunchRegistrationRequest): string {
+  // Spelled out, because the state arrives as a code and "NJ" in an inbox is a
+  // lookup rather than a fact.
+  const where = [
+    input.city,
+    input.state && input.country ? regionName(input.country, input.state) : input.state,
+    input.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
   return [
     "New founding-member registration submitted from Pravara.",
     "",
-    `Name: ${input.full_name}`,
-    `Age: ${input.age}`,
+    `Name: ${fullName(input)}`,
+    `Date of birth: ${input.dob} (age ${ageFromDob(input.dob)})`,
     `Gender: ${input.gender}`,
     `Profession: ${input.profession}`,
-    `Location: ${input.location}`,
+    `Location: ${where || input.location || "—"}`,
     `Email: ${input.email}`,
     `Phone: ${input.phone}`,
     `Source: ${input.source || "launch-homepage"}`,
@@ -112,14 +129,16 @@ export async function sendLaunchRegistrationEmails(
     from: emailFrom,
     to: inbox,
     replyTo: input.email,
-    subject: `[Pravara Launch] ${input.full_name} joined the founding list`,
+    subject: `[Pravara Launch] ${fullName(input)} joined the founding list`,
     text: buildLaunchInboxText(input),
   });
 
-  const firstName = input.full_name.split(" ")[0] || "";
+  // Given to us directly now, rather than guessed by splitting a full name on
+  // the first space — which greeted "Sri Venkata Raja" as "Sri".
+  const firstName = input.first_name;
   const ctaUrl =
     `${getSiteUrl()}/signup?email=${encodeURIComponent(input.email)}` +
-    `&name=${encodeURIComponent(input.full_name)}`;
+    `&name=${encodeURIComponent(fullName(input))}`;
   const welcome = founderWelcomeEmail({
     firstName,
     ctaUrl,
@@ -138,9 +157,17 @@ export async function sendLaunchRegistrationEmails(
 }
 
 /** Reminder to a registered founder who hasn't finished their profile. */
-export async function sendProfileReminderEmail(input: { email: string; full_name: string }) {
+export async function sendProfileReminderEmail(input: {
+  email: string;
+  full_name: string;
+  /** Absent on rows registered before the name was split in two. */
+  first_name?: string | null;
+}) {
   if (!resend || !emailFrom) return;
-  const firstName = input.full_name.split(" ")[0] || "";
+  // Prefer the real first name. Splitting on the first space is the old guess,
+  // kept only for rows that predate the split — it greets "Sri Venkata Raja"
+  // as "Sri", which is exactly why the form asks for the two separately now.
+  const firstName = input.first_name?.trim() || input.full_name.split(" ")[0] || "";
   const ctaUrl =
     `${getSiteUrl()}/signup?email=${encodeURIComponent(input.email)}` +
     `&name=${encodeURIComponent(input.full_name)}`;

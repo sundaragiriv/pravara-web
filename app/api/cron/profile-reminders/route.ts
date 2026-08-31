@@ -26,7 +26,7 @@ async function run() {
 
   const { data, error } = await supabase
     .from("launch_registrations")
-    .select("id, full_name, email, reminders_sent")
+    .select("id, full_name, first_name, email, reminders_sent")
     .eq("status", "registered")
     .lt("created_at", dayAgo)
     .lt("reminders_sent", 2)
@@ -41,7 +41,7 @@ async function run() {
   let sent = 0;
   for (const r of data ?? []) {
     try {
-      await sendProfileReminderEmail({ email: r.email, full_name: r.full_name });
+      await sendProfileReminderEmail({ email: r.email, full_name: r.full_name, first_name: r.first_name });
       await supabase
         .from("launch_registrations")
         .update({

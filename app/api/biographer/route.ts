@@ -15,12 +15,17 @@ function getOpenAI() {
   return _openai;
 }
 
+/**
+ * Columns the conversation is allowed to write.
+ *
+ * full_name, age, gender and dob are deliberately absent. They are established
+ * at registration, and a model that mishears "I'm looking for someone in their
+ * thirties" could otherwise rewrite the member's own age. Registration data is
+ * entered by the person, once, in a form; nothing said in passing should
+ * overwrite it.
+ */
 const VALID_PROFILE_COLUMNS = new Set([
-  "full_name",
-  "age",
-  "gender",
   "marital_status",
-  "dob",
   "birth_time",
   "birth_place",
   "nakshatra",
@@ -50,12 +55,25 @@ const VALID_PROFILE_COLUMNS = new Set([
   "gallery_images",
 ]);
 
+/**
+ * What Narada still needs to ask, in order.
+ *
+ * Four things are NOT here, because registration already collected them and the
+ * profile prefill trigger carries them across: full_name, gender, dob and the
+ * country/state/city that make up location. Asking a founder their name again,
+ * ten minutes after they typed it into the form that sent them here, is the
+ * fastest way to make an assistant feel like a form.
+ *
+ * `age` is gone for a second reason: the list used to contain both `age` and
+ * `dob`, which are the same fact asked twice. Age is derived from the date of
+ * birth at registration and stored alongside it, so there is nothing to ask.
+ *
+ * The list is still a safety net rather than an assumption — the step filter
+ * below skips any field that already has a value, so were a prefill to fail,
+ * Narada would simply pick the question back up.
+ */
 const ONBOARDING_STEPS = [
-  "full_name",
-  "age",
-  "gender",
   "marital_status",
-  "dob",
   "birth_time",
   "birth_place",
   "nakshatra",
@@ -144,9 +162,10 @@ ${ONBOARDING_STEPS.join(", ")}
 Rules:
 1. Only use column names from the list above.
 2. For height and weight, only extract numeric measurements.
-3. For age, only extract a number.
-4. If the user mentions Niyogi, Vaidiki, or similar, extract it as "sub_community".
-5. For "spiritual_org", output an array.
+3. If the user mentions Niyogi, Vaidiki, or similar, extract it as "sub_community".
+4. For "spiritual_org", output an array.
+5. Never extract name, age, date of birth, gender or country — these are
+   collected at registration and must not be overwritten from conversation.
 6. Output valid JSON only. Use {} if nothing is extractable.`
 }`,
         },
@@ -171,15 +190,6 @@ Rules:
         if (!VALID_PROFILE_COLUMNS.has(key)) return;
         if (value === null || value === undefined || value === "" || value === "..." || value === "skip") return;
 
-        if (key === "dob") {
-          const dateValue = String(value).trim();
-          if (/^\d{4}$/.test(dateValue)) {
-            updatedProfile.age = new Date().getFullYear() - parseInt(dateValue, 10);
-            return;
-          }
-          if (!dateValue.includes("-") && !dateValue.includes("/")) return;
-        }
-
         if (key === "partner_preferences") {
           const existing = String(updatedProfile.partner_preferences || "");
           const nextValue = String(value);
@@ -191,7 +201,7 @@ Rules:
           return;
         }
 
-        if (key === "age" || key === "nakshatra_padam") {
+        if (key === "nakshatra_padam") {
           const parsed = parseInt(String(value), 10);
           if (!Number.isNaN(parsed)) updatedProfile[key] = parsed;
           return;
@@ -290,11 +300,13 @@ Rules:
       case "marital_status":
         specificInstruction = "Ask about their marital status: Never Married, Divorced, or Widowed.";
         break;
-      case "dob":
+      // Date of birth is collected at registration, so only the time and place
+      // are still missing — asking for "all three" would be asking again for
+      // something already given.
       case "birth_time":
       case "birth_place":
         specificInstruction =
-          "Explain that an accurate horoscope match needs date, time, and place of birth. Ask for all three gently.";
+          "The date of birth is already on file. Explain that an accurate horoscope also needs the time and place of birth, and ask for those two gently.";
         break;
       case "nakshatra_padam":
         specificInstruction =

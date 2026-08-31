@@ -7,6 +7,7 @@ import { ArrowRight, CheckCircle2, Loader2, Copy, Check, Crown, Mail, Sparkles }
 import { trackMetaEvent } from "@/components/analytics/MetaPixel";
 import PetalBurst from "@/components/launch/PetalBurst";
 import type { FounderProgress } from "@/lib/launch";
+import { regionLabelFor, regionsFor } from "@/lib/regions";
 import {
   COUNTRIES,
   DEFAULT_COUNTRY,
@@ -18,23 +19,31 @@ import {
 import { COHORT_TARGET, FOUNDER_PREMIUM_MONTHS } from "@/lib/offer";
 
 type RegisterFormState = {
-  full_name: string;
-  age: string;
+  first_name: string;
+  last_name: string;
+  /** ISO yyyy-mm-dd from the date input. Age is derived server-side. */
+  dob: string;
   gender: "" | "Male" | "Female" | "Other";
   email: string;
   /** National number only — the dial code comes from `country`. */
   phone: string;
-  /** ISO 3166-1 alpha-2. Drives the dial code and is stored on the registration. */
+  /** ISO 3166-1 alpha-2. Drives the dial code, the region list, and is stored. */
   country: string;
+  /** Subdivision code for a served market; blank elsewhere. */
+  state: string;
+  city: string;
 };
 
 const INITIAL_STATE: RegisterFormState = {
-  full_name: "",
-  age: "",
+  first_name: "",
+  last_name: "",
+  dob: "",
   gender: "",
   email: "",
   phone: "",
   country: DEFAULT_COUNTRY,
+  state: "",
+  city: "",
 };
 
 type RegisterFormProps = {
@@ -76,6 +85,25 @@ export default function RegisterForm({ founderProgress, aside }: RegisterFormPro
   const [lead, setLead] = useState<{ name: string; email: string } | null>(null);
 
   const dialCode = getCountry(form.country)?.dial ?? "1";
+
+  // Region list follows the country, and the label with it — an Indian form
+  // asking for a "Province" reads as written by someone who has not been there.
+  const regions = regionsFor(form.country);
+  const regionLabel = regionLabelFor(form.country);
+
+  /**
+   * The 18-80 window as absolute dates, so the browser's own date picker
+   * enforces it. Computed once per render rather than memoised: it changes
+   * only at midnight, and being a day stale at 23:59 costs nothing.
+   */
+  const today = new Date();
+  const isoDaysAgo = (years: number) => {
+    const d = new Date(today);
+    d.setFullYear(d.getFullYear() - years);
+    return d.toISOString().slice(0, 10);
+  };
+  const maxDob = isoDaysAgo(18);
+  const minDob = isoDaysAgo(80);
   // Only complain once they have typed enough to mean it.
   const phoneInvalid = form.phone.trim().length > 3 && !isPlausibleNationalNumber(form.phone);
   const phonePlaceholder =
@@ -107,10 +135,12 @@ export default function RegisterForm({ founderProgress, aside }: RegisterFormPro
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          age: Number(form.age),
+          dob: form.dob,
           // The API and database store E.164; the split field is a UI concern.
           phone: toE164(dialCode, form.phone),
           country: form.country,
+          state: form.state || undefined,
+          city: form.city.trim() || undefined,
           source: "launch-register-page",
         }),
       });
@@ -120,7 +150,7 @@ export default function RegisterForm({ founderProgress, aside }: RegisterFormPro
         | null;
 
       if (response.status === 409 && payload?.alreadyRegistered) {
-        setLead({ name: form.full_name, email: form.email });
+        setLead({ name: `${form.first_name} ${form.last_name}`.trim(), email: form.email });
         setDone("already");
         return;
       }
@@ -128,7 +158,7 @@ export default function RegisterForm({ founderProgress, aside }: RegisterFormPro
         throw new Error(payload?.error || "Unable to complete registration right now.");
       }
 
-      setLead({ name: form.full_name, email: form.email });
+      setLead({ name: `${form.first_name} ${form.last_name}`.trim(), email: form.email });
       trackMetaEvent("Lead");
       setDone("new");
       setForm(INITIAL_STATE);
@@ -296,21 +326,44 @@ export default function RegisterForm({ founderProgress, aside }: RegisterFormPro
           </div>
         ) : null}
 
-        <div>
-          <label htmlFor="reg-full-name" className={labelClass}>
-            Full name
-          </label>
-          <input
-            id="reg-full-name"
-            name="full_name"
-            type="text"
-            autoComplete="name"
-            value={form.full_name}
-            onChange={(event) => updateField("full_name", event.target.value)}
-            required
-            placeholder="Your full name"
-            className={fieldClass}
-          />
+        {/* Two fields rather than one. Everything downstream addresses a member
+            by their given name — the welcome email opens "Namaste Venkata" —
+            and deriving that by splitting on the first space greets
+            "Sri Venkata Raja" as "Sri". Asking is cheaper than guessing. */}
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor="reg-first-name" className={labelClass}>
+              First name
+            </label>
+            <input
+              id="reg-first-name"
+              name="first_name"
+              type="text"
+              autoComplete="given-name"
+              value={form.first_name}
+              onChange={(event) => updateField("first_name", event.target.value)}
+              required
+              placeholder="Venkata"
+              className={fieldClass}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="reg-last-name" className={labelClass}>
+              Last name
+            </label>
+            <input
+              id="reg-last-name"
+              name="last_name"
+              type="text"
+              autoComplete="family-name"
+              value={form.last_name}
+              onChange={(event) => updateField("last_name", event.target.value)}
+              required
+              placeholder="Sundaragiri"
+              className={fieldClass}
+            />
+          </div>
         </div>
 
         <div>
@@ -339,7 +392,12 @@ export default function RegisterForm({ founderProgress, aside }: RegisterFormPro
             name="country"
             autoComplete="country"
             value={form.country}
-            onChange={(event) => updateField("country", event.target.value)}
+            onChange={(event) => {
+              // A state chosen under the old country is meaningless under the
+              // new one — NJ is a US state and not an Indian one.
+              const next = event.target.value;
+              setForm((previous) => ({ ...previous, country: next, state: "" }));
+            }}
             required
             className={fieldClass}
           >
@@ -360,6 +418,68 @@ export default function RegisterForm({ founderProgress, aside }: RegisterFormPro
               ))}
             </optgroup>
           </select>
+        </div>
+
+        {/* Region and city sit under country because the answer to "which
+            state" depends on it — and because a matrimonial search is regional
+            before it is anything else. */}
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor="reg-state" className={labelClass}>
+              {regionLabel}
+            </label>
+            {regions.length ? (
+              <select
+                id="reg-state"
+                name="state"
+                autoComplete="address-level1"
+                value={form.state}
+                onChange={(event) => updateField("state", event.target.value)}
+                required
+                className={`${fieldClass} ${form.state === "" ? "text-stone-600" : ""}`}
+              >
+                <option value="" disabled>
+                  Select…
+                </option>
+                {regions.map((r) => (
+                  <option key={r.code} value={r.code}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              /* Outside the served markets there is no list, and refusing a
+                 diaspora family because we have not enumerated their country
+                 would be the wrong trade. */
+              <input
+                id="reg-state"
+                name="state"
+                type="text"
+                autoComplete="address-level1"
+                value={form.state}
+                onChange={(event) => updateField("state", event.target.value)}
+                placeholder="State or region"
+                className={fieldClass}
+              />
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="reg-city" className={labelClass}>
+              City
+            </label>
+            <input
+              id="reg-city"
+              name="city"
+              type="text"
+              autoComplete="address-level2"
+              value={form.city}
+              onChange={(event) => updateField("city", event.target.value)}
+              required
+              placeholder="Hyderabad"
+              className={fieldClass}
+            />
+          </div>
         </div>
 
         <div>
@@ -419,24 +539,27 @@ export default function RegisterForm({ founderProgress, aside }: RegisterFormPro
           </div>
 
           <div>
-            <label htmlFor="reg-age" className={labelClass}>
-              Age
+            <label htmlFor="reg-dob" className={labelClass}>
+              Date of birth
             </label>
             <input
-              id="reg-age"
-              name="age"
-              type="number"
-              // type=number alone gives Android a full keyboard with a number
-              // row; inputMode=numeric gives the numeric keypad.
-              inputMode="numeric"
-              min={18}
-              max={80}
-              value={form.age}
-              onChange={(event) => updateField("age", event.target.value)}
+              id="reg-dob"
+              name="dob"
+              type="date"
+              autoComplete="bday"
+              // The same 18-80 rule the server enforces, so the browser refuses
+              // an impossible date before a round trip. min/max are absolute
+              // dates because a date input cannot express "18 years ago".
+              min={minDob}
+              max={maxDob}
+              value={form.dob}
+              onChange={(event) => updateField("dob", event.target.value)}
               required
-              placeholder="29"
-              className={fieldClass}
+              className={`${fieldClass} ${form.dob === "" ? "text-stone-600" : ""}`}
             />
+            <p className="mt-1.5 text-xs text-stone-400">
+              Used for your horoscope. A birth chart cannot be cast from an age.
+            </p>
           </div>
         </div>
 

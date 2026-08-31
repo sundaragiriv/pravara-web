@@ -61,9 +61,43 @@ export const supportRequestSchema = z.object({
   tier: z.enum(["Basic", "Gold", "Concierge"]),
 });
 
+/**
+ * Age bounds, expressed as dates.
+ *
+ * The form asks for a date of birth rather than an age, so the 18-80 rule has
+ * to be enforced against a calendar. Both bounds matter: under 18 is a legal
+ * line a matrimonial site must not cross, and a birth year of 1890 is a typo
+ * rather than a founder.
+ */
+const MIN_AGE = 18;
+const MAX_AGE = 80;
+
+function ageOn(dob: Date, now = new Date()): number {
+  let age = now.getFullYear() - dob.getFullYear();
+  const monthDelta = now.getMonth() - dob.getMonth();
+  if (monthDelta < 0 || (monthDelta === 0 && now.getDate() < dob.getDate())) age -= 1;
+  return age;
+}
+
+/** Exported so the route stores the same number the form was validated against. */
+export function ageFromDob(dob: string): number {
+  return ageOn(new Date(`${dob}T00:00:00Z`));
+}
+
 export const launchRegistrationSchema = z.object({
-  full_name: z.string().trim().min(2).max(120),
-  age: z.coerce.number().int().min(18).max(80),
+  // Split from a single full_name. A matrimonial introduction is made by name,
+  // and "Sri Venkata Raja Sundaragiri" cannot be addressed correctly by
+  // guessing which word to greet someone with.
+  first_name: z.string().trim().min(1).max(60),
+  last_name: z.string().trim().min(1).max(60),
+  // ISO date from the form's date input. Age is derived, never sent.
+  dob: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date of birth must be YYYY-MM-DD")
+    .refine((value) => !Number.isNaN(Date.parse(`${value}T00:00:00Z`)), "Not a real date")
+    .refine((value) => ageFromDob(value) >= MIN_AGE, `You must be at least ${MIN_AGE}`)
+    .refine((value) => ageFromDob(value) <= MAX_AGE, "Please check the year of birth"),
   gender: z.enum(["Male", "Female", "Other"]),
   // Onboarding-stage fields — optional at pre-registration to keep friction low.
   profession: z.string().trim().max(120).optional(),
@@ -74,6 +108,10 @@ export const launchRegistrationSchema = z.object({
   // ISO 3166-1 alpha-2. Optional so a stale client cannot start failing, but the
   // form always sends it.
   country: z.string().trim().length(2).regex(/^[A-Z]{2}$/).optional(),
+  // Subdivision code for a served market, free text elsewhere. Cross-checked
+  // against the country in the route, where both values are known together.
+  state: z.string().trim().max(60).optional(),
+  city: z.string().trim().max(80).optional(),
   source: z.string().trim().max(64).optional(),
 });
 

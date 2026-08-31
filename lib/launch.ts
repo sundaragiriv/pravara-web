@@ -129,18 +129,45 @@ export async function createLaunchRegistration(input: LaunchRegistrationInput) {
 
   let { data, error } = await insert(row);
 
-  // The country column arrives in a migration (add_registration_country.sql).
-  // If the code reaches an environment before the SQL does, drop the field and
-  // save the registration rather than lose it — a deploy-ordering mistake must
-  // never cost a real signup. Remove this fallback once every environment has
-  // the column.
-  if (isMissingColumnError(error) && "country" in row) {
+  /**
+   * A column the database does not have yet must not cost a registration.
+   *
+   * Code and SQL do not deploy together, and if the code lands first every
+   * registration fails on an unknown column. That is the most expensive failure
+   * this route has — during an advertising push it is paid traffic hitting a
+   * 500 on the one page that matters.
+   *
+   * Only the column actually named in the error is dropped, then the insert is
+   * retried. A first attempt dropped every recently-added column at once, which
+   * saved the row but also discarded `country` — a column that exists and is
+   * precisely what says which of three ad markets a registration came from.
+   * Losing that for the length of a deploy window is a real cost, and an
+   * avoidable one.
+   *
+   * `full_name` and `age` are never dropped: they are derived, they predate all
+   * of this, and a row without them is not worth saving.
+   */
+  const dropped: string[] = [];
+  const degraded: Record<string, unknown> = { ...row };
+
+  // Bounded rather than while(true): each pass must remove one column, so the
+  // number of columns is the natural limit, and a malformed error message can
+  // never spin here.
+  for (let attempt = 0; attempt < Object.keys(row).length && isMissingColumnError(error); attempt++) {
+    const named = /'([a-z_]+)' column|column "?([a-z_]+)"?/i.exec(error?.message ?? "");
+    const column = named?.[1] ?? named?.[2];
+    if (!column || !(column in degraded) || column === "full_name" || column === "age") break;
+
+    delete degraded[column];
+    dropped.push(column);
+    ({ data, error } = await insert(degraded));
+  }
+
+  if (dropped.length) {
     console.warn(
-      "launch_registrations.country missing — saving without it. Run supabase/migrations/add_registration_country.sql.",
+      `launch_registrations is missing ${dropped.join(", ")} — registration saved without ` +
+        "those fields. Run the pending migrations in supabase/migrations/.",
     );
-    const withoutCountry = { ...row };
-    delete (withoutCountry as { country?: string }).country;
-    ({ data, error } = await insert(withoutCountry));
   }
 
   if (error) {

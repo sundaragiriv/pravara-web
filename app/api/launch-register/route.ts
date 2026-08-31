@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import type { PostgrestError } from "@supabase/supabase-js";
 
-import { launchRegistrationSchema } from "@/lib/api-schemas";
+import { ageFromDob, launchRegistrationSchema } from "@/lib/api-schemas";
 import { isEmailConfigured, sendLaunchRegistrationEmails } from "@/lib/email";
 import { recordLaunchEvent } from "@/lib/launch-analytics";
 import { createLaunchRegistration, getSeatNumber } from "@/lib/launch";
 import { RATE_LIMITS, enforceRateLimit } from "@/lib/ratelimit";
+import { isValidRegion } from "@/lib/regions";
 import { sanitizePlainText } from "@/lib/sanitize";
 
 function isDuplicateRegistrationError(error: unknown): boolean {
@@ -32,9 +33,32 @@ export async function POST(request: Request) {
       );
     }
 
+    const firstName = sanitizePlainText(payload.data.first_name);
+    const lastName = sanitizePlainText(payload.data.last_name);
+    const country = payload.data.country;
+
+    /**
+     * A region code is only meaningful next to its country, which is the one
+     * place both are known. An unrecognised subdivision is dropped rather than
+     * rejected — a wrong state should never cost a registration, and a null
+     * reads honestly as "not captured" where "NJ" against India would not.
+     */
+    const state =
+      payload.data.state && country && isValidRegion(country, payload.data.state)
+        ? sanitizePlainText(payload.data.state).toUpperCase()
+        : undefined;
+
     const sanitizedInput = {
       ...payload.data,
-      full_name: sanitizePlainText(payload.data.full_name),
+      first_name: firstName,
+      last_name: lastName,
+      // Derived, never sent by the client. full_name and age stay populated
+      // because the welcome email, the profile prefill trigger, the admin
+      // tables and the matching engine all still read them.
+      full_name: `${firstName} ${lastName}`.trim(),
+      age: ageFromDob(payload.data.dob),
+      state,
+      city: payload.data.city ? sanitizePlainText(payload.data.city) : "",
       profession: payload.data.profession ? sanitizePlainText(payload.data.profession) : "",
       location: payload.data.location ? sanitizePlainText(payload.data.location) : "",
       email: sanitizePlainText(payload.data.email).toLowerCase(),
@@ -51,6 +75,10 @@ export async function POST(request: Request) {
         age: sanitizedInput.age,
         gender: sanitizedInput.gender,
         location: sanitizedInput.location,
+        // Which market and region a registration came from, so the three
+        // campaigns can be told apart without joining back to the row.
+        country: sanitizedInput.country,
+        state: sanitizedInput.state,
       },
     });
 
