@@ -108,7 +108,20 @@ export function cronAuth(req: NextRequest): CronAuthResult {
   return { ok: false, diagnostic: describe(secret, req) };
 }
 
-/** The 401 every job returns, carrying the diagnostic. */
+/**
+ * The 401 every job returns.
+ *
+ * The diagnostic goes to the server log, not to the caller. These routes are
+ * publicly reachable, and while it was briefly returned in the response body —
+ * which is what finally found an empty CRON_SECRET after several rounds of
+ * guessing — it also told anyone who asked which environment variables exist
+ * and how long the secret is. That is a reasonable trade for ten minutes of
+ * debugging and a bad one to leave standing.
+ *
+ * Vercel captures console output per invocation, so the same information is one
+ * click away under the function's logs, for whoever can already see them.
+ */
 export function cronUnauthorized(result: Extract<CronAuthResult, { ok: false }>) {
-  return NextResponse.json({ error: "Unauthorized", ...result.diagnostic }, { status: 401 });
+  console.warn("cron auth rejected:", JSON.stringify(result.diagnostic));
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
