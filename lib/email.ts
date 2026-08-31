@@ -5,6 +5,7 @@ import type { LaunchRegistrationRequest, SupportRequest } from "@/lib/api-schema
 import { getSiteUrl } from "@/lib/env";
 import { founderWelcomeEmail, guardianInviteEmail, profileReminderEmail } from "@/lib/email-templates";
 import { ageFromDob } from "@/lib/api-schemas";
+import { mailPreferenceFor, unsubscribeHeaders, unsubscribeUrl } from "@/lib/email-preferences";
 import { regionName } from "@/lib/regions";
 import { CONTACT_EMAIL } from "@/lib/site";
 
@@ -31,6 +32,26 @@ const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 export function isEmailConfigured(): boolean {
   return Boolean(resend && emailFrom);
+}
+
+/**
+ * Everything a non-transactional send needs: whether it may go at all, the
+ * link for the footer, and the headers that put an Unsubscribe button in the
+ * reader's mail client.
+ *
+ * Returns null when the address has opted out, and the caller must then send
+ * nothing. It also returns null if the preference row cannot be read — failing
+ * closed, because sending marketing to someone whose opt-out we could not check
+ * is the error that costs a spam complaint, and a missed milestone email is
+ * not.
+ */
+async function marketingContext(email: string) {
+  const preference = await mailPreferenceFor(email);
+  if (!preference || preference.unsubscribed) return null;
+  return {
+    url: unsubscribeUrl(preference.token),
+    headers: unsubscribeHeaders(preference.token, inbox),
+  };
 }
 
 function buildSupportInboxText(input: SupportRequest): string {
@@ -139,11 +160,18 @@ export async function sendLaunchRegistrationEmails(
   const ctaUrl =
     `${getSiteUrl()}/signup?email=${encodeURIComponent(input.email)}` +
     `&name=${encodeURIComponent(fullName(input))}`;
+  // The internal notification above always goes; this one is to the member and
+  // therefore respects their preference. Someone who opted out and later
+  // registers again has still asked not to be emailed.
+  const marketing = await marketingContext(input.email);
+  if (!marketing) return;
+
   const welcome = founderWelcomeEmail({
     firstName,
     ctaUrl,
     contactEmail: inbox,
     seatNumber,
+    unsubscribeUrl: marketing.url,
   });
 
   await resend.emails.send({
@@ -153,6 +181,7 @@ export async function sendLaunchRegistrationEmails(
     subject: welcome.subject,
     html: welcome.html,
     text: welcome.text,
+    headers: marketing.headers,
   });
 }
 
@@ -171,7 +200,15 @@ export async function sendProfileReminderEmail(input: {
   const ctaUrl =
     `${getSiteUrl()}/signup?email=${encodeURIComponent(input.email)}` +
     `&name=${encodeURIComponent(input.full_name)}`;
-  const reminder = profileReminderEmail({ firstName, ctaUrl, contactEmail: inbox });
+  const marketing = await marketingContext(input.email);
+  if (!marketing) return;
+
+  const reminder = profileReminderEmail({
+    firstName,
+    ctaUrl,
+    contactEmail: inbox,
+    unsubscribeUrl: marketing.url,
+  });
 
   await resend.emails.send({
     from: emailFrom,
@@ -180,6 +217,7 @@ export async function sendProfileReminderEmail(input: {
     subject: reminder.subject,
     html: reminder.html,
     text: reminder.text,
+    headers: marketing.headers,
   });
 }
 
@@ -224,7 +262,12 @@ export type RenderedEmail = { subject: string; html: string; text: string };
  * roll back the ledger row it wrote before sending — a member who did not get
  * the email must stay eligible for it.
  */
-export async function sendSequenceEmail(to: string, email: RenderedEmail): Promise<void> {
+export async function sendSequenceEmail(
+  to: string,
+  email: RenderedEmail,
+  /** From sequenceMarketingContext, so the caller can render the link into the body. */
+  headers?: Record<string, string>,
+): Promise<void> {
   if (!resend || !emailFrom) {
     throw new Error("Email service is not configured");
   }
@@ -236,7 +279,19 @@ export async function sendSequenceEmail(to: string, email: RenderedEmail): Promi
     subject: email.subject,
     html: email.html,
     text: email.text,
+    headers,
   });
+}
+
+/**
+ * Whether this address may receive sequence mail, and what to put in it.
+ *
+ * Exposed for the cron, which needs the unsubscribe URL when it renders the
+ * template and the headers when it sends — and needs to know to skip the
+ * address entirely before it claims a slot in the send ledger.
+ */
+export async function sequenceMarketingContext(email: string) {
+  return marketingContext(email);
 }
 
 /** The address a sequence recipient should reply to. Exposed for the cron. */

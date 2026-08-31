@@ -65,6 +65,10 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/api") ||
     request.nextUrl.pathname.startsWith("/not-yet-available") ||
     request.nextUrl.pathname.startsWith("/legal") ||
+    // Someone unsubscribing must always get through. They may well be abroad,
+    // and geo-blocking an opt-out would leave them with "Report spam" as the
+    // only way to stop the mail — the exact outcome the link exists to avoid.
+    request.nextUrl.pathname.startsWith("/unsubscribe") ||
     request.nextUrl.pathname.startsWith("/login");
 
   if (!user && !geoExempt) {

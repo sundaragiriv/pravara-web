@@ -67,6 +67,10 @@ mkdirSync(AUTH_OUT, { recursive: true });
 
 const SITE = "https://www.pravara.ai";
 const CONTACT = "care@pravara.ai";
+// Real sends mint a per-address token; the preview uses a stand-in so the
+// footer link and the opt-out wording are visible here rather than only in a
+// live message.
+const UNSUB = `${SITE}/unsubscribe/00000000-0000-0000-0000-000000000000`;
 
 const EMAILS = [
   {
@@ -77,6 +81,7 @@ const EMAILS = [
         firstName: "Venkata",
         ctaUrl: `${SITE}/signup?email=someone%40example.com&name=Venkata`,
         contactEmail: CONTACT,
+        unsubscribeUrl: UNSUB,
         seatNumber: 47,
       }),
   },
@@ -90,6 +95,7 @@ const EMAILS = [
         firstName: "Venkata",
         ctaUrl: `${SITE}/register`,
         contactEmail: CONTACT,
+        unsubscribeUrl: UNSUB,
         joined: MILESTONES[0].at,
         target: COHORT_TARGET,
         phrase: fractionPhrase(MILESTONES[0].at),
@@ -103,6 +109,7 @@ const EMAILS = [
         firstName: "Venkata",
         ctaUrl: `${SITE}/register`,
         contactEmail: CONTACT,
+        unsubscribeUrl: UNSUB,
         joined: MILESTONES[1].at,
         target: COHORT_TARGET,
         left: seatsLeft(MILESTONES[1].at),
@@ -116,6 +123,7 @@ const EMAILS = [
         firstName: "Venkata",
         ctaUrl: `${SITE}/signup`,
         contactEmail: CONTACT,
+        unsubscribeUrl: UNSUB,
         target: COHORT_TARGET,
         days: MATCHING_OPENS_IN_DAYS,
       }),
@@ -128,6 +136,7 @@ const EMAILS = [
         firstName: "Venkata",
         ctaUrl: `${SITE}/membership`,
         contactEmail: CONTACT,
+        unsubscribeUrl: UNSUB,
         days: PREMIUM_WARNING_DAYS,
         tier: "Gold",
       }),
@@ -140,6 +149,7 @@ const EMAILS = [
         firstName: "Venkata",
         ctaUrl: `${SITE}/membership`,
         contactEmail: CONTACT,
+        unsubscribeUrl: UNSUB,
         tier: "Gold",
       }),
   },
@@ -151,6 +161,7 @@ const EMAILS = [
         firstName: "Venkata",
         ctaUrl: `${SITE}/signup`,
         contactEmail: CONTACT,
+        unsubscribeUrl: UNSUB,
       }),
   },
 ];

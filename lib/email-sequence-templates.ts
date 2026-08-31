@@ -26,6 +26,8 @@ type SequenceOptions = {
   firstName: string;
   ctaUrl: string;
   contactEmail: string;
+  /** Every message in this sequence is marketing, so every one carries it. */
+  unsubscribeUrl?: string;
 };
 
 /** These are signed by the family, not by "the Pravara team". */
@@ -95,6 +97,7 @@ export function cohortQuarterEmail(
       preheader: `${joined} of ${target} seats taken.`,
       body,
       contactEmail: opts.contactEmail,
+      unsubscribeUrl: opts.unsubscribeUrl,
     }),
     text,
   };
@@ -142,6 +145,7 @@ export function cohortSeatsLeftEmail(
       preheader: `${joined} of ${target} taken. The founding terms close with the circle.`,
       body,
       contactEmail: opts.contactEmail,
+      unsubscribeUrl: opts.unsubscribeUrl,
     }),
     text,
   };
@@ -189,6 +193,7 @@ export function cohortFullEmail(opts: SequenceOptions & { target: number; days: 
       preheader: `The circle is closed. Your profile is what the next ${opts.days} days are for.`,
       body,
       contactEmail: opts.contactEmail,
+      unsubscribeUrl: opts.unsubscribeUrl,
     }),
     text,
   };
@@ -235,6 +240,7 @@ export function premiumEndingEmail(opts: SequenceOptions & { days: number; tier:
       preheader: `Nothing to do today. The account moves to Basic on its own in ${opts.days} days.`,
       body,
       contactEmail: opts.contactEmail,
+      unsubscribeUrl: opts.unsubscribeUrl,
     }),
     text,
   };
@@ -280,6 +286,7 @@ export function premiumEndedEmail(opts: SequenceOptions & { tier: string }) {
       preheader: `Your account moved to Basic. Nothing was deleted.`,
       body,
       contactEmail: opts.contactEmail,
+      unsubscribeUrl: opts.unsubscribeUrl,
     }),
     text,
   };

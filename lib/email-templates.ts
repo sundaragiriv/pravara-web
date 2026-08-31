@@ -68,6 +68,12 @@ export function shell(opts: {
   body: string;
   contactEmail: string;
   footerNote?: string;
+  /**
+   * Present on anything that is not auth mail. Its absence is what marks a
+   * message as transactional — a password reset must not offer to stop sending
+   * password resets.
+   */
+  unsubscribeUrl?: string;
 }): string {
   return `<!doctype html>
 <html lang="en">
@@ -108,6 +114,11 @@ export function shell(opts: {
           <tr><td style="padding:20px 40px 26px;background:${GROUND};border-top:1px solid ${RULE};font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${MUTED};text-align:center;line-height:1.7;">
             ${opts.footerNote ?? FOUNDING_CIRCLE_NOTE}<br>
             Reply to this message, or write to <a href="mailto:${opts.contactEmail}" style="color:${GOLD};text-decoration:none;">${opts.contactEmail}</a> — a person reads it.
+            ${
+              opts.unsubscribeUrl
+                ? `<br><br><a href="${opts.unsubscribeUrl}" style="color:${MUTED};text-decoration:underline;">Unsubscribe from these updates</a>`
+                : ""
+            }
           </td></tr>
 
         </table>
@@ -149,6 +160,8 @@ export type FounderWelcomeOptions = {
   firstName: string;
   ctaUrl: string;
   contactEmail: string;
+  /** Present on everything that is not auth mail. */
+  unsubscribeUrl?: string;
   /** Position in the founding circle. Omitted rather than guessed if unknown. */
   seatNumber?: number;
 };
@@ -251,13 +264,19 @@ export function founderWelcomeEmail(opts: FounderWelcomeOptions) {
         : `Build your profile to be matched first when we open.`,
       body,
       contactEmail: opts.contactEmail,
+      unsubscribeUrl: opts.unsubscribeUrl,
     }),
     text,
   };
 }
 
 /** Reminder for founders who registered but never finished a profile. */
-export function profileReminderEmail(opts: { firstName: string; ctaUrl: string; contactEmail: string }) {
+export function profileReminderEmail(opts: {
+  firstName: string;
+  ctaUrl: string;
+  contactEmail: string;
+  unsubscribeUrl?: string;
+}) {
   const name = opts.firstName?.trim() || "friend";
   const body = `
     <p style="font-family:Georgia,serif;font-size:17px;color:${MUTED};margin:0 0 6px;font-style:italic;">Namaste ${name},</p>
@@ -307,6 +326,7 @@ export function profileReminderEmail(opts: { firstName: string; ctaUrl: string; 
       preheader: "Founders with a finished profile are introduced first.",
       body,
       contactEmail: opts.contactEmail,
+      unsubscribeUrl: opts.unsubscribeUrl,
     }),
     text,
   };

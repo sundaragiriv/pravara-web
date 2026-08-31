@@ -3,7 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { cronAuth, cronUnauthorized } from "@/lib/cron-auth";
 
 import { createAdminClient } from "@/lib/supabase-admin";
-import { isEmailConfigured, sendSequenceEmail, sequenceContactEmail } from "@/lib/email";
+import {
+  isEmailConfigured,
+  sendSequenceEmail,
+  sequenceContactEmail,
+  sequenceMarketingContext,
+} from "@/lib/email";
 import { premiumEndedEmail } from "@/lib/email-sequence-templates";
 import { getSiteUrl } from "@/lib/env";
 
@@ -51,6 +56,7 @@ async function sendExpiryEmails(
   const contactEmail = sequenceContactEmail();
   let sent = 0;
   let noAddress = 0;
+  let optedOut = 0;
 
   for (const member of expired) {
     if (!member.founding_member) continue;
@@ -59,6 +65,14 @@ async function sendExpiryEmails(
       // was backfilled. Logged rather than swallowed.
       noAddress += 1;
       console.warn("premium-ended skipped, no address on profile", member.id);
+      continue;
+    }
+
+    // Opt-out is checked before the claim, so a skipped member is not recorded
+    // as having been sent to.
+    const marketing = await sequenceMarketingContext(member.email);
+    if (!marketing) {
+      optedOut += 1;
       continue;
     }
 
@@ -89,7 +103,9 @@ async function sendExpiryEmails(
           ctaUrl: `${site}/membership`,
           contactEmail,
           tier: member.membership_tier,
+          unsubscribeUrl: marketing.url,
         }),
+        marketing.headers,
       );
       sent++;
     } catch (e) {
@@ -100,6 +116,7 @@ async function sendExpiryEmails(
   }
 
   if (noAddress) console.warn(`premium-ended: ${noAddress} founding member(s) had no address`);
+  if (optedOut) console.warn(`premium-ended: ${optedOut} founding member(s) have unsubscribed`);
   return sent;
 }
 

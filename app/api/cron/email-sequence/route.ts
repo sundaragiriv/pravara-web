@@ -16,7 +16,12 @@ import {
   seatsLeft,
   type MilestoneKey,
 } from "@/lib/email-sequence";
-import { isEmailConfigured, sendSequenceEmail, sequenceContactEmail } from "@/lib/email";
+import {
+  isEmailConfigured,
+  sendSequenceEmail,
+  sequenceContactEmail,
+  sequenceMarketingContext,
+} from "@/lib/email";
 import { getSiteUrl } from "@/lib/env";
 import { COHORT_TARGET } from "@/lib/offer";
 import { createAdminClient } from "@/lib/supabase-admin";
@@ -107,14 +112,14 @@ async function runMilestones(supabase: Supabase, site: string, contactEmail: str
 
   const { data: people, error } = await supabase
     .from("launch_registrations")
-    .select("id, full_name, email")
+    .select("id, full_name, first_name, email")
     .limit(BATCH);
 
   if (error) return { milestone: milestone.key, sent: 0, count, error: error.message };
 
   const left = seatsLeft(count);
-  const render = (firstName: string) => {
-    const base = { firstName, contactEmail };
+  const render = (firstName: string, unsubscribeUrl: string) => {
+    const base = { firstName, contactEmail, unsubscribeUrl };
     const key: MilestoneKey = milestone.key;
     if (key === "cohort-quarter") {
       return cohortQuarterEmail({
@@ -144,11 +149,22 @@ async function runMilestones(supabase: Supabase, site: string, contactEmail: str
 
   let sent = 0;
   let noAddress = 0;
+  let optedOut = 0;
   for (const person of people ?? []) {
     if (!person.email) {
       noAddress += 1;
       continue;
     }
+
+    // Checked before the ledger claim, not after: claiming would record a send
+    // that never happened, and if the person later resubscribed the unique
+    // index would then refuse to send them the one they should have had.
+    const marketing = await sequenceMarketingContext(person.email);
+    if (!marketing) {
+      optedOut += 1;
+      continue;
+    }
+
     const claimId = await claim(supabase, {
       email: person.email,
       template_key: milestone.key,
@@ -158,7 +174,11 @@ async function runMilestones(supabase: Supabase, site: string, contactEmail: str
     if (!claimId) continue;
 
     try {
-      await sendSequenceEmail(person.email, render((person.full_name ?? "").split(" ")[0] ?? ""));
+      await sendSequenceEmail(
+        person.email,
+        render(person.first_name ?? (person.full_name ?? "").split(" ")[0] ?? "", marketing.url),
+        marketing.headers,
+      );
       sent++;
     } catch (e) {
       console.error("milestone send failed for", person.id, e);
@@ -166,7 +186,7 @@ async function runMilestones(supabase: Supabase, site: string, contactEmail: str
     }
   }
 
-  return { milestone: milestone.key, sent, count, considered: people?.length ?? 0, noAddress };
+  return { milestone: milestone.key, sent, count, considered: people?.length ?? 0, noAddress, optedOut };
 }
 
 /**
@@ -199,9 +219,16 @@ async function runPremiumWarnings(supabase: Supabase, site: string, contactEmail
   // reported success while sending nothing. A number in the response is what
   // would have made that visible.
   let noAddress = 0;
+  let optedOut = 0;
   for (const member of members ?? []) {
     if (!member.email) {
       noAddress += 1;
+      continue;
+    }
+
+    const marketing = await sequenceMarketingContext(member.email);
+    if (!marketing) {
+      optedOut += 1;
       continue;
     }
 
@@ -227,7 +254,9 @@ async function runPremiumWarnings(supabase: Supabase, site: string, contactEmail
           contactEmail,
           days,
           tier: member.membership_tier,
+          unsubscribeUrl: marketing.url,
         }),
+        marketing.headers,
       );
       sent++;
     } catch (e) {
@@ -236,7 +265,7 @@ async function runPremiumWarnings(supabase: Supabase, site: string, contactEmail
     }
   }
 
-  return { sent, considered: members?.length ?? 0, noAddress };
+  return { sent, considered: members?.length ?? 0, noAddress, optedOut };
 }
 
 async function run() {
