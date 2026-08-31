@@ -25,7 +25,7 @@ export default async function RegistrantsPage() {
   const { data } = await admin
     .from("launch_registrations")
     .select(
-      "id, full_name, email, phone, gender, age, profession, location, status, source, reminders_sent, created_at",
+      "id, full_name, first_name, last_name, email, phone, gender, age, dob, profession, location, country, state, city, status, source, reminders_sent, created_at",
     )
     .order("created_at", { ascending: false });
 
