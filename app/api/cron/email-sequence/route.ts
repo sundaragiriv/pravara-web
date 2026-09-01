@@ -20,10 +20,12 @@ import {
   isEmailConfigured,
   sendSequenceEmail,
   sequenceContactEmail,
+  sendLaunchDigest,
   sequenceMarketingContext,
 } from "@/lib/email";
 import { getSiteUrl } from "@/lib/env";
 import { COHORT_TARGET } from "@/lib/offer";
+import { regionName } from "@/lib/regions";
 import { createAdminClient } from "@/lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
@@ -268,6 +270,66 @@ async function runPremiumWarnings(supabase: Supabase, site: string, contactEmail
   return { sent, considered: members?.length ?? 0, noAddress, optedOut };
 }
 
+/**
+ * One summary a day of who registered, to the internal inbox.
+ *
+ * Replaces the notification that fired once per registration. The window is a
+ * plain 24 hours because this job runs daily; a run that is missed loses a day
+ * of the digest, not a day of registrations, and the admin page is the record
+ * either way.
+ */
+const DIGEST_HOURS = 24;
+
+async function runDigest(supabase: Supabase) {
+  const since = new Date(Date.now() - DIGEST_HOURS * 3_600_000).toISOString();
+
+  const { data: fresh, error } = await supabase
+    .from("launch_registrations")
+    .select("first_name, last_name, full_name, email, country, state, city, source, created_at")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(500);
+
+  if (error) return { sent: false, error: error.message };
+
+  const { count: total } = await supabase
+    .from("launch_registrations")
+    .select("id", { count: "exact", head: true });
+
+  const rows = fresh ?? [];
+
+  // Nothing happened; do not send a daily email saying so.
+  if (!rows.length) return { sent: false, newRegistrations: 0 };
+
+  const counts = new Map<string, number>();
+  for (const r of rows) counts.set(r.country ?? "—", (counts.get(r.country ?? "—") ?? 0) + 1);
+
+  const LABEL: Record<string, string> = { IN: "India", US: "USA", CA: "Canada" };
+
+  const sent = await sendLaunchDigest({
+    hours: DIGEST_HOURS,
+    totalSoFar: total ?? rows.length,
+    target: COHORT_TARGET,
+    byMarket: [...counts.entries()]
+      .map(([code, count]) => ({ label: LABEL[code] ?? code, count }))
+      .sort((a, b) => b.count - a.count),
+    registrations: rows.map((r) => ({
+      name: `${r.first_name ?? ""} ${r.last_name ?? ""}`.trim() || (r.full_name ?? "—"),
+      email: r.email ?? "—",
+      // Spelled out: the state is a code, and it means different places in
+      // different countries.
+      where:
+        [r.city, r.state && r.country ? regionName(r.country, r.state) : r.state, r.country]
+          .filter(Boolean)
+          .join(", ") || "—",
+      source: r.source ?? "—",
+      at: r.created_at,
+    })),
+  });
+
+  return { sent, newRegistrations: rows.length };
+}
+
 async function run() {
   if (!isEmailConfigured()) return { note: "email not configured" };
 
@@ -278,6 +340,7 @@ async function run() {
   return {
     milestones: await runMilestones(supabase, site, contactEmail),
     premiumWarnings: await runPremiumWarnings(supabase, site, contactEmail),
+    digest: await runDigest(supabase),
   };
 }
 

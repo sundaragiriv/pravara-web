@@ -3,10 +3,14 @@ import "server-only";
 import { Resend } from "resend";
 import type { LaunchRegistrationRequest, SupportRequest } from "@/lib/api-schemas";
 import { getSiteUrl } from "@/lib/env";
-import { founderWelcomeEmail, guardianInviteEmail, profileReminderEmail } from "@/lib/email-templates";
-import { ageFromDob } from "@/lib/api-schemas";
+import {
+  founderWelcomeEmail,
+  guardianInviteEmail,
+  launchDigestEmail,
+  profileReminderEmail,
+  type DigestRegistration,
+} from "@/lib/email-templates";
 import { mailPreferenceFor, unsubscribeHeaders, unsubscribeUrl } from "@/lib/email-preferences";
-import { regionName } from "@/lib/regions";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -138,31 +142,6 @@ function fullName(input: LaunchRegistrationRequest): string {
   return `${input.first_name} ${input.last_name}`.trim();
 }
 
-function buildLaunchInboxText(input: LaunchRegistrationRequest): string {
-  // Spelled out, because the state arrives as a code and "NJ" in an inbox is a
-  // lookup rather than a fact.
-  const where = [
-    input.city,
-    input.state && input.country ? regionName(input.country, input.state) : input.state,
-    input.country,
-  ]
-    .filter(Boolean)
-    .join(", ");
-
-  return [
-    "New founding-member registration submitted from Pravara.",
-    "",
-    `Name: ${fullName(input)}`,
-    `Date of birth: ${input.dob} (age ${ageFromDob(input.dob)})`,
-    `Gender: ${input.gender}`,
-    `Profession: ${input.profession}`,
-    `Location: ${where || input.location || "—"}`,
-    `Email: ${input.email}`,
-    `Phone: ${input.phone}`,
-    `Source: ${input.source || "launch-homepage"}`,
-  ].join("\n");
-}
-
 export async function sendLaunchRegistrationEmails(
   input: LaunchRegistrationRequest,
   /** Position in the founding circle. Left out rather than guessed if unknown. */
@@ -172,22 +151,20 @@ export async function sendLaunchRegistrationEmails(
     throw new Error("Email service is not configured");
   }
 
-  await resend.emails.send({
-    from: emailFrom,
-    to: inbox,
-    replyTo: input.email,
-    subject: `[Pravara Launch] ${fullName(input)} joined the founding list`,
-    text: buildLaunchInboxText(input),
-  });
+  // A notification used to fire here, once per registration. Fine at three a
+  // week; two hundred separate emails on the evening a flyer goes into WhatsApp
+  // groups — doubling the send volume and burying the one inbox that has to
+  // stay readable. sendLaunchDigest reports the same registrations once a day,
+  // and /admin/registrants is the live view.
 
   // Given to us directly now, rather than guessed by splitting a full name on
   // the first space — which greeted "Sri Venkata Raja" as "Sri".
   const firstName = input.first_name;
+
   const ctaUrl =
     `${getSiteUrl()}/signup?email=${encodeURIComponent(input.email)}` +
     `&name=${encodeURIComponent(fullName(input))}`;
-  // The internal notification above always goes; this one is to the member and
-  // therefore respects their preference. Someone who opted out and later
+  // To the member, so it respects their preference. Someone who opted out and later
   // registers again has still asked not to be emailed.
   const marketing = await marketingContext(input.email);
   if (!marketing) return false;
@@ -330,6 +307,32 @@ export async function sendSequenceEmail(
  */
 export async function sequenceMarketingContext(email: string) {
   return marketingContext(email);
+}
+
+/**
+ * The internal daily digest of new registrations.
+ *
+ * Internal mail: it goes to one inbox we control, carries no unsubscribe, and
+ * is not gated on preferences.
+ */
+export async function sendLaunchDigest(input: {
+  registrations: DigestRegistration[];
+  byMarket: { label: string; count: number }[];
+  hours: number;
+  totalSoFar: number;
+  target: number;
+}): Promise<boolean> {
+  if (!resend || !emailFrom) return false;
+
+  const digest = launchDigestEmail(input);
+  await resend.emails.send({
+    from: emailFrom,
+    to: inbox,
+    subject: digest.subject,
+    html: digest.html,
+    text: digest.text,
+  });
+  return true;
 }
 
 /** The address a sequence recipient should reply to. Exposed for the cron. */

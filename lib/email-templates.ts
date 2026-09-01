@@ -32,6 +32,9 @@ const MATTE = "#040609";
  *  sending domain or clients are likelier to block it. */
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.pravara.ai";
 
+/** The digest is internal, so its footer names the same inbox it is sent to. */
+const CONTACT_EMAIL_FOR_DIGEST = "care@pravara.ai";
+
 /**
  * The toran: a garland strung above a doorway to mark an auspicious threshold.
  *
@@ -538,5 +541,94 @@ export function emailChangeEmail(): { subject: string; html: string } {
       contactEmail: AUTH_CONTACT,
       footerNote: "You are receiving this because an email change was requested for this account.",
     }),
+  };
+}
+
+/* ---------------------------------------------------------------------------
+ * The internal daily digest.
+ *
+ * Not a member email: it goes to care@pravara.ai and nowhere else, so it needs
+ * no unsubscribe and does not use the invitation card. It replaces the
+ * notification that fired once per registration — fine at three a week, and
+ * two hundred separate emails on the evening a flyer goes into WhatsApp groups.
+ *
+ * Plain and dense on purpose. This is a working document read on a phone at
+ * six in the morning, not something to be admired.
+ * ------------------------------------------------------------------------- */
+
+export type DigestRegistration = {
+  name: string;
+  email: string;
+  where: string;
+  source: string;
+  at: string;
+};
+
+export function launchDigestEmail(opts: {
+  registrations: DigestRegistration[];
+  byMarket: { label: string; count: number }[];
+  hours: number;
+  totalSoFar: number;
+  target: number;
+}) {
+  const n = opts.registrations.length;
+
+  const marketRows = opts.byMarket
+    .filter((m) => m.count > 0)
+    .map(
+      (m) => `<tr>
+        <td style="padding:4px 12px 4px 0;font-family:Arial,sans-serif;font-size:14px;color:${MUTED};">${m.label}</td>
+        <td style="padding:4px 0;font-family:Arial,sans-serif;font-size:14px;font-weight:700;color:${INK};text-align:right;">${m.count}</td>
+      </tr>`,
+    )
+    .join("");
+
+  const rows = opts.registrations
+    .map(
+      (r) => `<tr>
+        <td style="padding:7px 12px 7px 0;font-family:Arial,sans-serif;font-size:13px;color:${INK};white-space:nowrap;">${r.name}</td>
+        <td style="padding:7px 12px 7px 0;font-family:Arial,sans-serif;font-size:13px;color:${MUTED};">${r.where}</td>
+        <td style="padding:7px 12px 7px 0;font-family:Arial,sans-serif;font-size:12px;color:${MUTED};">${r.email}</td>
+        <td style="padding:7px 0;font-family:Arial,sans-serif;font-size:12px;color:${MUTED};white-space:nowrap;">${r.source}</td>
+      </tr>`,
+    )
+    .join("");
+
+  const body = `
+    <h1 style="font-family:Georgia,serif;font-size:26px;line-height:1.3;color:${INK};margin:0 0 4px;font-weight:400;">
+      ${n} ${n === 1 ? "registration" : "registrations"} in the last ${opts.hours} hours
+    </h1>
+    <p style="font-family:Arial,sans-serif;font-size:14px;color:${MUTED};margin:0 0 22px;">
+      ${opts.totalSoFar} of ${opts.target} founding seats taken.
+    </p>
+
+    ${
+      marketRows
+        ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">${marketRows}</table>`
+        : ""
+    }
+
+    ${
+      n
+        ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-top:1px solid ${RULE};">${rows}</table>`
+        : `<p style="font-family:Arial,sans-serif;font-size:14px;color:${MUTED};margin:0;">Nothing new since the last digest.</p>`
+    }`;
+
+  return {
+    subject: `Pravara — ${n} new ${n === 1 ? "registration" : "registrations"} (${opts.totalSoFar}/${opts.target})`,
+    html: shell({
+      preheader: `${n} new, ${opts.totalSoFar} of ${opts.target} seats taken.`,
+      body,
+      contactEmail: CONTACT_EMAIL_FOR_DIGEST,
+      footerNote: "Daily summary of founding-circle registrations. Internal.",
+    }),
+    text: [
+      `${n} registration(s) in the last ${opts.hours} hours.`,
+      `${opts.totalSoFar} of ${opts.target} founding seats taken.`,
+      ``,
+      ...opts.byMarket.filter((m) => m.count > 0).map((m) => `${m.label}: ${m.count}`),
+      ``,
+      ...opts.registrations.map((r) => `${r.name}  ${r.where}  ${r.email}  ${r.source}`),
+    ].join("\n"),
   };
 }
